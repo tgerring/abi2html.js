@@ -218,7 +218,7 @@ function genFunction(abiItem) {
     // Call is only useful when there is a return value
     if (abiItem.outputs.length > 0)
         text += ' <button type="button" id="' + id + '_btn" onclick="contractCall(\'' + id + '\')">Call</button>';
-    // Transact is always available
+    // Transact available when not constant. (Constant functions cannot modify state)
     if (!abiItem.constant)
         text += ' <button type="button" id="' + id + '_btn" onclick="contractTransact(\'' + id + '\')">Transact</button>';
     text += '</fieldset>'
@@ -288,7 +288,6 @@ function watchEvent(abiItem) {
     var contract_func_name = id.substring(cFuncId.length, id.length);
     var func = contract[contract_func_name];
     // call the contract
-    // func({}, options, callback);
     func.apply(func, kv).watch(callback);
 
 }
@@ -367,18 +366,14 @@ function fillEventOutput(id, results) {
     // var outFields = getOutputFields(id);
     var outFields = getInputFields(id);
     outFields.forEach(function(val) {
-        // console.log(id, val, results);
         var badId = id + cInId + '_'
         var idxName = val.name.slice((val.name.length - badId.length) * -1)
         var result = results[idxName];
-        // console.log(badId, idxName, result);
         var eventDomId = cEventId + val.name
         var elem = document.getElementById(eventDomId);
         if (elem) {
-            switch (val.type.substring(0, 5)) {
-                // case "bool":
-                //     elem.value = result;
-                case "bytes":
+            switch (val.type.substring(0, 3)) {
+                case "byt":
                     elem.value = web3.toHex(result);
                     break;
                 default:
@@ -398,10 +393,8 @@ function fillResults(id, result) {
         // console.log(id, val, result);
         var elem = document.getElementById(val.name);
         if (elem) {
-            switch (val.type.substring(0, 5)) {
-                // case "bool":
-                //     elem.value = result;
-                case "bytes":
+            switch (val.type.substring(0, 3)) {
+                case "byt":
                     elem.value = web3.toHex(result);
                     break;
                 default:
@@ -431,7 +424,6 @@ function contractCall(id) {
         if (err)
             alert(err)
         else {
-            // console.log(result);
             fillResults(id, result);
         }
     }
@@ -483,18 +475,6 @@ function contractTransact(id) {
     // transact the contract
     func.sendTransaction.apply(func, kv);
 }
-
-// function watchLogs() {
-//     var address = getContractAddress();
-//     var logFilter = web3.eth.filter({
-//         address: address
-//     });
-//     logFilter.watch(function(error, result) {
-//         console.log(result.data);
-//         console.log(result.topics);
-//     });
-//     filters.push(logFilter);
-// }
 
 function watchSenderBalance() {
     var unit = "ether";
