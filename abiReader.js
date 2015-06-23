@@ -216,10 +216,11 @@ function genFunction(abiItem) {
 
 
     // Call is only useful when there is a return value
-    // if (abiItem.outputs.length > 0)
-    text += ' <button type="button" id="' + id + '_btn" onclick="contractCall(\'' + id + '\')">Call</button>';
+    if (abiItem.outputs.length > 0)
+        text += ' <button type="button" id="' + id + '_btn" onclick="contractCall(\'' + id + '\')">Call</button>';
     // Transact is always available
-    text += ' <button type="button" id="' + id + '_btn" onclick="contractTransact(\'' + id + '\')">Transact</button>';
+    if (!abiItem.constant)
+        text += ' <button type="button" id="' + id + '_btn" onclick="contractTransact(\'' + id + '\')">Transact</button>';
     text += '</fieldset>'
 
 
@@ -277,7 +278,6 @@ function watchEvent(abiItem) {
         if (err)
             alert(err)
         else {
-            console.log(result.event, result.args)
             fillEventOutput(result.event, result.args);
         }
     }
@@ -431,7 +431,7 @@ function contractCall(id) {
         if (err)
             alert(err)
         else {
-            console.log(result);
+            // console.log(result);
             fillResults(id, result);
         }
     }
@@ -484,17 +484,17 @@ function contractTransact(id) {
     func.sendTransaction.apply(func, kv);
 }
 
-function watchLogs() {
-    var address = getContractAddress();
-    var logFilter = web3.eth.filter({
-        address: address
-    });
-    logFilter.watch(function(error, result) {
-        console.log(result.data);
-        console.log(result.topics);
-    });
-    filters.push(logFilter);
-}
+// function watchLogs() {
+//     var address = getContractAddress();
+//     var logFilter = web3.eth.filter({
+//         address: address
+//     });
+//     logFilter.watch(function(error, result) {
+//         console.log(result.data);
+//         console.log(result.topics);
+//     });
+//     filters.push(logFilter);
+// }
 
 function watchSenderBalance() {
     var unit = "ether";
@@ -565,7 +565,7 @@ var main = function(abi) {
     }
     setAccounts();
     doAbi(abi);
-    watchLogs();
+    // watchLogs();
     watchContractBalance();
 }
 
