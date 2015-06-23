@@ -242,7 +242,7 @@ function genEvent(abiItem) {
     id = cEventId + abiItem.name;
     var text = '';
     text += '<div class="border event" id="' + id + '"><h3>Event: ' + abiItem.name + '</h3>';
-    var fields = makeOutputs(abiItem.inputs, id);
+    var fields = makeInputs(abiItem.inputs, id);
     if (fields.length > 0)
         text += '<fieldset class="' + cFieldsOut + '"><legend>Outputs</legend>';
     fields.forEach(function(field) {
@@ -258,8 +258,14 @@ function genEvent(abiItem) {
 
 function watchEvent(abiItem) {
     if (abiItem.type != "event") return;
-    var kv = [{}]; // first argument empty object
-    // set transaction options
+    var kv = [];
+
+    // first argument empty object
+    // TODO accept params as function input
+    var filterFields = {};
+    kv.push(filterFields);
+
+    // set transaction options to only watch for newly mined
     var options = {
         fromBlock: 'latest',
         toBlock: 'latest'
@@ -271,19 +277,10 @@ function watchEvent(abiItem) {
         if (err)
             alert(err)
         else {
-            console.log(result)
-                // // fillResults('f_' + contract_func_name, results)
-                // var id = cFuncId + contract_func_name + '_out_return';
-                // var elem = document.getElementById(id);
-                // if (elem) {
-                //     elem.value = result;
-                // } else {
-                //     alert(contract_func_name + ': ' + result);
-                //     // alert('Could not find id ' + id)
-                // }
+            console.log(result.event, result.args)
+            fillEventOutput(result.event, result.args);
         }
     }
-    kv.push(callback);
 
     // get instance of contract
     var contract = Contract.at(getContractAddress());
@@ -291,14 +288,10 @@ function watchEvent(abiItem) {
     var contract_func_name = id.substring(cFuncId.length, id.length);
     var func = contract[contract_func_name];
     // call the contract
-    func.apply(func, kv);
+    // func({}, options, callback);
+    func.apply(func, kv).watch(callback);
 
 }
-
-// function eventFired(eventName) {
-//     var id = cEventId+eventName;
-//     getOutputFields(id);
-// }
 
 function getOutputFields(funcId) {
     var v = [];
@@ -324,7 +317,8 @@ function getInputFields(funcId) {
     var v = [];
     var i;
     for (i = 0; i < abi.length; i++) {
-        if (abi[i].name == funcId.slice(2, funcId.length))
+        // TODO this needs to be cleaned up
+        if (abi[i].name == funcId || abi[i].name == funcId.slice(2, funcId.length))
             break;
     };
     if (i == abi.length) {
@@ -352,24 +346,6 @@ function getInputValues(id) {
     return kv;
 }
 
-// function getInputValues(id) {
-//     // get the first fieldset
-//     // TODO should look for input instead
-//     var fs = document.getElementById(id).getElementsByTagName('fieldset')[0];
-//     var kv = [];
-//     var len = fs.childNodes.length;
-
-//     // find the input fields
-//     for (var i = 0; i < len; i++) {
-//         var el = fs.childNodes[i];
-//         // make sure it has the input param class
-//         if (el.className.indexOf(cParamIn) > -1) {
-//             kv.push(el.value);
-//         }
-//     }
-//     return kv;
-// }
-
 function sendValue() {
     var address = getContractAddress();
     var account = getSenderAddress();
@@ -384,6 +360,57 @@ function sendValue() {
             alert(error);
         else
             alert(result)
+    });
+}
+
+function fillEventOutput(id, results) {
+    // var outFields = getOutputFields(id);
+    var outFields = getInputFields(id);
+    outFields.forEach(function(val) {
+        // console.log(id, val, results);
+        var badId = id + cInId + '_'
+        var idxName = val.name.slice((val.name.length - badId.length) * -1)
+        var result = results[idxName];
+        // console.log(badId, idxName, result);
+        var eventDomId = cEventId + val.name
+        var elem = document.getElementById(eventDomId);
+        if (elem) {
+            switch (val.type.substring(0, 5)) {
+                // case "bool":
+                //     elem.value = result;
+                case "bytes":
+                    elem.value = web3.toHex(result);
+                    break;
+                default:
+                    elem.value = result;
+            }
+
+        } else {
+            console.log('Looking for event', eventDomId, 'with result', result)
+            // alert('Could not find id ' + id)
+        }
+    });
+}
+
+function fillResults(id, result) {
+    var outFields = getOutputFields(id);
+    outFields.forEach(function(val) {
+        // console.log(id, val, result);
+        var elem = document.getElementById(val.name);
+        if (elem) {
+            switch (val.type.substring(0, 5)) {
+                // case "bool":
+                //     elem.value = result;
+                case "bytes":
+                    elem.value = web3.toHex(result);
+                    break;
+                default:
+                    elem.value = result.toString();
+            }
+
+        } else {
+            // alert('Could not find id ' + id)
+        }
     });
 }
 
@@ -405,26 +432,7 @@ function contractCall(id) {
             alert(err)
         else {
             console.log(result);
-            var outFields = getOutputFields(id);
-            outFields.forEach(function(val) {
-                // console.log(id, val, result);
-                var elem = document.getElementById(val.name);
-                if (elem) {
-                    switch (val.type.substring(0, 5)) {
-                        // case "bool":
-                        //     elem.value = result;
-                        case "bytes":
-                            elem.value = web3.toHex(result);
-                            break;
-                        default:
-                            elem.value = result.toString();
-                    }
-
-                } else {
-
-                    // alert('Could not find id ' + id)
-                }
-            });
+            fillResults(id, result);
         }
     }
     kv.push(callback);
