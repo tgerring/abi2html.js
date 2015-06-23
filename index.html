@@ -1,0 +1,123 @@
+<!doctype>
+<html>
+
+<head>
+    <script type="text/javascript" src="./dist/bignumber.min.js"></script>
+    <script type="text/javascript" src="./dist/web3-light.js"></script>
+    <script type="text/javascript" src="./abi.js"></script>
+    <script type="text/javascript" src="./abiReader.js"></script>
+    <script type="text/javascript">
+    var web3 = require('web3');
+    web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'));
+
+    window.onload = function() {
+        main(abi);
+    }
+    window.onbeforeunload = function() {
+        unset();
+    }
+    </script>
+    <style>
+    .border {
+        margin: 3em 0 3em 0;
+        padding: 1ex;
+    }
+    
+    .function {
+        background-color: #CCFFCC;
+        border-color: green;
+    }
+    
+    .event {
+        background-color: #B2E6FF;
+        border-color: gray;
+    }
+    
+    .clearboth {
+        clear: both;
+    }
+    
+    .readonly {
+        font-family: monospace;
+        color: #000000;
+        background-color: #E6E6E6
+    }
+    
+    .in_address {
+        width: 55ex;
+    }
+    
+    #main {
+        width: 100%;
+        clear: both;
+    }
+    
+    #head {
+        padding-bottom: 3em;
+    }
+    
+    #remote {
+        width: 33%;
+        float: right;
+    }
+    
+    #net {
+        width: 33%;
+        display: inline-block;
+    }
+    
+    #local {
+        width: 33%;
+        float: left;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="head">
+        <p><button type="button" onclick="reload()">Regenerate page</button> <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp></p>
+        <div id="local">
+            <label for="sender_address">From:</label>
+            <select id="sender_address" class="in_address" onchange="watchSenderBalance()"></select>
+            <br>
+            Account balance: <span id="sender_balance">0</span> &#926;
+        </div>
+        <div id="net">
+            <label for="gas">Gas:</label>
+            <input id="gas" type="text" class="" value="3000000">
+            <br>
+            <label for="gas_price">Gas price:</label>
+            <input id="gas_price" type="text" class="" value="10">
+            <select id="gas_price_unit">
+                <option>ether</option>
+                <option>finney</option>
+                <option selected>szabo</option>
+                <option>shannon</option>
+                <option>babbage</option>
+                <option>ada</option>
+                <option>wei</option>
+            </select>
+            <br>
+            <label for="ether_amt">&#926;</label>
+            <input id="ether_amt" type="text" value="0">
+            <br>
+            <em>account must be unlocked!</em>
+            <button type="button" onclick="sendValue()">Send</button>
+        </div>
+        <div id="remote">
+            <label for="contract_address">Contract address:</label>
+            <input id="contract_address" type="text" class="in_address" value="0x0deac8513c7e260310d42c90400fa965c5412cad">
+            <br>
+            <label for="contract_balance">Balance:</label> <span id="contract_balance"></span> ether
+        </div>
+    </div>
+    <div id="main">
+        <div id="functions"></div>
+        <div id="events"></div>
+        <div class="clearboth"></div>
+    </div>
+    <div id="foot">
+    </div>
+</body>
+
+</html>
