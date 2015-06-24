@@ -145,3 +145,79 @@ function fillResults(id, result) {
         }
     });
 }
+
+
+
+function genFunction(abiItem) {
+    // TODO model as object instead of text
+    id = cFuncId + abiItem.name;
+    var text = '<div class="border function" id="' + id + '"><h3>Function: ' + abiItem.name + '</h3>';
+    var fields_in = makeInputs(abiItem.inputs, id);
+
+    text += '<fieldset class="' + cFieldsIn + '"><legend>Inputs</legend>';
+    if (fields_in.length > 0) {
+        fields_in.forEach(function(field) {
+            text += field;
+        });
+    }
+
+
+    // Call is only useful when there is a return value
+    if (abiItem.outputs.length > 0)
+        text += ' <button type="button" id="' + id + '_btn" onclick="contractCall(\'' + id + '\')">Call</button>';
+    // Transact available when not constant. (Constant functions cannot modify state)
+    if (!abiItem.constant)
+        text += ' <button type="button" id="' + id + '_btn" onclick="contractTransact(\'' + id + '\')">Transact</button>';
+    text += '</fieldset>'
+
+
+    var fields_out = makeOutputs(abiItem.outputs, id);
+    if (fields_out.length > 0) {
+        text += '<fieldset class="' + cFieldsOut + '"><legend>Outputs</legend>';
+        fields_out.forEach(function(field) {
+            text += field;
+        });
+        text += '</fieldset>';
+    }
+
+    text += "</div>";
+
+    return text;
+}
+
+
+function genEvent(abiItem) {
+    // TODO model as object instead of text
+    id = cEventId + abiItem.name;
+    var text = '';
+    text += '<div class="border event" id="' + id + '"><h3>Event: ' + abiItem.name + '</h3>';
+    var fields = makeInputs(abiItem.inputs, id);
+    if (fields.length > 0)
+        text += '<fieldset class="' + cFieldsOut + '"><legend>Outputs</legend>';
+    fields.forEach(function(field) {
+        text += field;
+    });
+    if (fields.length > 0)
+        text += '</fieldset>';
+    text += "</div>";
+
+    return text;
+}
+
+function getInputValues(id) {
+    f = getInputFields(id);
+    var kv = [];
+
+    for (var i = 0; i < f.length; i++) {
+        f[i].value = document.getElementById(f[i].name).value;
+        kv.push(f[i].value);
+    };
+
+    return kv;
+}
+
+function render(elementname, text) {
+    // console.log(text);
+    var pre = document.getElementById(elementname).innerHTML;
+    document.getElementById(elementname).innerHTML = pre + text;
+}
