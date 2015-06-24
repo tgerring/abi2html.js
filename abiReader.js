@@ -1,16 +1,10 @@
 var Contract;
 
-var cFieldsIn = 'fields_in',
-    cFieldsOut = 'fields_out';
 var cFuncId = 'f_',
     cEventId = 'e_';
 var cInId = '_in',
     cOutId = '_out';
-var cParamIn = 'p_in',
-    cParamOut = 'p_out';
-var abiEvents = [];
-var abiFunctions = [];
-var senderBalanceFilter;
+
 var filters = [];
 var defaultUnit = 'ether';
 var networkGasPrice;
@@ -18,7 +12,7 @@ var networkGasPrice;
 function getNetworkGasPrice(callback) {
     web3.eth.getGasPrice(function(error, result) {
         networkGasPrice = result;
-        console.log('Network gas price estimate:', result.toString());
+        console.log('Network gas price estimate:', result.toString(), 'wei');
         if (typeof callback == 'function')
             callback(result);
     })
@@ -297,16 +291,17 @@ function watchEvent(abiItem, filterFields) {
 function watchBlocks(callback) {
     var filter = web3.eth.filter('latest');
     filter.watch(function(error, result) {
+        console.log('Saw new block', result);
         callback(result);
     });
-    console.log('Started filter', filter);
+    console.log('Started new block filter', filter);
 
     return filter;
 }
 
 function getBalance(address) {
     var weiBalance = web3.eth.getBalance(address).toNumber()
-    console.log('Got', address, 'balance of', weiBalance.toString());
+    console.log('Got address', address, 'balance of', web3.fromWei(weiBalance.toString(), defaultUnit), defaultUnit);
     return weiBalance;
 }
 
@@ -320,14 +315,14 @@ function readAbi(abi) {
         var r;
         switch (val.type) {
             case 'function':
-                r = genFunction(val);
-                abiFunctions.push(val);
-                render('functions', r);
+                // r = genFunction(val);
+                // abiFunctions.push(val);
+                render('functions', genFunction(val));
                 break;
             case 'event':
-                r = genEvent(val);
-                abiEvents.push(val);
-                render('events', r);
+                // r = genEvent(val);
+                // abiEvents.push(val);
+                render('events', genEvent(val));
                 filters.push(watchEvent(val));
                 break;
             case 'constructor':
@@ -348,14 +343,14 @@ var main = function(abi) {
     Contract = web3.eth.contract(abi);
     readAbi(abi);
 
+    getNetworkGasPrice(renderGasPriceEstimate);
+
     getAccounts('sender_address', function() {
         renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
         renderAccountBalance('contract_balance', getBalance(getContractAddress()));
     });
 
-    getNetworkGasPrice(renderGasPriceEstimate);
-
-    var blockFilter = watchBlocks(function() {
+    var blockFilter = watchBlocks(function(result) {
         renderAccountBalance('contract_balance', getBalance(getContractAddress()));
         renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
     });

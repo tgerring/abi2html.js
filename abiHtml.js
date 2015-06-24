@@ -1,3 +1,8 @@
+var cFieldsIn = 'fields_in',
+    cFieldsOut = 'fields_out';
+var cParamIn = 'p_in',
+    cParamOut = 'p_out';
+
 function inBool(name, id) {
     id = id + '_' + name
     return '<label for="' + id + '">' + name + '</label><input type="checkbox" class="' + cParamIn + ' in_check" id="' + id + '">';
@@ -124,7 +129,6 @@ function fillEventOutput(id, results) {
 
         } else {
             console.log('Looking for event', eventDomId, 'with result', result)
-                // alert('Could not find id ' + id)
         }
     });
 }
@@ -132,7 +136,6 @@ function fillEventOutput(id, results) {
 function fillResults(id, result) {
     var outFields = getOutputFields(id);
     outFields.forEach(function(val) {
-        // console.log(id, val, result);
         var elem = document.getElementById(val.name);
         if (elem) {
             switch (val.type.substring(0, 3)) {
@@ -144,7 +147,7 @@ function fillResults(id, result) {
             }
 
         } else {
-            // alert('Could not find id ' + id)
+            console.log('Could not find id', id)
         }
     });
 }
@@ -222,7 +225,6 @@ function getInputValues(id) {
 }
 
 function render(elementId, text) {
-    // console.log(text);
     var pre = document.getElementById(elementId).innerHTML;
     document.getElementById(elementId).innerHTML = pre + text;
 }
