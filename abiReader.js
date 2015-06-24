@@ -287,18 +287,17 @@ function watchSenderBalance(domId) {
     });
 }
 
-function watchContractBalance(domId) {
+function watchBalance(domId, address) {
     var unit = defaultUnit;
-    var contract = getContractAddress()
-    var originalBalance = web3.eth.getBalance(contract).toNumber()
-    document.getElementById(domId).innerHTML = web3.fromWei(originalBalance, unit);
+    var curBalance = web3.eth.getBalance(address).toNumber()
+    document.getElementById(domId).innerHTML = web3.fromWei(curBalance, unit);
 
-    var f_balance = web3.eth.filter('pending');
-    f_balance.watch(function(error, result) {
-        var currentBalance = web3.eth.getBalance(contract).toNumber();
-        document.getElementById(domId).innerHTML = web3.fromWei(currentBalance, unit);
+    var filterBalance = web3.eth.filter('pending');
+    filterBalance.watch(function(error, result) {
+        var newBalance = web3.eth.getBalance(address).toNumber();
+        document.getElementById(domId).innerHTML = web3.fromWei(newBalance, unit);
     });
-    filters.push(f_balance);
+    return filterBalance;
 }
 
 function readAbi(abi) {
@@ -339,7 +338,11 @@ var main = function(abi) {
         watchSenderBalance('sender_balance')
     });
     readAbi(abi);
-    watchContractBalance('contract_balance');
+
+    var contractFilter = watchBalance('contract_balance', getContractAddress());
+    filters.push(contractFilter);
+
+    
 }
 
 var unset = function() {
