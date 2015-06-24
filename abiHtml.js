@@ -62,25 +62,25 @@ function outUint(name, size, id) {
 
 
 function getContractAddress() {
-    return document.getElementById("contract_address").value;
+    return document.getElementById('contract_address').value;
 }
 
 function getSenderAddress() {
-    return document.getElementById("sender_address").value;
+    return document.getElementById('sender_address').value;
 }
 
 function getUserGasPrice() {
-    var amount = document.getElementById("gas_price").value;
-    var unit = document.getElementById("gas_price_unit").value;
-    return {amount: web3.toWei(amount, unit), unit: unit};
+    var amount = document.getElementById('gas_price').value;
+    var unit = document.getElementById('gas_price_unit').value;
+    return {amount: amount, unit: unit};
 }
 
 function getGas() {
-    return document.getElementById("gas").value;
+    return document.getElementById('gas').value;
 }
 
 function getEtherAmount() {
-    return document.getElementById("ether_amt").value;
+    return document.getElementById('ether_amt').value;
 }
 
 
@@ -92,7 +92,7 @@ function setAccounts(elemId, accounts) {
     // inject accounts
     for (var i = 0; i < accounts.length; i++) {
         var opt = accounts[i];
-        var el = document.createElement("option");
+        var el = document.createElement('option');
         el.textContent = opt;
         el.value = opt;
         select.options.add(el);
@@ -112,7 +112,7 @@ function fillEventOutput(id, results) {
         var elem = document.getElementById(eventDomId);
         if (elem) {
             switch (val.type.substring(0, 3)) {
-                case "byt":
+                case 'byt':
                     elem.value = web3.toHex(result);
                     break;
                 default:
@@ -133,7 +133,7 @@ function fillResults(id, result) {
         var elem = document.getElementById(val.name);
         if (elem) {
             switch (val.type.substring(0, 3)) {
-                case "byt":
+                case 'byt':
                     elem.value = web3.toHex(result);
                     break;
                 default:
@@ -180,7 +180,7 @@ function genFunction(abiItem) {
         text += '</fieldset>';
     }
 
-    text += "</div>";
+    text += '</div>';
 
     return text;
 }
@@ -199,7 +199,7 @@ function genEvent(abiItem) {
     });
     if (fields.length > 0)
         text += '</fieldset>';
-    text += "</div>";
+    text += '</div>';
 
     return text;
 }
@@ -227,4 +227,10 @@ function renderGasPriceEstimate(gasWei) {
         var elUnit = document.getElementById('gas_price_unit');
 
         elAmount.value = web3.fromWei(gasWei, elUnit.value);
+}
+
+function renderAccountBalance(domId, weiBalance) {
+    var formattedBalance = web3.fromWei(weiBalance, defaultUnit).toString() + ' ' + defaultUnit
+
+    document.getElementById(domId).innerHTML = formattedBalance;
 }

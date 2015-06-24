@@ -16,9 +16,10 @@ var defaultUnit = 'ether';
 var networkGasPrice;
 
 function getNetworkGasPrice(callback) {
-    web3.eth.getGasPrice(function(error, result){
+    web3.eth.getGasPrice(function(error, result) {
         networkGasPrice = result;
-        if (typeof callback == "function")
+        console.log('Network gas price estimate:', result.toString());
+        if (typeof callback == 'function')
             callback(result);
     })
 }
@@ -27,10 +28,11 @@ function getNetworkGasPrice(callback) {
 function getAccounts(domId, callback) {
     web3.eth.getAccounts(function(error, accounts) {
         if (error) {
-            alert("couldn't get accounts")
+            alert('could not get accounts')
         } else {
+            console.log('Got accounts:', accounts)
             setAccounts(domId, accounts);
-            if (typeof callback == "function")
+            if (typeof callback == 'function')
                 callback();
         }
     });
@@ -62,24 +64,24 @@ function makeInputs(abiFields, id) {
         var field = abiFields[i];
         var solType = splitSolType(field);
         switch (solType.base) {
-            case "bool":
+            case 'bool':
                 html = inBool(field.name, id);
                 break;
-            case "address":
+            case 'address':
                 html = inAddress(field.name, id);
                 break;
-            case "bytes":
+            case 'bytes':
                 html = inBytes(field.name, solType.size, id);
                 break;
-            case "int":
+            case 'int':
                 html = inInt(field.name, solType.size, id);
                 break;
-            case "uint":
+            case 'uint':
                 html = inUint(field.name, solType.size, id);
                 break;
             default:
                 html = '';
-                console.log("unknown type:", field.name, solType.base, solType.size);
+                console.log('unknown type:', field.name, solType.base, solType.size);
         }
         results.push(html);
     }
@@ -97,24 +99,24 @@ function makeOutputs(abiFields, id) {
         var field = abiFields[i];
         var solType = splitSolType(field);
         switch (solType.base) {
-            case "bool":
+            case 'bool':
                 html = outBool(field.name, id);
                 break;
-            case "address":
+            case 'address':
                 html = outAddress(field.name, id);
                 break;
-            case "bytes":
+            case 'bytes':
                 html = outBytes(field.name, solType.size, id);
                 break;
-            case "int":
+            case 'int':
                 html = outInt(field.name, solType.size, id);
                 break;
-            case "uint":
+            case 'uint':
                 html = outUint(field.name, solType.size, id);
                 break;
             default:
                 html = '';
-                console.log("unknown type:", field.name, solType.base, solType.size);
+                console.log('unknown type:', field.name, solType.base, solType.size);
         }
         results.push(html);
     }
@@ -132,7 +134,7 @@ function getOutputFields(funcId) {
         return null;
     }
     abi[i].outputs.forEach(function(field) {
-        var name = '_' + (field.name == "" ? "return" : field.name);
+        var name = '_' + (field.name == '' ? 'return' : field.name);
         v.push({
             name: funcId + cOutId + name,
             type: field.type
@@ -170,12 +172,13 @@ function sendValue() {
     var tx = web3.eth.sendTransaction({
         from: account,
         to: address,
-        value: web3.toWei(etheramt, "ether")
+        value: web3.toWei(etheramt, defaultUnit)
     }, function(error, result) {
         if (error)
             alert(error);
         else
-            alert('Transaction: ' + result)
+            console.log('Transaction: ' + result)
+        alert('Transaction: ' + result)
     });
 }
 
@@ -187,8 +190,9 @@ function contractCall(id) {
     var options = {
         from: getSenderAddress(),
         gas: getGas(),
-        gasPrice: web.toWei(gp.amount, gp.unit)
+        gasPrice: web3.toWei(gp.amount, gp.unit)
     };
+    console.log('Calling contract with options', options);
     kv.push(options);
 
     // set callback
@@ -196,6 +200,7 @@ function contractCall(id) {
         if (err)
             alert(err)
         else {
+            console.log('Contract call returned', result);
             fillResults(id, result);
         }
     }
@@ -218,21 +223,25 @@ function contractTransact(id) {
     var options = {
         from: getSenderAddress(),
         gas: getGas(),
-        gasPrice: web.toWei(gp.amount, gp.unit)
+        gasPrice: web3.toWei(gp.amount, gp.unit)
     };
+    console.log('Sending transaction with options', options);
     kv.push(options);
 
     // set callback
     var callback = function(err, result) {
+        // result is txhash
         if (err)
             alert(err)
         else {
             var id = cFuncId + contract_func_name + '_out_return';
             var elem = document.getElementById(id);
             if (elem) {
+                console.log('Transaction returned', result)
                 elem.value = result;
             } else {
-                alert(contract_func_name + ': ' + result); //txhash, probably
+                console.log(contract_func_name + ': ' + result);
+                alert(contract_func_name + ': ' + result);
             }
         }
     }
@@ -248,7 +257,7 @@ function contractTransact(id) {
 }
 
 function watchEvent(abiItem, filterFields) {
-    if (abiItem.type != "event") return;
+    if (abiItem.type != 'event') return;
     var kv = [];
 
     // first argument empty object
@@ -268,6 +277,7 @@ function watchEvent(abiItem, filterFields) {
         if (err)
             alert(err)
         else {
+            console.log('Event:', result);
             fillEventOutput(result.event, result.args);
         }
     }
@@ -283,31 +293,26 @@ function watchEvent(abiItem, filterFields) {
 }
 
 function watchSenderBalance(domId) {
-    var unit = defaultUnit;
-    var address = getSenderAddress()
-    var originalBalance = web3.fromWei(web3.eth.getBalance(address).toNumber(), defaultUnit);
-    document.getElementById(domId).innerHTML = originalBalance;
-
     if (senderBalanceFilter) {
+        console.log('Stopping sender balance filter');
         senderBalanceFilter.stopWatching();
     }
-    senderBalanceFilter = web3.eth.filter('pending');
-    senderBalanceFilter.watch(function(error, result) {
-        var currentBalance = web3.fromWei(web3.eth.getBalance(address).toNumber(), unit)
-        document.getElementById(domId).innerHTML = currentBalance;
-    });
+
+    senderBalanceFilter = watchBalance(domId, getSenderAddress());
 }
 
 function watchBalance(domId, address) {
-    var unit = defaultUnit;
-    var curBalance = web3.eth.getBalance(address).toNumber()
-    document.getElementById(domId).innerHTML = web3.fromWei(curBalance, unit);
+    var weiBalance = web3.eth.getBalance(address).toNumber()
+    console.log('Got', address, 'balance of', weiBalance);
+    renderAccountBalance(domId, weiBalance);
 
-    var filterBalance = web3.eth.filter('pending');
+    var filterBalance = web3.eth.filter('latest');
     filterBalance.watch(function(error, result) {
-        var newBalance = web3.eth.getBalance(address).toNumber();
-        document.getElementById(domId).innerHTML = web3.fromWei(newBalance, unit);
+        var weiBalance = web3.eth.getBalance(address).toNumber()
+        console.log('Filter returned', address, 'balance of', weiBalance);
+        renderAccountBalance(domId, weiBalance);
     });
+
     return filterBalance;
 }
 
@@ -320,22 +325,21 @@ function readAbi(abi) {
         }
         var r;
         switch (val.type) {
-            case "function":
+            case 'function':
                 r = genFunction(val);
                 abiFunctions.push(val);
                 render('functions', r);
                 break;
-            case "event":
+            case 'event':
                 r = genEvent(val);
                 abiEvents.push(val);
                 render('events', r);
                 watchEvent(val);
                 break;
-            case "constructor":
-                // console.log("ignoring constructor");
+            case 'constructor':
                 break;
             default:
-                console.log("unknown type:", val.name, val.type);
+                console.log('unknown type:', val.name, val.type);
         }
     });
 }
@@ -345,8 +349,9 @@ var main = function(abi) {
         alert('no abi!')
         return
     }
-    getAccounts('sender_address', function(){
+    getAccounts('sender_address', function() {
         watchSenderBalance('sender_balance')
+            // watchBalance('sender_balance', getSenderAddress())
     });
     readAbi(abi);
 
@@ -354,12 +359,13 @@ var main = function(abi) {
     filters.push(contractFilter);
 
     getNetworkGasPrice(renderGasPriceEstimate);
-    
+
 }
 
 var unset = function() {
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
+        console.log('Stopping filter', i)
         filter.stopWatching();
     };
     filters = [];
