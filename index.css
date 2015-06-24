@@ -1,0 +1,57 @@
+html, body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+}
+
+.border {
+    margin: 3em 0 3em 0;
+    padding: 1ex;
+}
+
+.function {
+    background-color: #CCFFCC;
+    border-color: green;
+}
+
+.event {
+    background-color: #B2E6FF;
+    border-color: gray;
+}
+
+.clearboth {
+    clear: both;
+}
+
+.readonly {
+    font-family: monospace;
+    color: #000000;
+    background-color: #E6E6E6
+}
+
+.in_address {
+    width: 55ex;
+}
+
+#main {
+    width: 100%;
+    clear: both;
+}
+
+#head {
+    padding-bottom: 3em;
+}
+
+#remote {
+    width: 33%;
+    float: right;
+}
+
+#net {
+    width: 33%;
+    display: inline-block;
+}
+
+#local {
+    width: 33%;
+    float: left;
+}

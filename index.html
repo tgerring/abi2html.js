@@ -2,6 +2,8 @@
 <html>
 
 <head>
+    <title>abi2html</title>
+    <link rel="stylesheet" href="index.css">
     <script type="text/javascript" src="./dist/bignumber.min.js"></script>
     <script type="text/javascript" src="./dist/web3-light.js"></script>
     <script type="text/javascript" src="./abi.js"></script>
@@ -12,72 +14,21 @@
     web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'));
 
     window.onload = function() {
+        // set event handlers
         document.getElementById('reload_page').addEventListener('click', reload, false);
         document.getElementById('send_value').addEventListener('click', sendValue, false);
         document.getElementById('sender_address').addEventListener('change', watchSenderBalance, false);
+        // debug default
         document.getElementById('contract_address').value = '0x0deac8513c7e260310d42c90400fa965c5412cad';
-
+        // currently, abi must be manually loaded into a variable
         main(abi);
     }
-    
+
     window.onbeforeunload = function() {
+        // unlikely this fires, but try to clean up after oneself
         unset();
     }
     </script>
-    <style>
-    .border {
-        margin: 3em 0 3em 0;
-        padding: 1ex;
-    }
-    
-    .function {
-        background-color: #CCFFCC;
-        border-color: green;
-    }
-    
-    .event {
-        background-color: #B2E6FF;
-        border-color: gray;
-    }
-    
-    .clearboth {
-        clear: both;
-    }
-    
-    .readonly {
-        font-family: monospace;
-        color: #000000;
-        background-color: #E6E6E6
-    }
-    
-    .in_address {
-        width: 55ex;
-    }
-    
-    #main {
-        width: 100%;
-        clear: both;
-    }
-    
-    #head {
-        padding-bottom: 3em;
-    }
-    
-    #remote {
-        width: 33%;
-        float: right;
-    }
-    
-    #net {
-        width: 33%;
-        display: inline-block;
-    }
-    
-    #local {
-        width: 33%;
-        float: left;
-    }
-    </style>
 </head>
 
 <body>
