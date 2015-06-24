@@ -12,8 +12,14 @@
     web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'));
 
     window.onload = function() {
+        document.getElementById('reload_page').addEventListener('click', reload, false);
+        document.getElementById('send_value').addEventListener('click', sendValue, false);
+        document.getElementById('sender_address').addEventListener('change', watchSenderBalance, false);
+        document.getElementById('contract_address').value = '0x0deac8513c7e260310d42c90400fa965c5412cad';
+
         main(abi);
     }
+    
     window.onbeforeunload = function() {
         unset();
     }
@@ -76,12 +82,14 @@
 
 <body>
     <div id="head">
-        <p><button type="button" onclick="reload()">Regenerate page</button> <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp></p>
+        <p>
+            <button id="reload_page" type="button">Regenerate page</button>
+            <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
+        </p>
         <div id="local">
             <label for="sender_address">From:</label>
-            <select id="sender_address" class="in_address" onchange="watchSenderBalance()"></select>
-            <br>
-            Account balance: <span id="sender_balance">0</span> &#926;
+            <select id="sender_address" class="in_address"></select>
+            <br> Account balance: <span id="sender_balance">0</span> &#926;
         </div>
         <div id="net">
             <label for="gas">Gas:</label>
@@ -103,13 +111,14 @@
             <input id="ether_amt" type="text" value="0">
             <br>
             <em>account must be unlocked!</em>
-            <button type="button" onclick="sendValue()">Send</button>
+            <button id="send_value" type="button">Send</button>
         </div>
         <div id="remote">
             <label for="contract_address">Contract address:</label>
-            <input id="contract_address" type="text" class="in_address" value="0x0deac8513c7e260310d42c90400fa965c5412cad">
+            <input id="contract_address" type="text" class="in_address">
             <br>
-            <label for="contract_balance">Balance:</label> <span id="contract_balance"></span> ether
+            <label for="contract_balance">Balance:</label>
+            <span id="contract_balance"></span> ether
         </div>
     </div>
     <div id="main">

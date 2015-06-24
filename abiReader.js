@@ -10,8 +10,7 @@ var cParamIn = 'p_in',
 var abiEvents = [];
 var abiFunctions = [];
 var senderBalanceFilter;
-
-
+var filters = [];
 
 
 function getAccounts(domId, callback) {
@@ -401,15 +400,13 @@ function readAbi(abi) {
     });
 }
 
-var filters = [];
-
 var main = function(abi) {
     if (!abi) {
         alert('no abi!')
+        return
     }
     getAccounts("sender_address", watchSenderBalance);
     readAbi(abi);
-    // watchLogs();
     watchContractBalance();
 }
 
