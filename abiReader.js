@@ -1,4 +1,4 @@
-var Contract = web3.eth.contract(abi);
+var Contract;
 
 var cFieldsIn = 'fields_in',
     cFieldsOut = 'fields_out';
@@ -349,13 +349,16 @@ var main = function(abi) {
         alert('no abi!')
         return
     }
+
+    console.log('Instantiating contract with abi', abi)
+    Contract = web3.eth.contract(abi);
     getAccounts('sender_address', function() {
         watchSenderBalance('sender_balance')
-            // watchBalance('sender_balance', getSenderAddress())
     });
     readAbi(abi);
 
-    var contractFilter = watchBalance('contract_balance', getContractAddress());
+    var contractAddress = getContractAddress();
+    var contractFilter = watchBalance('contract_balance', contractAddress);
     filters.push(contractFilter);
 
     getNetworkGasPrice(renderGasPriceEstimate);
@@ -369,9 +372,12 @@ var unset = function() {
         filter.stopWatching();
     };
     filters = [];
+
+    document.getElementById('functions').innerHTML = '';
+    document.getElementById('events').innerHTML = '';
 }
 
 var reload = function() {
     unset();
-    main(abi);
+    main(getAbi());
 }

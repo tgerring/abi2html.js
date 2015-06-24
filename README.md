@@ -5,15 +5,8 @@ Generate HTML page from Solidity ABI with JavaScript. This is useful as an "admi
 Usage:
 
 0. Connect to an ethereum instance with provided params
-1. Declare ABI in abi.js
+1. Paste ABI in "Contract ABI" text box
 2. Set deployed contract address in page
 3. Interact with functions or observe events
 
-Call and Transact buttons are conditionally shown based on the following:
-
-* Call
-    - Only shown when output parameters are defined
-* Transact
-    - Hidden when function is declared as constant
-
-Events are always shown and automatically subscribed to. 
+The "Call" button is only shown when output parameters are defined. The "Transact" button is hidden when the function is declared constant. When an event fires, the values are rendered in the matching text boxes.

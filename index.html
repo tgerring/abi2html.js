@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="index.css">
     <script type="text/javascript" src="./dist/bignumber.min.js"></script>
     <script type="text/javascript" src="./dist/web3-light.js"></script>
-    <script type="text/javascript" src="./abi.js"></script>
     <script type="text/javascript" src="./abiHtml.js"></script>
     <script type="text/javascript" src="./abiReader.js"></script>
     <script type="text/javascript">
@@ -22,6 +21,7 @@
         // debug default
         document.getElementById('contract_address').value = '0x0deac8513c7e260310d42c90400fa965c5412cad';
         // currently, abi must be manually loaded into a variable
+        abi = getAbi();
         main(abi);
     }
 
@@ -35,7 +35,7 @@
 <body>
     <div id="head">
         <p>
-            <button id="reload_page" type="button">Regenerate page</button>
+            <button id="reload_page" type="button">Regenerate</button>
             <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
         </p>
         <div id="local">
@@ -73,6 +73,89 @@
             <br>
             <label for="contract_balance">Balance:</label>
             <span id="contract_balance"></span>
+            <br>
+            Contract ABI:
+            <br>
+            <textarea id="contract_abi">[{
+    "constant": false,
+    "inputs": [],
+    "name": "isTrue",
+    "outputs": [{
+        "name": "",
+        "type": "bool"
+    }],
+    "type": "function"
+}, {
+    "constant": true,
+    "inputs": [{
+        "name": "addr",
+        "type": "address"
+    }],
+    "name": "queryBalance",
+    "outputs": [{
+        "name": "balance",
+        "type": "uint256"
+    }],
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "name": "owner",
+        "type": "address"
+    }, {
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "mint",
+    "outputs": [],
+    "type": "function"
+}, {
+    "constant": false,
+    "inputs": [{
+        "name": "receiver",
+        "type": "address"
+    }, {
+        "name": "amount",
+        "type": "uint256"
+    }],
+    "name": "send",
+    "outputs": [],
+    "type": "function"
+}, {
+    "inputs": [],
+    "type": "constructor"
+}, {
+    "anonymous": false,
+    "inputs": [{
+        "indexed": false,
+        "name": "from",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "name": "to",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "name": "value",
+        "type": "uint256"
+    }],
+    "name": "Send",
+    "type": "event"
+}, {
+    "anonymous": false,
+    "inputs": [{
+        "indexed": false,
+        "name": "from",
+        "type": "address"
+    }, {
+        "indexed": false,
+        "name": "value",
+        "type": "uint256"
+    }],
+    "name": "Deposit",
+    "type": "event"
+}]
+</textarea>
         </div>
     </div>
     <div id="main">

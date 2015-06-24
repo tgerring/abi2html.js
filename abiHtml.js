@@ -60,6 +60,9 @@ function outUint(name, size, id) {
     return '<label for="">' + name + ':</label><input type="text" class="readonly cParamOut out_uint' + size + '" id="' + id + '" readonly></span>';
 }
 
+function getAbi() {
+    return JSON.parse(document.getElementById('contract_abi').value);
+}
 
 function getContractAddress() {
     return document.getElementById('contract_address').value;
@@ -149,6 +152,7 @@ function fillResults(id, result) {
 
 
 function genFunction(abiItem) {
+    console.log('Generating function for', abiItem);
     // TODO model as object instead of text
     id = cFuncId + abiItem.name;
     var text = '<div class="border function" id="' + id + '"><h3>Function: ' + abiItem.name + '</h3>';
@@ -187,6 +191,7 @@ function genFunction(abiItem) {
 
 
 function genEvent(abiItem) {
+    console.log('Generating event for', abiItem);
     // TODO model as object instead of text
     id = cEventId + abiItem.name;
     var text = '';

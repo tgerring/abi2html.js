@@ -55,3 +55,8 @@ html, body {
     width: 33%;
     float: left;
 }
+
+#contract_abi {
+    width: 100%;
+    height: 8em;
+}
