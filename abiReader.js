@@ -288,32 +288,26 @@ function watchEvent(abiItem, filterFields) {
     var contract_func_name = id.substring(cFuncId.length, id.length);
     var func = contract[contract_func_name];
     // call the contract
-    func.apply(func, kv).watch(callback);
+    var eventFilter = func.apply(func, kv);
+    eventFilter.watch(callback);
+    return eventFilter;
 
 }
 
-function watchSenderBalance(domId) {
-    if (senderBalanceFilter) {
-        console.log('Stopping sender balance filter');
-        senderBalanceFilter.stopWatching();
-    }
-
-    senderBalanceFilter = watchBalance(domId, getSenderAddress());
-}
-
-function watchBalance(domId, address) {
-    var weiBalance = web3.eth.getBalance(address).toNumber()
-    console.log('Got', address, 'balance of', weiBalance);
-    renderAccountBalance(domId, weiBalance);
-
-    var filterBalance = web3.eth.filter('latest');
-    filterBalance.watch(function(error, result) {
-        var weiBalance = web3.eth.getBalance(address).toNumber()
-        console.log('Filter returned', address, 'balance of', weiBalance);
-        renderAccountBalance(domId, weiBalance);
+function watchBlocks(callback) {
+    var filter = web3.eth.filter('latest');
+    filter.watch(function(error, result) {
+        callback(result);
     });
+    console.log('Started filter', filter);
 
-    return filterBalance;
+    return filter;
+}
+
+function getBalance(address) {
+    var weiBalance = web3.eth.getBalance(address).toNumber()
+    console.log('Got', address, 'balance of', weiBalance.toString());
+    return weiBalance;
 }
 
 function readAbi(abi) {
@@ -334,7 +328,7 @@ function readAbi(abi) {
                 r = genEvent(val);
                 abiEvents.push(val);
                 render('events', r);
-                watchEvent(val);
+                filters.push(watchEvent(val));
                 break;
             case 'constructor':
                 break;
@@ -352,23 +346,26 @@ var main = function(abi) {
 
     console.log('Instantiating contract with abi', abi)
     Contract = web3.eth.contract(abi);
-    getAccounts('sender_address', function() {
-        watchSenderBalance('sender_balance')
-    });
     readAbi(abi);
 
-    var contractAddress = getContractAddress();
-    var contractFilter = watchBalance('contract_balance', contractAddress);
-    filters.push(contractFilter);
+    getAccounts('sender_address', function() {
+        renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
+        renderAccountBalance('contract_balance', getBalance(getContractAddress()));
+    });
 
     getNetworkGasPrice(renderGasPriceEstimate);
 
+    var blockFilter = watchBlocks(function() {
+        renderAccountBalance('contract_balance', getBalance(getContractAddress()));
+        renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
+    });
+    filters.push(blockFilter);
 }
 
 var unset = function() {
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
-        console.log('Stopping filter', i)
+        console.log('Stopping filter', filter.filterId)
         filter.stopWatching();
     };
     filters = [];
