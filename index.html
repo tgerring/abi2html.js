@@ -18,6 +18,7 @@
         document.getElementById('reload_page').addEventListener('click', reload, false);
         document.getElementById('send_value').addEventListener('click', sendValue, false);
         document.getElementById('sender_address').addEventListener('change', function(){watchSenderBalance('sender_balance')}, false);
+        document.getElementById('gas_price_unit').addEventListener('change', function(){renderGasPriceEstimate(networkGasPrice)}, false);
         // debug default
         document.getElementById('contract_address').value = '0x0deac8513c7e260310d42c90400fa965c5412cad';
         // currently, abi must be manually loaded into a variable
@@ -57,6 +58,8 @@
                 <option>ada</option>
                 <option>wei</option>
             </select>
+            <br>
+            <em>Estimated from network</em>
             <br>
             <label for="ether_amt">&#926;</label>
             <input id="ether_amt" type="text" value="0">

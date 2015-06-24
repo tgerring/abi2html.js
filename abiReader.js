@@ -13,6 +13,15 @@ var abiFunctions = [];
 var senderBalanceFilter;
 var filters = [];
 var defaultUnit = 'ether';
+var networkGasPrice;
+
+function getNetworkGasPrice(callback) {
+    web3.eth.getGasPrice(function(error, result){
+        networkGasPrice = result;
+        if (typeof callback == "function")
+            callback(result);
+    })
+}
 
 
 function getAccounts(domId, callback) {
@@ -174,10 +183,11 @@ function contractCall(id) {
     var kv = getInputValues(id);
 
     // set transaction options
+    gp = getUserGasPrice();
     var options = {
         from: getSenderAddress(),
         gas: getGas(),
-        gasPrice: getGasPrice()
+        gasPrice: web.toWei(gp.amount, gp.unit)
     };
     kv.push(options);
 
@@ -204,10 +214,11 @@ function contractTransact(id) {
     var kv = getInputValues(id);
 
     // set transaction options
+    gp = getUserGasPrice();
     var options = {
         from: getSenderAddress(),
         gas: getGas(),
-        gasPrice: getGasPrice()
+        gasPrice: web.toWei(gp.amount, gp.unit)
     };
     kv.push(options);
 
@@ -334,7 +345,7 @@ var main = function(abi) {
         alert('no abi!')
         return
     }
-    getAccounts("sender_address", function(){
+    getAccounts('sender_address', function(){
         watchSenderBalance('sender_balance')
     });
     readAbi(abi);
@@ -342,6 +353,7 @@ var main = function(abi) {
     var contractFilter = watchBalance('contract_balance', getContractAddress());
     filters.push(contractFilter);
 
+    getNetworkGasPrice(renderGasPriceEstimate);
     
 }
 

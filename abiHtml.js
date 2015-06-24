@@ -69,10 +69,10 @@ function getSenderAddress() {
     return document.getElementById("sender_address").value;
 }
 
-function getGasPrice() {
+function getUserGasPrice() {
     var amount = document.getElementById("gas_price").value;
     var unit = document.getElementById("gas_price_unit").value;
-    return web3.toWei(amount, unit);
+    return {amount: web3.toWei(amount, unit), unit: unit};
 }
 
 function getGas() {
@@ -216,8 +216,15 @@ function getInputValues(id) {
     return kv;
 }
 
-function render(elementname, text) {
+function render(elementId, text) {
     // console.log(text);
-    var pre = document.getElementById(elementname).innerHTML;
-    document.getElementById(elementname).innerHTML = pre + text;
+    var pre = document.getElementById(elementId).innerHTML;
+    document.getElementById(elementId).innerHTML = pre + text;
+}
+
+function renderGasPriceEstimate(gasWei) {
+        var elAmount = document.getElementById('gas_price');
+        var elUnit = document.getElementById('gas_price_unit');
+
+        elAmount.value = web3.fromWei(gasWei, elUnit.value);
 }
