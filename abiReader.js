@@ -310,21 +310,22 @@ function getBalance(address) {
     return weiBalance;
 }
 
-function readAbi(abi) {
+function generateDoc(abi, generateEvents) {
     abi.forEach(function(val) {
         // safety check
         if (!val.type) {
             console.log('Unexpected ABI format');
             return
         }
-        var r;
         switch (val.type) {
             case 'function':
                 render('functions', genFunction(val));
                 break;
             case 'event':
                 render('events', genEvent(val));
-                filters.push(watchEvent(val));
+                if (generateEvents === true) {
+                    filters.push(watchEvent(val));
+                }
                 break;
             case 'constructor':
                 break;
@@ -334,7 +335,7 @@ function readAbi(abi) {
     });
 }
 
-var main = function(abi) {
+var main = function(abi, generateEvents) {
     if (!abi) {
         alert('no abi!')
         return
@@ -342,7 +343,6 @@ var main = function(abi) {
 
     console.log('Instantiating contract with abi', abi)
     Contract = web3.eth.contract(abi);
-    readAbi(abi);
 
     getNetworkGasPrice(renderGasPriceEstimate);
 
@@ -351,11 +351,15 @@ var main = function(abi) {
         renderAccountBalance('contract_balance', getBalance(getContractAddress()));
     });
 
-    var blockFilter = watchBlocks(function(result) {
-        renderAccountBalance('contract_balance', getBalance(getContractAddress()));
-        renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
-    });
-    filters.push(blockFilter);
+
+    generateDoc(abi, generateEvents);
+    if (generateEvents === true) {
+        var blockFilter = watchBlocks(function(result) {
+            renderAccountBalance('contract_balance', getBalance(getContractAddress()));
+            renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
+        });
+        filters.push(blockFilter);
+    }
 }
 
 var unset = function() {
@@ -372,5 +376,5 @@ var unset = function() {
 
 var reload = function() {
     unset();
-    main(getAbi());
+    main(getAbi(), true);
 }
