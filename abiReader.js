@@ -51,7 +51,7 @@ function splitSolType(solidityType) {
 function makeInputs(abiFields, id) {
     var results = [],
         end = abiFields.length,
-        html;
+        html = [];
     id = id + cInId;
 
     for (var i = 0; i < end; i = i + 1) {
@@ -74,11 +74,14 @@ function makeInputs(abiFields, id) {
                 html = inUint(field.name, solType.size, id);
                 break;
             default:
-                html = '';
                 console.log('unknown type:', field.name, solType.base, solType.size);
         }
-        results.push(html);
+        html.forEach(function(el) {
+            results.push(el);
+        })
     }
+
+
     return results;
 }
 
@@ -86,7 +89,7 @@ function makeInputs(abiFields, id) {
 function makeOutputs(abiFields, id) {
     var results = [],
         end = abiFields.length,
-        html;
+        html = [];
     id = id + cOutId;
 
     for (var i = 0; i < end; i = i + 1) {
@@ -109,11 +112,13 @@ function makeOutputs(abiFields, id) {
                 html = outUint(field.name, solType.size, id);
                 break;
             default:
-                html = '';
                 console.log('unknown type:', field.name, solType.base, solType.size);
         }
-        results.push(html);
+        html.forEach(function(el) {
+            results.push(el);
+        })
     }
+
     return results;
 }
 
@@ -315,13 +320,9 @@ function readAbi(abi) {
         var r;
         switch (val.type) {
             case 'function':
-                // r = genFunction(val);
-                // abiFunctions.push(val);
                 render('functions', genFunction(val));
                 break;
             case 'event':
-                // r = genEvent(val);
-                // abiEvents.push(val);
                 render('events', genEvent(val));
                 filters.push(watchEvent(val));
                 break;

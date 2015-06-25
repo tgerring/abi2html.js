@@ -5,64 +5,170 @@ var cParamIn = 'p_in',
 
 function inBool(name, id) {
     id = id + '_' + name
-    return '<label for="' + id + '">' + name + '</label><input type="checkbox" class="' + cParamIn + ' in_check" id="' + id + '">';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = cParamIn + ' in_check';
+    input.id = id;
+
+    return [label, input];
 }
 
 function inAddress(name, id) {
     id = id + '_' + name
-    return '<label for="' + id + '">' + name + ':</label><input type="text" id="' + id + '" class="' + cParamIn + ' in_address">';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = cParamIn + ' in_address';
+    input.id = id;
+
+    return [label, input];
 }
 
 function inBytes(name, size, id) {
     id = id + '_' + name
     if (size == null) size = '256';
-    return '<label for="' + id + '">' + name + ':</label><input type="text" id="' + id + '" class="' + cParamIn + ' in_bytes' + size + '">';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = cParamIn + ' in_bytes' + size;
+    input.id = id;
+
+    return [label, input];
 }
 
 function inInt(name, size, id) {
     id = id + '_' + name
     if (size == null) size = '256';
-    return '<label for="' + id + '">' + name + ':</label><input type="text" id="' + id + '" class="' + cParamIn + ' in_int' + size + '">';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = cParamIn + ' in_int' + size;
+    input.id = id;
+
+    return [label, input];
 }
 
 function inUint(name, size, id) {
     id = id + '_' + name
     if (size == null) size = '256';
-    return '<label for="' + id + '">' + name + ':</label><input type="text" id="' + id + '" class="' + cParamIn + ' in_int' + size + '">';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = cParamIn + ' in_uint' + size;
+    input.id = id;
+
+    return [label, input];
 }
 
 function outBool(name, id) {
     // for example, a return value from a call'd function
     if (!name) name = 'return';
     id = id + '_' + name
-    return '<label for="' + id + '">' + name + ':</label><input type="text" class="readonly ' + cParamOut + ' out_bool" id="' + id + '" readonly></input>';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'readonly ' + cParamOut + ' out_bool';
+    input.id = id;
+    input.readOnly = true;
+
+    return [label, input];
 }
 
 function outAddress(name, id) {
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
-    return '<label for="' + id + '">' + name + ':</label><input type="text" class="readonly cParamOut out_address" id="' + id + '" readonly></input>';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'readonly ' + cParamOut + ' out_address';
+    input.id = id;
+    input.readOnly = true;
+
+    return [label, input];
 }
 
 function outBytes(name, size, id) {
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
-    return '<label for="' + id + '">' + name + ':</label><input type="text" class="readonly cParamOut out_bytes' + size + '" id="' + id + '" readonly></input>';
+
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = ['readonly', cParamOut, 'out_bytes' + size].join(' ');
+    input.id = id;
+    input.readOnly = true;
+
+    return [label, input];
 }
 
 function outInt(name, size, id) {
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
-    return '<label for="">' + name + ':</label><input type="text" class="readonly cParamOut out_int' + size + '" id="' + id + '" readonly></input>';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = ['readonly', cParamOut, 'out_int' + size].join(' ');
+    input.id = id;
+    input.readOnly = true;
+
+    return [label, input];
 }
 
 function outUint(name, size, id) {
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
-    return '<label for="">' + name + ':</label><input type="text" class="readonly cParamOut out_uint' + size + '" id="' + id + '" readonly></span>';
+
+    var label = document.createElement('label');
+    label.forHtml = id;
+    label.innerHTML = name;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = ['readonly', cParamOut, 'out_unit' + size].join(' ');
+    input.id = id;
+    input.readOnly = true;
+
+    return [label, input];
 }
 
 function getAbi() {
@@ -80,7 +186,10 @@ function getSenderAddress() {
 function getUserGasPrice() {
     var amount = document.getElementById('gas_price').value;
     var unit = document.getElementById('gas_price_unit').value;
-    return {amount: amount, unit: unit};
+    return {
+        amount: amount,
+        unit: unit
+    };
 }
 
 function getGas() {
@@ -107,7 +216,6 @@ function setAccounts(elemId, accounts) {
 
     }
 }
-
 
 function fillEventOutput(id, results) {
     // var outFields = getOutputFields(id);
@@ -156,60 +264,107 @@ function fillResults(id, result) {
 
 function genFunction(abiItem) {
     console.log('Generating function for', abiItem);
-    // TODO model as object instead of text
     id = cFuncId + abiItem.name;
-    var text = '<div class="border function" id="' + id + '"><h3>Function: ' + abiItem.name + '</h3>';
+
+    var div = document.createElement('div');
+    div.className = ['border', 'function'].join(' ');
+    div.id = id;
+
+    var h3 = document.createElement('h3');
+    h3.innerHTML = 'Function: ' + abiItem.name
+    div.appendChild(h3);
+
+
     var fields_in = makeInputs(abiItem.inputs, id);
 
-    text += '<fieldset class="' + cFieldsIn + '"><legend>Inputs</legend>';
+    var fsi = document.createElement('fieldset')
+    fsi.className = cFieldsIn;
+
+    var leg = document.createElement('legend');
+    leg.innerHTML = 'Inputs';
+    fsi.appendChild(leg);
     if (fields_in.length > 0) {
         fields_in.forEach(function(field) {
-            text += field;
+            fsi.appendChild(field);
         });
     }
 
-
     // Call is only useful when there is a return value
-    if (abiItem.outputs.length > 0)
-        text += ' <button type="button" id="' + id + '_btn" onclick="contractCall(\'' + id + '\')">Call</button>';
+    if (abiItem.outputs.length > 0) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = id + '_call';
+        btn.innerHTML = 'Call';
+        btn.onclick = function() {
+            contractCall(div.id)
+        };
+        fsi.appendChild(btn)
+    }
+
     // Transact available when not constant. (Constant functions cannot modify state)
-    if (!abiItem.constant)
-        text += ' <button type="button" id="' + id + '_btn" onclick="contractTransact(\'' + id + '\')">Transact</button>';
-    text += '</fieldset>'
+    if (!abiItem.constant) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = id + '_transact';
+        btn.innerHTML = 'Transact';
+        btn.onclick = function() {
+            contractTransact(div.id)
+        };
+        fsi.appendChild(btn)
+    }
+    div.appendChild(fsi);
 
 
     var fields_out = makeOutputs(abiItem.outputs, id);
     if (fields_out.length > 0) {
-        text += '<fieldset class="' + cFieldsOut + '"><legend>Outputs</legend>';
-        fields_out.forEach(function(field) {
-            text += field;
-        });
-        text += '</fieldset>';
+        var fso = document.createElement('fieldset')
+        fso.className = cFieldsOut;
+
+        var leg = document.createElement('legend');
+        leg.innerHTML = 'Outputs';
+        fso.appendChild(leg);
+
+        for (var i = 0; i < fields_out.length; i++) {
+            fso.appendChild(fields_out[i]);
+        };
+        div.appendChild(fso);
+
     }
 
-    text += '</div>';
-
-    return text;
+    return div;
 }
 
 
 function genEvent(abiItem) {
     console.log('Generating event for', abiItem);
-    // TODO model as object instead of text
     id = cEventId + abiItem.name;
-    var text = '';
-    text += '<div class="border event" id="' + id + '"><h3>Event: ' + abiItem.name + '</h3>';
-    var fields = makeInputs(abiItem.inputs, id);
-    if (fields.length > 0)
-        text += '<fieldset class="' + cFieldsOut + '"><legend>Outputs</legend>';
-    fields.forEach(function(field) {
-        text += field;
-    });
-    if (fields.length > 0)
-        text += '</fieldset>';
-    text += '</div>';
 
-    return text;
+    var div = document.createElement('div');
+    div.className = ['border', 'event'].join(' ');
+    div.id = id;
+
+    var h3 = document.createElement('h3');
+    h3.innerHTML = 'Event: ' + abiItem.name
+    div.appendChild(h3);
+
+    var fields = makeInputs(abiItem.inputs, id);
+    if (fields.length > 0) {
+
+        var fsi = document.createElement('fieldset')
+        fsi.className = cFieldsOut;
+
+        var leg = document.createElement('legend');
+        leg.innerHTML = 'Outputs';
+        fsi.appendChild(leg);
+
+        fields.forEach(function(field) {
+            fsi.appendChild(field);
+        });
+
+        div.appendChild(fsi);
+    }
+
+    return div;
 }
 
 function getInputValues(id) {
@@ -225,15 +380,14 @@ function getInputValues(id) {
 }
 
 function render(elementId, text) {
-    var pre = document.getElementById(elementId).innerHTML;
-    document.getElementById(elementId).innerHTML = pre + text;
+    document.getElementById(elementId).appendChild(text);
 }
 
 function renderGasPriceEstimate(gasWei) {
-        var elAmount = document.getElementById('gas_price');
-        var elUnit = document.getElementById('gas_price_unit');
+    var elAmount = document.getElementById('gas_price');
+    var elUnit = document.getElementById('gas_price_unit');
 
-        elAmount.value = web3.fromWei(gasWei, elUnit.value);
+    elAmount.value = web3.fromWei(gasWei, elUnit.value);
 }
 
 function renderAccountBalance(domId, weiBalance) {
