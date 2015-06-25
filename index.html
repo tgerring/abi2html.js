@@ -15,10 +15,17 @@
     // set global events
     window.onload = function() {
         // set event handlers
-        document.getElementById('reload_page').addEventListener('click', function(){reload(); document.getElementById('reload_page').innerHTML = 'Reload';}, false);
+        document.getElementById('reload_page').addEventListener('click', function() {
+            reload();
+            document.getElementById('reload_page').innerHTML = 'Reload';
+        }, false);
         document.getElementById('send_value').addEventListener('click', sendValue, false);
-        document.getElementById('sender_address').addEventListener('change', function(){watchSenderBalance('sender_balance')}, false);
-        document.getElementById('gas_price_unit').addEventListener('change', function(){renderGasPriceEstimate(networkGasPrice)}, false);
+        document.getElementById('sender_address').addEventListener('change', function() {
+            watchSenderBalance('sender_balance')
+        }, false);
+        document.getElementById('gas_price_unit').addEventListener('change', function() {
+            renderGasPriceEstimate(networkGasPrice)
+        }, false);
         // debug default
         document.getElementById('contract_address').value = '0x0deac8513c7e260310d42c90400fa965c5412cad';
 
@@ -75,8 +82,7 @@
             <br>
             <label for="contract_balance">Balance:</label>
             <span id="contract_balance"></span>
-            <br>
-            Contract ABI:
+            <br> Contract ABI:
             <br>
             <textarea id="contract_abi">[{
     "constant": false,

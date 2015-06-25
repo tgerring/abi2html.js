@@ -7,7 +7,7 @@ function inBool(name, id) {
     id = id + '_' + name
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -22,7 +22,7 @@ function inAddress(name, id) {
     id = id + '_' + name
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -38,7 +38,7 @@ function inBytes(name, size, id) {
     if (size == null) size = '256';
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -54,7 +54,7 @@ function inInt(name, size, id) {
     if (size == null) size = '256';
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -70,7 +70,7 @@ function inUint(name, size, id) {
     if (size == null) size = '256';
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -87,7 +87,7 @@ function outBool(name, id) {
     id = id + '_' + name
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -104,7 +104,7 @@ function outAddress(name, id) {
     if (name === null) name = 'Output' + id;
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -123,7 +123,7 @@ function outBytes(name, size, id) {
 
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -141,7 +141,7 @@ function outInt(name, size, id) {
     if (size == null) size = '256';
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -159,7 +159,7 @@ function outUint(name, size, id) {
     if (size == null) size = '256';
 
     var label = document.createElement('label');
-    label.forHtml = id;
+    label.htmlFor = id;
     label.innerHTML = name;
 
     var input = document.createElement('input');
@@ -213,12 +213,10 @@ function setAccounts(elemId, accounts) {
         el.textContent = opt;
         el.value = opt;
         select.options.add(el);
-
     }
 }
 
 function fillEventOutput(id, results) {
-    // var outFields = getOutputFields(id);
     var outFields = getInputFields(id);
     outFields.forEach(function(val) {
         var badId = id + cInId + '_'
@@ -275,7 +273,7 @@ function genFunction(abiItem) {
     div.appendChild(h3);
 
 
-    var fields_in = makeInputs(abiItem.inputs, id);
+    var fieldsIn = makeInputs(abiItem.inputs, id);
 
     var fsi = document.createElement('fieldset')
     fsi.className = cFieldsIn;
@@ -283,8 +281,8 @@ function genFunction(abiItem) {
     var leg = document.createElement('legend');
     leg.innerHTML = 'Inputs';
     fsi.appendChild(leg);
-    if (fields_in.length > 0) {
-        fields_in.forEach(function(field) {
+    if (fieldsIn.length > 0) {
+        fieldsIn.forEach(function(field) {
             fsi.appendChild(field);
         });
     }
@@ -295,9 +293,9 @@ function genFunction(abiItem) {
         btn.type = 'button';
         btn.id = id + '_call';
         btn.innerHTML = 'Call';
-        btn.onclick = function() {
+        btn.addEventListener('click', function() {
             contractCall(div.id)
-        };
+        });
         fsi.appendChild(btn)
     }
 
@@ -307,16 +305,16 @@ function genFunction(abiItem) {
         btn.type = 'button';
         btn.id = id + '_transact';
         btn.innerHTML = 'Transact';
-        btn.onclick = function() {
+        btn.addEventListener('click', function() {
             contractTransact(div.id)
-        };
+        });
         fsi.appendChild(btn)
     }
     div.appendChild(fsi);
 
 
-    var fields_out = makeOutputs(abiItem.outputs, id);
-    if (fields_out.length > 0) {
+    var fieldsOut = makeOutputs(abiItem.outputs, id);
+    if (fieldsOut.length > 0) {
         var fso = document.createElement('fieldset')
         fso.className = cFieldsOut;
 
@@ -324,11 +322,10 @@ function genFunction(abiItem) {
         leg.innerHTML = 'Outputs';
         fso.appendChild(leg);
 
-        for (var i = 0; i < fields_out.length; i++) {
-            fso.appendChild(fields_out[i]);
-        };
+        fieldsOut.forEach(function(field){
+            fso.appendChild(field);
+        });
         div.appendChild(fso);
-
     }
 
     return div;
