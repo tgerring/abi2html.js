@@ -17,7 +17,6 @@
         // set event handlers
         document.getElementById('reload_page').addEventListener('click', function() {
             reload();
-            document.getElementById('reload_page').innerHTML = 'Reload';
         }, false);
         document.getElementById('send_value').addEventListener('click', sendValue, false);
         document.getElementById('sender_address').addEventListener('change', function() {
@@ -31,7 +30,7 @@
 
         // we set as global here because some functions need to be cleaned up
         abi = getAbi();
-        main(abi);
+        main(abi, true);
     }
 
     window.onbeforeunload = function() {
@@ -44,7 +43,7 @@
 <body>
     <div id="head">
         <p>
-            <button id="reload_page" type="button">Start watch</button>
+            <button id="reload_page" type="button">Reload</button>
             <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
         </p>
         <div id="local">
