@@ -175,9 +175,10 @@ function sendValue() {
     }, function(error, result) {
         if (error)
             alert(error);
-        else
+        else {
             console.log('Transaction: ' + result)
-        alert('Transaction: ' + result)
+            alert('Transaction: ' + result)
+        }
     });
 }
 
@@ -233,6 +234,9 @@ function contractTransact(id) {
         if (err)
             alert(err)
         else {
+            // TODO generalize below call for all output types
+            // fillEventOutput(result.event, result.args);
+
             var id = cFuncId + contract_func_name + '_out_return';
             var elem = document.getElementById(id);
             if (elem) {

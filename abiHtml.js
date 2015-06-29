@@ -100,6 +100,7 @@ function outBool(name, id) {
 }
 
 function outAddress(name, id) {
+    if (!name) name = 'return';
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
 
@@ -117,6 +118,7 @@ function outAddress(name, id) {
 }
 
 function outBytes(name, size, id) {
+    if (!name) name = 'return';
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
@@ -136,6 +138,7 @@ function outBytes(name, size, id) {
 }
 
 function outInt(name, size, id) {
+    if (!name) name = 'return';
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
@@ -154,6 +157,7 @@ function outInt(name, size, id) {
 }
 
 function outUint(name, size, id) {
+    if (!name) name = 'return';
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
