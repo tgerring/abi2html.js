@@ -11,10 +11,14 @@ var networkGasPrice;
 
 function getNetworkGasPrice(callback) {
     web3.eth.getGasPrice(function(error, result) {
-        networkGasPrice = result;
-        console.log('Network gas price estimate:', result.toString(), 'wei');
-        if (typeof callback == 'function')
-            callback(result);
+        if (error) {
+            console.log('could not get gas price estimate')
+        } else {
+            networkGasPrice = result;
+            console.log('Network gas price estimate:', result.toString(), 'wei');
+            if (typeof callback == 'function')
+                callback(result);
+        }
     })
 }
 
@@ -217,7 +221,6 @@ function contractCall(id) {
 
 function contractTransact(id) {
     var kv = getInputValues(id);
-
     // set transaction options
     gp = getUserGasPrice();
     var options = {
