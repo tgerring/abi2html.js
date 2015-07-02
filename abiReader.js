@@ -351,6 +351,14 @@ var main = function(abi, generateEvents) {
     console.log('Instantiating contract with abi', abi)
     Contract = web3.eth.contract(abi);
 
+    // if the connection is not available, bail out
+    try {
+        web3.eth.accounts;
+    } catch (e) {
+        alert('could not connect to ethereum client')
+        return
+    }
+
     getNetworkGasPrice(renderGasPriceEstimate);
 
     getAccounts('sender_address', function() {
