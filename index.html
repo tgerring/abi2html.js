@@ -11,12 +11,14 @@
     <script type="text/javascript">
     //initalize web3
     var web3 = require('web3');
+    // TODO make configurable
     web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'));
     // set global events
     window.onload = function() {
         // set event handlers
         document.getElementById('reload_page').addEventListener('click', function() {
             reload();
+            document.getElementById('reload_page').innerHTML = 'Reload';
         }, false);
         document.getElementById('send_value').addEventListener('click', sendValue, false);
         document.getElementById('sender_address').addEventListener('change', function() {
@@ -28,9 +30,11 @@
         // debug default
         document.getElementById('contract_address').value = '0x219d0786c1edd8202f7f83dcfd7dcbb3669f920f';
 
-        // we set as global here because some functions need to be cleaned up
+        // TODO clean up functions that depend on this global
         abi = getAbi();
-        main(abi, true);
+        // Uncomment to connect to instance straight away
+        // Commented out requires user to press "Reload" first
+        // main(abi, true);
     }
 
     window.onbeforeunload = function() {
@@ -43,7 +47,7 @@
 <body>
     <div id="head">
         <p>
-            <button id="reload_page" type="button">Reload</button>
+            <button id="reload_page" type="button">Load</button>
             <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
         </p>
         <div id="local">
