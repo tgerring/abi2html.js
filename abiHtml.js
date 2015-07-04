@@ -176,7 +176,15 @@ function outUint(name, size, id) {
 }
 
 function getAbi() {
-    return JSON.parse(document.getElementById('contract_abi').value);
+    return JSON.parse(document.getElementById('contract-abi').value);
+}
+
+function getInstanceHostname() {
+    return document.getElementById('instance-hostname').value;
+}
+
+function getInstancePort() {
+    return document.getElementById('instance-port').value;
 }
 
 function getContractAddress() {
@@ -396,3 +404,4 @@ function renderAccountBalance(domId, weiBalance) {
 
     document.getElementById(domId).innerHTML = formattedBalance;
 }
+

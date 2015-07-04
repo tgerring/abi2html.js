@@ -9,17 +9,12 @@
     <script type="text/javascript" src="./abiHtml.js"></script>
     <script type="text/javascript" src="./abiReader.js"></script>
     <script type="text/javascript">
-    //initalize web3
+    // initalize web3
     var web3 = require('web3');
-    // TODO make configurable
-    web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'));
     // set global events
     window.onload = function() {
         // set event handlers
-        document.getElementById('reload_page').addEventListener('click', function() {
-            reload();
-            document.getElementById('reload_page').innerHTML = 'Reload';
-        }, false);
+
         document.getElementById('send_value').addEventListener('click', sendValue, false);
         document.getElementById('sender_address').addEventListener('change', function() {
             renderAccountBalance('sender_balance', getBalance(getSenderAddress()))
@@ -27,6 +22,36 @@
         document.getElementById('gas_price_unit').addEventListener('change', function() {
             renderGasPriceEstimate(networkGasPrice)
         }, false);
+
+        // document.getElementById('reload_page').addEventListener('click', function() {
+        //     reload();
+        //     document.getElementById('reload_page').innerHTML = 'Reload';
+        // }, false);
+        // document.getElementById('compile-contract').addEventListener('click', function() {
+        //     compileSolidity(document.getElementById('contract-code').value)
+        //     // console.log(r)
+        //     // document.getElementById('contract-selector').value
+        // }, false);
+        document.getElementById('connect-instance').addEventListener('click', function() {
+            if (!connectInstance(getInstanceHostname(), getInstancePort())) {
+                alert('could not connect to ethereum client')
+            } else {
+                loadBasics()
+                    // document.getElementById('compile-contract').disabled = false
+                document.getElementById('generate-page').disabled = false
+                document.getElementById('monitor-events').disabled = false
+            }
+        }, false);
+        document.getElementById('generate-page').addEventListener('click', function() {
+            unset()
+            monitorEvents(false)
+        }, false);
+        document.getElementById('monitor-events').addEventListener('click', function() {
+            unset()
+            monitorEvents(true)
+        }, false);
+
+
         // debug default
         document.getElementById('contract_address').value = '0x219d0786c1edd8202f7f83dcfd7dcbb3669f920f';
 
@@ -47,13 +72,21 @@
 <body>
     <div id="head">
         <p>
-            <button id="reload_page" type="button">Load</button>
-            <samp>geth --rpc --rpcaddr "127.0.0.1" --rpcport "8545" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
+            <!-- <button id="reload_page" type="button">Load</button> -->
+            <samp>geth --rpc --rpcaddr "</samp><input type="text" id="instance-hostname" value="127.0.0.1"><samp>" --rpcport "<input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
         </p>
         <div id="local">
             <label for="sender_address">From:</label>
             <select id="sender_address" class="in_address"></select>
             <br> Account balance: <span id="sender_balance">0</span>
+            <div>
+                <label for="contract-code">Contract</label>
+                <br>
+                <textarea id="contract-code"></textarea>
+                <button type="button" id="connect-instance">Connect</button>
+                <!-- <button type="button" id="compile-contract" disabled>Compile</button> -->
+                <!-- <button type="button" id="deploy-contract" disabled>Deploy</button> -->
+            </div>
         </div>
         <div id="net">
             <label for="gas">Gas:</label>
@@ -87,397 +120,10 @@
             <span id="contract_balance"></span>
             <br> Contract ABI:
             <br>
-            <textarea id="contract_abi">[{
-    "constant": false,
-    "inputs": [{
-        "name": "_owner",
-        "type": "address"
-    }],
-    "name": "removeOwner",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "name": "m_owners",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_addr",
-        "type": "address"
-    }],
-    "name": "isOwner",
-    "outputs": [{
-        "name": "",
-        "type": "bool"
-    }],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [{
-        "name": "",
-        "type": "bytes32"
-    }],
-    "name": "m_pending",
-    "outputs": [{
-        "name": "yetNeeded",
-        "type": "uint256"
-    }, {
-        "name": "ownersDone",
-        "type": "uint256"
-    }, {
-        "name": "index",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [{
-        "name": "",
-        "type": "bytes32"
-    }],
-    "name": "m_txs",
-    "outputs": [{
-        "name": "to",
-        "type": "address"
-    }, {
-        "name": "value",
-        "type": "uint256"
-    }, {
-        "name": "data",
-        "type": "bytes"
-    }],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [],
-    "name": "m_numOwners",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [],
-    "name": "m_lastDay",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [],
-    "name": "resetSpentToday",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [],
-    "name": "m_spentToday",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_owner",
-        "type": "address"
-    }],
-    "name": "addOwner",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [],
-    "name": "m_required",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_h",
-        "type": "bytes32"
-    }],
-    "name": "confirm",
-    "outputs": [{
-        "name": "",
-        "type": "bool"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_newLimit",
-        "type": "uint256"
-    }],
-    "name": "setDailyLimit",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_to",
-        "type": "address"
-    }, {
-        "name": "_value",
-        "type": "uint256"
-    }, {
-        "name": "_data",
-        "type": "bytes"
-    }],
-    "name": "execute",
-    "outputs": [{
-        "name": "_r",
-        "type": "bytes32"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_operation",
-        "type": "bytes32"
-    }],
-    "name": "revoke",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_newRequired",
-        "type": "uint256"
-    }],
-    "name": "changeRequirement",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_to",
-        "type": "address"
-    }],
-    "name": "kill",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "name": "m_ownerIndex",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": false,
-    "inputs": [{
-        "name": "_from",
-        "type": "address"
-    }, {
-        "name": "_to",
-        "type": "address"
-    }],
-    "name": "changeOwner",
-    "outputs": [],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [],
-    "name": "m_dailyLimit",
-    "outputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "type": "function"
-}, {
-    "constant": true,
-    "inputs": [{
-        "name": "",
-        "type": "uint256"
-    }],
-    "name": "m_pendingIndex",
-    "outputs": [{
-        "name": "",
-        "type": "bytes32"
-    }],
-    "type": "function"
-}, {
-    "inputs": [],
-    "type": "constructor"
-}, {
-    "anonymous": false,
-    "inputs": [],
-    "name": "Created",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "owner",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "operation",
-        "type": "bytes32"
-    }],
-    "name": "Confirmation",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "owner",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "operation",
-        "type": "bytes32"
-    }],
-    "name": "Revoke",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "oldOwner",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "newOwner",
-        "type": "address"
-    }],
-    "name": "OwnerChanged",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "newOwner",
-        "type": "address"
-    }],
-    "name": "OwnerAdded",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "oldOwner",
-        "type": "address"
-    }],
-    "name": "OwnerRemoved",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "newRequirement",
-        "type": "uint256"
-    }],
-    "name": "RequirementChanged",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "from",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-    }],
-    "name": "Deposit",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "owner",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-    }, {
-        "indexed": false,
-        "name": "to",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "data",
-        "type": "bytes"
-    }],
-    "name": "SingleTransact",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "owner",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "operation",
-        "type": "bytes32"
-    }, {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-    }, {
-        "indexed": false,
-        "name": "to",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "data",
-        "type": "bytes"
-    }],
-    "name": "MultiTransact",
-    "type": "event"
-}, {
-    "anonymous": false,
-    "inputs": [{
-        "indexed": false,
-        "name": "operation",
-        "type": "bytes32"
-    }, {
-        "indexed": false,
-        "name": "initiator",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "value",
-        "type": "uint256"
-    }, {
-        "indexed": false,
-        "name": "to",
-        "type": "address"
-    }, {
-        "indexed": false,
-        "name": "data",
-        "type": "bytes"
-    }],
-    "name": "ConfirmationNeeded",
-    "type": "event"
-}]
-</textarea>
+            <textarea id="contract-abi">[{ "constant": false, "inputs": [{ "name": "_owner", "type": "address" }], "name": "removeOwner", "outputs": [], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "uint256" }], "name": "m_owners", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_addr", "type": "address" }], "name": "isOwner", "outputs": [{ "name": "", "type": "bool" }], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "bytes32" }], "name": "m_pending", "outputs": [{ "name": "yetNeeded", "type": "uint256" }, { "name": "ownersDone", "type": "uint256" }, { "name": "index", "type": "uint256" }], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "bytes32" }], "name": "m_txs", "outputs": [{ "name": "to", "type": "address" }, { "name": "value", "type": "uint256" }, { "name": "data", "type": "bytes" }], "type": "function" }, { "constant": true, "inputs": [], "name": "m_numOwners", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": true, "inputs": [], "name": "m_lastDay", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [], "name": "resetSpentToday", "outputs": [], "type": "function" }, { "constant": true, "inputs": [], "name": "m_spentToday", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_owner", "type": "address" }], "name": "addOwner", "outputs": [], "type": "function" }, { "constant": true, "inputs": [], "name": "m_required", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_h", "type": "bytes32" }], "name": "confirm", "outputs": [{ "name": "", "type": "bool" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_newLimit", "type": "uint256" }], "name": "setDailyLimit", "outputs": [], "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }, { "name": "_value", "type": "uint256" }, { "name": "_data", "type": "bytes" }], "name": "execute", "outputs": [{ "name": "_r", "type": "bytes32" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_operation", "type": "bytes32" }], "name": "revoke", "outputs": [], "type": "function" }, { "constant": false, "inputs": [{ "name": "_newRequired", "type": "uint256" }], "name": "changeRequirement", "outputs": [], "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }], "name": "kill", "outputs": [], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "uint256" }], "name": "m_ownerIndex", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_from", "type": "address" }, { "name": "_to", "type": "address" }], "name": "changeOwner", "outputs": [], "type": "function" }, { "constant": true, "inputs": [], "name": "m_dailyLimit", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "uint256" }], "name": "m_pendingIndex", "outputs": [{ "name": "", "type": "bytes32" }], "type": "function" }, { "inputs": [], "type": "constructor" }, { "anonymous": false, "inputs": [], "name": "Created", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "operation", "type": "bytes32" }], "name": "Confirmation", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "operation", "type": "bytes32" }], "name": "Revoke", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "oldOwner", "type": "address" }, { "indexed": false, "name": "newOwner", "type": "address" }], "name": "OwnerChanged", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "newOwner", "type": "address" }], "name": "OwnerAdded", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "oldOwner", "type": "address" }], "name": "OwnerRemoved", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "newRequirement", "type": "uint256" }], "name": "RequirementChanged", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "from", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Deposit", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }, { "indexed": false, "name": "to", "type": "address" }, { "indexed": false, "name": "data", "type": "bytes" }], "name": "SingleTransact", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "operation", "type": "bytes32" }, { "indexed": false, "name": "value", "type": "uint256" }, { "indexed": false, "name": "to", "type": "address" }, { "indexed": false, "name": "data", "type": "bytes" }], "name": "MultiTransact", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "operation", "type": "bytes32" }, { "indexed": false, "name": "initiator", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }, { "indexed": false, "name": "to", "type": "address" }, { "indexed": false, "name": "data", "type": "bytes" }], "name": "ConfirmationNeeded", "type": "event" }]
+            </textarea>
+            <button type="button" id="generate-page" disabled="">Generate</button>
+            <button type="button" id="monitor-events" disabled>Monitor</button>
         </div>
     </div>
     <div id="main">

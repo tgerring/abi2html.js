@@ -54,9 +54,15 @@ html, body {
 #local {
     width: 33%;
     float: left;
+    /*padding: 0 1ex 0 1ex;*/
 }
 
-#contract_abi {
+#contract-abi {
+    width: 100%;
+    height: 8em;
+}
+
+#contract-code {
     width: 100%;
     height: 8em;
 }

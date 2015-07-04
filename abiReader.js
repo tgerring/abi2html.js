@@ -317,6 +317,25 @@ function getBalance(address) {
     return weiBalance;
 }
 
+function compileSolidity(sourceString) {
+    var c = web3.eth.getCompilers()
+    var i = 0;
+    for (; i < c.length; i++) {
+        if (c[i] == 'Solidity')
+            break;
+    }
+    if (i < c.length) {
+        web3.eth.compile.solidity(sourceString, function(compiled) {
+            console.log(compiled)
+            // compiled.forEach(function(result) {
+            //     console.log(result)
+            // })
+        })
+    } else {
+        console.log(c)
+    }
+}
+
 function generateDoc(abi, generateEvents) {
     abi.forEach(function(val) {
         // safety check
@@ -352,13 +371,24 @@ var main = function(abi, generateEvents) {
     Contract = web3.eth.contract(abi);
 
     // if the connection is not available, bail out
+    if (!connectInstance()) {
+        alert('could not connect to ethereum client')
+    }
+}
+
+function connectInstance(ip, port) {
+    if (!ip) ip = '127.0.0.1'
+    if (!port) port = '8545'
+    web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port));
     try {
         web3.eth.accounts;
     } catch (e) {
-        alert('could not connect to ethereum client')
-        return
+        return false
     }
+    return true
+}
 
+function loadBasics() {
     getNetworkGasPrice(renderGasPriceEstimate);
 
     getAccounts('sender_address', function() {
@@ -366,8 +396,14 @@ var main = function(abi, generateEvents) {
         renderAccountBalance('contract_balance', getBalance(getContractAddress()));
     });
 
+}
+
+function monitorEvents(generateEvents) {
+
+    loadBasics()
 
     generateDoc(abi, generateEvents);
+    
     if (generateEvents === true) {
         var blockFilter = watchBlocks(function(result) {
             renderAccountBalance('contract_balance', getBalance(getContractAddress()));
@@ -377,7 +413,7 @@ var main = function(abi, generateEvents) {
     }
 }
 
-var unset = function() {
+function unset() {
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         console.log('Stopping filter', filter.filterId)
