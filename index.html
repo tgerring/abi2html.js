@@ -33,6 +33,7 @@
                     contracts = r
                     setContractSelector('contract-selector', r)
                     renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
+                    document.getElementById('deploy-contract').disabled = false
                     generateDoc(false);
                 }
             })
@@ -62,7 +63,6 @@
                 getAccounts('sender_address', updateBalances);
                 monitorBlocks()
                 document.getElementById('compile-contract').disabled = false
-                document.getElementById('deploy-contract').disabled = false
                 document.getElementById('monitor-events').disabled = false
                 document.getElementById('send_value').disabled = false
             }
@@ -73,6 +73,7 @@
         }, false);
 
         document.getElementById('monitor-events').addEventListener('click', function() {
+            unset()
             monitorBlocks()
             generateDoc(true)
         }, false);
@@ -106,8 +107,6 @@
             </div>
         </div>
         <div id="net">
-            <em>account must be unlocked!</em>
-            <br>
             <label for="gas">Gas:</label>
             <input id="gas" type="text" class="" value="3000000">
             <br>
@@ -123,15 +122,14 @@
                 <option>wei</option>
             </select>
             <br>
-            <em>Estimated from network</em>
-            <br>
             <label for="ether_amt">&#926;</label>
             <input id="ether_amt" type="text" value="0">
             <button id="send_value" type="button" disabled>Send</button>
-            <hr>
+            <br>
+            <label for="contract-selector">Deploy contract:</label>
             <select id="contract-selector"></select>
             <button type="button" id="deploy-contract" disabled>Deploy</button>
-            <br>
+            <hr>
             <label for="transaction-hash">Transaction hash:</label>
             <input id="transaction-hash" type="text" class="in_address">
 

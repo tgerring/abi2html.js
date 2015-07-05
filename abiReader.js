@@ -15,7 +15,6 @@ function getNetworkGasPrice(callback) {
             console.log('could not get gas price estimate')
         } else {
             networkGasPrice = result;
-            console.log('Network gas price estimate:', result.toString(), 'wei');
             if (typeof callback == 'function')
                 callback(result);
         }
@@ -129,6 +128,7 @@ function makeOutputs(abiFields, id) {
 function getOutputFields(funcId) {
     var v = [];
     var i;
+    var abi = getAbi()
     for (i = 0; i < abi.length; i++) {
         if (abi[i].name == funcId.slice(2, funcId.length))
             break;
@@ -209,7 +209,7 @@ function contractCall(id) {
         gas: getGas(),
         gasPrice: web3.toWei(gp.amount, gp.unit)
     };
-    console.log('Calling contract with options', options);
+    // console.log('Calling contract with options', options);
     kv.push(options);
 
     // set callback
@@ -217,7 +217,7 @@ function contractCall(id) {
         if (err)
             alert(err)
         else {
-            console.log('Contract call returned', result);
+            // console.log('Contract call returned', result);
             fillResults(id, result);
         }
     }
@@ -241,7 +241,7 @@ function contractTransact(id) {
         gas: getGas(),
         gasPrice: web3.toWei(gp.amount, gp.unit)
     };
-    console.log('Sending transaction with options', options);
+    // console.log('Sending transaction with options', options);
     kv.push(options);
 
     // set callback
@@ -296,7 +296,7 @@ function watchEvent(abiItem, filterFields) {
         if (err)
             alert(err)
         else {
-            console.log('Event:', result);
+            // console.log('Event:', result);
             fillEventOutput(result.event, result.args);
         }
     }
@@ -310,7 +310,7 @@ function watchEvent(abiItem, filterFields) {
         var func = contract[contract_func_name];
         // call the contract
         var eventFilter = func.apply(func, kv);
-        console.log('filtering for event', contract_func_name)
+        // console.log('filtering for event', contract_func_name)
         eventFilter.watch(callback);
         return eventFilter;
     }
@@ -330,7 +330,7 @@ function watchBlocks(callback) {
 
 function getBalance(address) {
     var weiBalance = web3.eth.getBalance(address).toNumber()
-    console.log('Got address', address, 'balance of', web3.fromWei(weiBalance.toString(), defaultUnit), defaultUnit);
+    // console.log('Got address', address, 'balance of', web3.fromWei(weiBalance.toString(), defaultUnit), defaultUnit);
     return weiBalance;
 }
 
@@ -356,7 +356,7 @@ function generateDoc(watchEvents) {
     abi.forEach(function(val) {
         // safety check
         if (!val.type) {
-            console.log('Unexpected ABI format');
+            alert('Unexpected ABI format');
             return
         }
         // console.log('Generating',val.type,'for',val.name);
@@ -401,7 +401,6 @@ function updateBalances() {
 }
 
 function monitorBlocks() {
-    unset()
     var blockFilter = watchBlocks(function(result) {
         updateBalances()
         getNetworkGasPrice(renderGasPriceEstimate)
@@ -410,14 +409,14 @@ function monitorBlocks() {
 }
 
 function unset() {
-    console.log('Clearing DOM')
+    // console.log('Clearing DOM')
     document.getElementById('functions').innerHTML = '';
     document.getElementById('events').innerHTML = '';
 
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         if (filter) {
-            console.log('Stopping filter', filter.filterId)
+            // console.log('Stopping filter', filter.filterId)
             filter.stopWatching();
         }
     };
