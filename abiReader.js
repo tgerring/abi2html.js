@@ -149,6 +149,7 @@ function getOutputFields(funcId) {
 function getInputFields(funcId) {
     var v = [];
     var i;
+    var abi = getAbi()
     for (i = 0; i < abi.length; i++) {
         // TODO this needs to be cleaned up
         if (abi[i].name == funcId || abi[i].name == funcId.slice(2, funcId.length))
@@ -311,7 +312,7 @@ function watchEvent(abiItem, filterFields) {
         var func = contract[contract_func_name];
         // call the contract
         var eventFilter = func.apply(func, kv);
-        console.log('filtering for event',contract_func_name)
+        console.log('filtering for event', contract_func_name)
         eventFilter.watch(callback);
         return eventFilter;
     }
@@ -392,21 +393,20 @@ function connectInstance(ip, port) {
     return true
 }
 
-function loadBasics() {
-    getNetworkGasPrice(renderGasPriceEstimate);
-
-    getAccounts('sender_address', function() {
-        renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
-        renderAccountBalance('contract_balance', getBalance(getContractAddress()));
-    });
-
+function updateBalances() {
+    var sender = getSenderAddress()
+    var contract = getContractAddress()
+    if (sender)
+        renderAccountBalance('sender_balance', getBalance(sender));
+    if (contract)
+        renderAccountBalance('contract_balance', getBalance(contract));
 }
 
 function monitorBlocks() {
     unset()
     var blockFilter = watchBlocks(function(result) {
-        renderAccountBalance('contract_balance', getBalance(getContractAddress()));
-        renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
+        updateBalances()
+        getNetworkGasPrice(renderGasPriceEstimate)
     });
     filters.push(blockFilter);
 }

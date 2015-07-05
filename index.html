@@ -60,10 +60,11 @@
             if (!connectInstance(getInstanceHostname(), getInstancePort())) {
                 alert('could not connect to ethereum client')
             } else {
-                loadBasics()
+                getNetworkGasPrice(renderGasPriceEstimate);
+                getAccounts('sender_address', updateBalances);
+                monitorBlocks()
                 document.getElementById('compile-contract').disabled = false
                 document.getElementById('deploy-contract').disabled = false
-                document.getElementById('generate-page').disabled = false
                 document.getElementById('monitor-events').disabled = false
                 document.getElementById('send_value').disabled = false
             }
@@ -147,7 +148,7 @@
             <br>
             <textarea id="contract-abi">
             </textarea>
-            <button type="button" id="generate-page" disabled>Generate</button>
+            <button type="button" id="generate-page">Generate</button>
             <button type="button" id="monitor-events" disabled>Monitor</button>
         </div>
     </div>
