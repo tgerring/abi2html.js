@@ -47,10 +47,8 @@
         document.getElementById('deploy-contract').addEventListener('click', function(){
             contract = getSelectedContract('contract-selector')
             deployContract(contract.code, function(error, result){
-                if (!error) {
-                    // TODO renderTransactionHash
-                    document.getElementById('transaction-hash').value = result
-                }
+                if (!error)
+                    renderTransactionHash(result)
                 else
                     alert(error)
             })

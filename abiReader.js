@@ -180,11 +180,9 @@ function sendValue() {
     }, function(error, result) {
         if (error)
             alert(error);
-        else {
-            // TODO renderTransactionHash
-            console.log('Transaction: ' + result)
-            alert('Transaction: ' + result)
-        }
+        else
+            renderTransactionHash(result)
+
     });
 }
 

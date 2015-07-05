@@ -428,3 +428,7 @@ function renderAccountBalance(domId, weiBalance) {
     document.getElementById(domId).innerHTML = formattedBalance;
 }
 
+function renderTransactionHash(hash) {
+    document.getElementById('transaction-hash').value = hash
+}
+
