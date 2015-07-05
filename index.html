@@ -11,60 +11,77 @@
     <script type="text/javascript">
     // initalize web3
     var web3 = require('web3');
+    var contracts;
     // set global events
     window.onload = function() {
         // set event handlers
-
         document.getElementById('send_value').addEventListener('click', sendValue, false);
+
         document.getElementById('sender_address').addEventListener('change', function() {
             renderAccountBalance('sender_balance', getBalance(getSenderAddress()))
         }, false);
+
         document.getElementById('gas_price_unit').addEventListener('change', function() {
             renderGasPriceEstimate(networkGasPrice)
         }, false);
 
-        // document.getElementById('reload_page').addEventListener('click', function() {
-        //     reload();
-        //     document.getElementById('reload_page').innerHTML = 'Reload';
-        // }, false);
-        // document.getElementById('compile-contract').addEventListener('click', function() {
-        //     compileSolidity(document.getElementById('contract-code').value)
-        //     // console.log(r)
-        //     // document.getElementById('contract-selector').value
-        // }, false);
+        document.getElementById('compile-contract').addEventListener('click', function() {
+            compileSolidity(document.getElementById('contract-code').value, function(err, r) {
+                if (err)
+                    alert(err)
+                else {
+                    contracts = r
+                    setContractSelector('contract-selector', r)
+                    renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
+                    generateDoc(false);
+                }
+            })
+
+        }, false);
+
+        document.getElementById('contract-selector').addEventListener('change', function(){
+            renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
+            generateDoc(false);
+        })
+
+        document.getElementById('deploy-contract').addEventListener('click', function(){
+            contract = getSelectedContract('contract-selector')
+            deployContract(contract.code, function(error, result){
+                if (!error) {
+                    // TODO renderTransactionHash
+                    document.getElementById('transaction-hash').value = result
+                }
+                else
+                    alert(error)
+            })
+        }, false);
+
         document.getElementById('connect-instance').addEventListener('click', function() {
             if (!connectInstance(getInstanceHostname(), getInstancePort())) {
                 alert('could not connect to ethereum client')
             } else {
                 loadBasics()
-                    // document.getElementById('compile-contract').disabled = false
+                document.getElementById('compile-contract').disabled = false
+                document.getElementById('deploy-contract').disabled = false
                 document.getElementById('generate-page').disabled = false
                 document.getElementById('monitor-events').disabled = false
+                document.getElementById('send_value').disabled = false
             }
         }, false);
+
         document.getElementById('generate-page').addEventListener('click', function() {
-            unset()
-            monitorEvents(false)
+            generateDoc(false)
         }, false);
+
         document.getElementById('monitor-events').addEventListener('click', function() {
-            unset()
-            monitorEvents(true)
+            monitorBlocks()
+            generateDoc(true)
         }, false);
-
-
-        // debug default
-        document.getElementById('contract_address').value = '0x219d0786c1edd8202f7f83dcfd7dcbb3669f920f';
-
-        // TODO clean up functions that depend on this global
-        abi = getAbi();
-        // Uncomment to connect to instance straight away
-        // Commented out requires user to press "Reload" first
-        // main(abi, true);
     }
 
     window.onbeforeunload = function() {
         // unlikely this fires, but try to clean up after oneself
-        unset();
+        unset()
     }
     </script>
 </head>
@@ -72,23 +89,26 @@
 <body>
     <div id="head">
         <p>
-            <!-- <button id="reload_page" type="button">Load</button> -->
-            <samp>geth --rpc --rpcaddr "</samp><input type="text" id="instance-hostname" value="127.0.0.1"><samp>" --rpcport "<input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
+            <samp>geth --rpc --rpcaddr "</samp>
+            <input type="text" id="instance-hostname" value="127.0.0.1">
+            <samp>" --rpcport "
+                <input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
         </p>
         <div id="local">
             <label for="sender_address">From:</label>
             <select id="sender_address" class="in_address"></select>
             <br> Account balance: <span id="sender_balance">0</span>
             <div>
-<!--                 <label for="contract-code">Contract</label>
+                <label for="contract-code">Contract</label>
                 <br>
-                <textarea id="contract-code"></textarea> -->
+                <textarea id="contract-code"></textarea>
                 <button type="button" id="connect-instance">Connect</button>
-                <!-- <button type="button" id="compile-contract" disabled>Compile</button> -->
-                <!-- <button type="button" id="deploy-contract" disabled>Deploy</button> -->
+                <button type="button" id="compile-contract" disabled>Compile</button>
             </div>
         </div>
         <div id="net">
+            <em>account must be unlocked!</em>
+            <br>
             <label for="gas">Gas:</label>
             <input id="gas" type="text" class="" value="3000000">
             <br>
@@ -108,9 +128,14 @@
             <br>
             <label for="ether_amt">&#926;</label>
             <input id="ether_amt" type="text" value="0">
+            <button id="send_value" type="button" disabled>Send</button>
+            <hr>
+            <select id="contract-selector"></select>
+            <button type="button" id="deploy-contract" disabled>Deploy</button>
             <br>
-            <em>account must be unlocked!</em>
-            <button id="send_value" type="button">Send</button>
+            <label for="transaction-hash">Transaction hash:</label>
+            <input id="transaction-hash" type="text" class="in_address">
+
         </div>
         <div id="remote">
             <label for="contract_address">Contract address:</label>
@@ -120,9 +145,9 @@
             <span id="contract_balance"></span>
             <br> Contract ABI:
             <br>
-            <textarea id="contract-abi">[{ "constant": false, "inputs": [{ "name": "_owner", "type": "address" }], "name": "removeOwner", "outputs": [], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "uint256" }], "name": "m_owners", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_addr", "type": "address" }], "name": "isOwner", "outputs": [{ "name": "", "type": "bool" }], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "bytes32" }], "name": "m_pending", "outputs": [{ "name": "yetNeeded", "type": "uint256" }, { "name": "ownersDone", "type": "uint256" }, { "name": "index", "type": "uint256" }], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "bytes32" }], "name": "m_txs", "outputs": [{ "name": "to", "type": "address" }, { "name": "value", "type": "uint256" }, { "name": "data", "type": "bytes" }], "type": "function" }, { "constant": true, "inputs": [], "name": "m_numOwners", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": true, "inputs": [], "name": "m_lastDay", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [], "name": "resetSpentToday", "outputs": [], "type": "function" }, { "constant": true, "inputs": [], "name": "m_spentToday", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_owner", "type": "address" }], "name": "addOwner", "outputs": [], "type": "function" }, { "constant": true, "inputs": [], "name": "m_required", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_h", "type": "bytes32" }], "name": "confirm", "outputs": [{ "name": "", "type": "bool" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_newLimit", "type": "uint256" }], "name": "setDailyLimit", "outputs": [], "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }, { "name": "_value", "type": "uint256" }, { "name": "_data", "type": "bytes" }], "name": "execute", "outputs": [{ "name": "_r", "type": "bytes32" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_operation", "type": "bytes32" }], "name": "revoke", "outputs": [], "type": "function" }, { "constant": false, "inputs": [{ "name": "_newRequired", "type": "uint256" }], "name": "changeRequirement", "outputs": [], "type": "function" }, { "constant": false, "inputs": [{ "name": "_to", "type": "address" }], "name": "kill", "outputs": [], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "uint256" }], "name": "m_ownerIndex", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": false, "inputs": [{ "name": "_from", "type": "address" }, { "name": "_to", "type": "address" }], "name": "changeOwner", "outputs": [], "type": "function" }, { "constant": true, "inputs": [], "name": "m_dailyLimit", "outputs": [{ "name": "", "type": "uint256" }], "type": "function" }, { "constant": true, "inputs": [{ "name": "", "type": "uint256" }], "name": "m_pendingIndex", "outputs": [{ "name": "", "type": "bytes32" }], "type": "function" }, { "inputs": [], "type": "constructor" }, { "anonymous": false, "inputs": [], "name": "Created", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "operation", "type": "bytes32" }], "name": "Confirmation", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "operation", "type": "bytes32" }], "name": "Revoke", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "oldOwner", "type": "address" }, { "indexed": false, "name": "newOwner", "type": "address" }], "name": "OwnerChanged", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "newOwner", "type": "address" }], "name": "OwnerAdded", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "oldOwner", "type": "address" }], "name": "OwnerRemoved", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "newRequirement", "type": "uint256" }], "name": "RequirementChanged", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "from", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }], "name": "Deposit", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }, { "indexed": false, "name": "to", "type": "address" }, { "indexed": false, "name": "data", "type": "bytes" }], "name": "SingleTransact", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "owner", "type": "address" }, { "indexed": false, "name": "operation", "type": "bytes32" }, { "indexed": false, "name": "value", "type": "uint256" }, { "indexed": false, "name": "to", "type": "address" }, { "indexed": false, "name": "data", "type": "bytes" }], "name": "MultiTransact", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": false, "name": "operation", "type": "bytes32" }, { "indexed": false, "name": "initiator", "type": "address" }, { "indexed": false, "name": "value", "type": "uint256" }, { "indexed": false, "name": "to", "type": "address" }, { "indexed": false, "name": "data", "type": "bytes" }], "name": "ConfirmationNeeded", "type": "event" }]
+            <textarea id="contract-abi">
             </textarea>
-            <button type="button" id="generate-page" disabled="">Generate</button>
+            <button type="button" id="generate-page" disabled>Generate</button>
             <button type="button" id="monitor-events" disabled>Monitor</button>
         </div>
     </div>

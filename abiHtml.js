@@ -213,6 +213,31 @@ function getEtherAmount() {
 }
 
 
+function setContractSelector(elemId, contracts) {
+    // get DOM object
+    select = document.getElementById(elemId);
+    // reset items
+    select.options.length = 0;
+    // inject accounts
+    for (var k in contracts) {
+        var obj = contracts[k];
+        var el = document.createElement('option');
+        el.textContent = k;
+        el.value = k;
+        select.options.add(el);
+    }
+}
+
+function renderContractInfo(elemId, abiObj) {
+     document.getElementById(elemId).value = JSON.stringify(abiObj.info.abiDefinition)
+}
+
+function getSelectedContract(elemId) {
+    var contractName = document.getElementById(elemId).value
+    return contracts[contractName]
+}
+
+
 function setAccounts(elemId, accounts) {
     // get DOM object
     select = document.getElementById(elemId);
@@ -273,7 +298,6 @@ function fillResults(id, result) {
 
 
 function genFunction(abiItem) {
-    console.log('Generating function for', abiItem);
     id = cFuncId + abiItem.name;
 
     var div = document.createElement('div');
@@ -345,7 +369,6 @@ function genFunction(abiItem) {
 
 
 function genEvent(abiItem) {
-    console.log('Generating event for', abiItem);
     id = cEventId + abiItem.name;
 
     var div = document.createElement('div');

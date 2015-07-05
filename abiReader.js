@@ -180,10 +180,24 @@ function sendValue() {
         if (error)
             alert(error);
         else {
+            // TODO renderTransactionHash
             console.log('Transaction: ' + result)
             alert('Transaction: ' + result)
         }
     });
+}
+
+function deployContract(hexstring, callback) {
+    gp = getUserGasPrice();
+    var options = {
+        from: getSenderAddress(),
+        code: hexstring,
+        value: web3.toWei(getEtherAmount(), defaultUnit),
+        gas: getGas(),
+        gasPrice: web3.toWei(gp.amount, gp.unit)
+    };
+
+    web3.eth.sendTransaction(options, callback);
 }
 
 function contractCall(id) {
@@ -289,14 +303,18 @@ function watchEvent(abiItem, filterFields) {
     }
 
     // get instance of contract
-    var contract = Contract.at(getContractAddress());
-    // get function as object
-    var contract_func_name = id.substring(cFuncId.length, id.length);
-    var func = contract[contract_func_name];
-    // call the contract
-    var eventFilter = func.apply(func, kv);
-    eventFilter.watch(callback);
-    return eventFilter;
+    var address = getContractAddress()
+    if (address) {
+        var contract = Contract.at(address);
+        // get function as object
+        var contract_func_name = id.substring(cFuncId.length, id.length);
+        var func = contract[contract_func_name];
+        // call the contract
+        var eventFilter = func.apply(func, kv);
+        console.log('filtering for event',contract_func_name)
+        eventFilter.watch(callback);
+        return eventFilter;
+    }
 
 }
 
@@ -317,7 +335,7 @@ function getBalance(address) {
     return weiBalance;
 }
 
-function compileSolidity(sourceString) {
+function compileSolidity(sourceString, callback) {
     var c = web3.eth.getCompilers()
     var i = 0;
     for (; i < c.length; i++) {
@@ -325,32 +343,33 @@ function compileSolidity(sourceString) {
             break;
     }
     if (i < c.length) {
-        web3.eth.compile.solidity(sourceString, function(compiled) {
-            console.log(compiled)
-            // compiled.forEach(function(result) {
-            //     console.log(result)
-            // })
-        })
+        web3.eth.compile.solidity(sourceString, callback)
     } else {
-        console.log(c)
+        alert("Solidity compiler not available")
     }
 }
 
-function generateDoc(abi, generateEvents) {
+function generateDoc(watchEvents) {
+    unset()
+    var abi = getAbi()
+    Contract = web3.eth.contract(abi);
+
     abi.forEach(function(val) {
         // safety check
         if (!val.type) {
             console.log('Unexpected ABI format');
             return
         }
+        // console.log('Generating',val.type,'for',val.name);
         switch (val.type) {
             case 'function':
                 render('functions', genFunction(val));
                 break;
             case 'event':
                 render('events', genEvent(val));
-                if (generateEvents === true) {
-                    filters.push(watchEvent(val));
+                if (watchEvents === true) {
+                    var filter = watchEvent(val);
+                    filters.push(filter);
                 }
                 break;
             case 'constructor':
@@ -359,21 +378,6 @@ function generateDoc(abi, generateEvents) {
                 console.log('unknown type:', val.name, val.type);
         }
     });
-}
-
-var main = function(abi, generateEvents) {
-    if (!abi) {
-        alert('no abi!')
-        return
-    }
-
-    console.log('Instantiating contract with abi', abi)
-    Contract = web3.eth.contract(abi);
-
-    // if the connection is not available, bail out
-    if (!connectInstance()) {
-        alert('could not connect to ethereum client')
-    }
 }
 
 function connectInstance(ip, port) {
@@ -398,34 +402,28 @@ function loadBasics() {
 
 }
 
-function monitorEvents(generateEvents) {
-
-    loadBasics()
-
-    generateDoc(abi, generateEvents);
-    
-    if (generateEvents === true) {
-        var blockFilter = watchBlocks(function(result) {
-            renderAccountBalance('contract_balance', getBalance(getContractAddress()));
-            renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
-        });
-        filters.push(blockFilter);
-    }
+function monitorBlocks() {
+    unset()
+    var blockFilter = watchBlocks(function(result) {
+        renderAccountBalance('contract_balance', getBalance(getContractAddress()));
+        renderAccountBalance('sender_balance', getBalance(getSenderAddress()));
+    });
+    filters.push(blockFilter);
 }
 
 function unset() {
+    console.log('Clearing DOM')
+    document.getElementById('functions').innerHTML = '';
+    document.getElementById('events').innerHTML = '';
+
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
-        console.log('Stopping filter', filter.filterId)
-        filter.stopWatching();
+        if (filter) {
+            console.log('Stopping filter', filter.filterId)
+            filter.stopWatching();
+        }
     };
     filters = [];
 
-    document.getElementById('functions').innerHTML = '';
-    document.getElementById('events').innerHTML = '';
-}
 
-var reload = function() {
-    unset();
-    main(getAbi(), true);
 }
