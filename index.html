@@ -21,6 +21,12 @@
         //     toggleMining()
         // }, false);
 
+        document.getElementById('gasprice-copy').addEventListener('click', function() {
+            getNetworkGasPrice(renderUserGasPrice)
+            // renderGasPriceEstimate()
+
+        }, false);
+
         document.getElementById('copy-from').addEventListener('click', function() {
             document.getElementById('contract_address').value = getSenderAddress()
             updateBalances()
@@ -37,7 +43,9 @@
         }, false);
 
         document.getElementById('gas_price_unit').addEventListener('change', function() {
-            renderGasPriceEstimate(networkGasPrice)
+            var gasprice = document.getElementById('gas_price').value
+            var gaspriceunit = document.getElementById('gas_price_unit').value
+            getNetworkGasPrice(renderUserGasPrice) // this overrides the number part
         }, false);
 
         document.getElementById('compile-contract').addEventListener('click', function() {
@@ -50,7 +58,6 @@
                     renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
                     generateDoc(false);
                     document.getElementById('deploy-contract').disabled = false
-                        // monitorBlocks()
                 }
             })
 
@@ -76,15 +83,18 @@
             if (!connectInstance(getInstanceHostname(), getInstancePort())) {
                 alert('could not connect to ethereum client')
             } else {
-                getNetworkGasPrice(renderGasPriceEstimate);
+                renderGasPriceEstimate()
                 getAccounts('sender_address', updateBalances);
                 updateBlocks()
+                getNetworkGasPrice(renderUserGasPrice)
+
                 unset()
                 monitorBlocks()
                 document.getElementById('compile-contract').disabled = false
                     // document.getElementById('toggle-mine').disabled = false
                     // document.getElementById('monitor-events').disabled = false
                 document.getElementById('send_value').disabled = false
+                    // set user gas price once
             }
         }, false);
 
@@ -130,6 +140,7 @@
                 <!-- <button type="text" id="toggle-mine" disabled>Mine</button> -->
                 <br> Block height: <span id="block-height">?</span>
                 <br> Best hash: <span id="block-hash">?</span>
+                <br> Gas price avg: <span id="gas-price">?</span>
                 <hr>
                 <label for="sender_address">From:</label>
                 <select id="sender_address" class="in-address"></select>
@@ -157,6 +168,7 @@
                     <option>ada</option>
                     <option>wei</option>
                 </select>
+                <button id="gasprice-copy">Sync</button>
                 <br>
                 <label for="ether_amt">&#926;</label>
                 <input id="ether_amt" type="text" value="0">

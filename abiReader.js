@@ -347,10 +347,10 @@ function compileSolidity(sourceString, callback) {
 }
 
 function generateDoc(watchEvents) {
-    if (watchEvents){
+    if (watchEvents) {
         unset()
     }
-    
+
     var abi = getAbi()
     Contract = web3.eth.contract(abi);
 
@@ -360,7 +360,7 @@ function generateDoc(watchEvents) {
             alert('Unexpected ABI format');
             return
         }
-        console.log('Generating',val.type,'for',val.name);
+        console.log('Generating', val.type, 'for', val.name);
         switch (val.type) {
             case 'function':
                 render('functions', genFunction(val));

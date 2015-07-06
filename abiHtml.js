@@ -418,11 +418,20 @@ function render(elementId, text) {
     document.getElementById(elementId).appendChild(text);
 }
 
-function renderGasPriceEstimate(gasWei) {
-    var elAmount = document.getElementById('gas_price');
-    var elUnit = document.getElementById('gas_price_unit');
+function renderUserGasPrice(gasWei) {
+    // getNetworkGasPrice(function(gasWei) {
+        var elAmount = document.getElementById('gas_price');
+        var elUnit = document.getElementById('gas_price_unit');
+        elAmount.value = web3.fromWei(gasWei, elUnit.value);
+    // })
 
-    elAmount.value = web3.fromWei(gasWei, elUnit.value);
+}
+
+function renderGasPriceEstimate() {
+    getNetworkGasPrice(function(gasWei) {
+        var elUnit = document.getElementById('gas_price_unit');
+        document.getElementById('gas-price').innerHTML = web3.fromWei(gasWei, elUnit.value) + ' ' + elUnit.value
+    })
 }
 
 function renderAccountBalance(domId, weiBalance) {
