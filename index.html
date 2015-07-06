@@ -23,7 +23,8 @@
         }, false);
 
         document.getElementById('copy-receipt').addEventListener('click', function() {
-            document.getElementById('contract_address').value = web3.eth.getTransactionReceipt(getTransactionHash())
+            var v = web3.eth.getTransactionReceipt(getTransactionHash())
+            document.getElementById('contract_address').value = v.contractAddress
             updateBalances()
         }, false);
 
