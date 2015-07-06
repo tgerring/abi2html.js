@@ -296,7 +296,6 @@ function watchEvent(abiItem, filterFields) {
         if (err)
             alert(err)
         else {
-            // console.log('Event:', result);
             fillEventOutput(result.event, result.args);
         }
     }
@@ -330,7 +329,6 @@ function watchBlocks(callback) {
 
 function getBalance(address) {
     var weiBalance = web3.eth.getBalance(address).toNumber()
-    // console.log('Got address', address, 'balance of', web3.fromWei(weiBalance.toString(), defaultUnit), defaultUnit);
     return weiBalance;
 }
 
@@ -412,15 +410,13 @@ function monitorBlocks() {
 }
 
 function unset() {
-    // console.log('Clearing DOM')
     document.getElementById('functions').innerHTML = '';
     document.getElementById('events').innerHTML = '';
 
-    console.log('stopping filters')
+    console.log('Stopping filters')
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         if (filter) {
-            // console.log('Stopping filter', filter.filterId)
             filter.stopWatching();
         }
     };

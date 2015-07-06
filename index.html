@@ -74,6 +74,7 @@
             } else {
                 getNetworkGasPrice(renderGasPriceEstimate);
                 getAccounts('sender_address', updateBalances);
+                unset()
                 monitorBlocks()
                 document.getElementById('compile-contract').disabled = false
                     // document.getElementById('monitor-events').disabled = false
@@ -117,8 +118,7 @@
                 <button type="button" id="generate-page">Generate</button>
                 <label for="contract-abi">Contract ABI</label>
                 <br>
-                <textarea id="contract-abi">
-                </textarea>
+                <textarea id="contract-abi"></textarea>
             </div>
         </div>
         <div id="remote">
