@@ -49,7 +49,7 @@ html, body {
 #main {
     float: left;
     width: 50%;
-    overflow-y: scroll;
+    /*overflow-y: scroll;*/
 }
 
 #status {
@@ -81,3 +81,9 @@ html, body {
     height: 8em;
 }
 
+.fields_in label, .fields_out label {
+    margin-right: 1em;
+    display: inline-block;
+    width: 10em;
+    text-align: right;
+}

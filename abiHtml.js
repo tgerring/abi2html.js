@@ -6,6 +6,9 @@ var cParamIn = 'p_in',
 function inBool(name, id) {
     id = id + '_' + name
 
+    var div = document.createElement('div');
+    div.className = cParamIn
+
     var label = document.createElement('label');
     label.htmlFor = id;
     label.innerHTML = name;
@@ -15,11 +18,17 @@ function inBool(name, id) {
     input.className = cParamIn + ' in_check';
     input.id = id;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function inAddress(name, id) {
     id = id + '_' + name
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -30,12 +39,18 @@ function inAddress(name, id) {
     input.className = cParamIn + ' in_address';
     input.id = id;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function inBytes(name, size, id) {
     id = id + '_' + name
     if (size == null) size = '256';
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -46,12 +61,18 @@ function inBytes(name, size, id) {
     input.className = cParamIn + ' in_bytes' + size;
     input.id = id;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function inInt(name, size, id) {
     id = id + '_' + name
     if (size == null) size = '256';
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -62,12 +83,18 @@ function inInt(name, size, id) {
     input.className = cParamIn + ' in_int' + size;
     input.id = id;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function inUint(name, size, id) {
     id = id + '_' + name
     if (size == null) size = '256';
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -78,13 +105,19 @@ function inUint(name, size, id) {
     input.className = cParamIn + ' in_uint' + size;
     input.id = id;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function outBool(name, id) {
     // for example, a return value from a call'd function
     if (!name) name = 'return';
     id = id + '_' + name
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -96,13 +129,19 @@ function outBool(name, id) {
     input.id = id;
     input.readOnly = true;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function outAddress(name, id) {
     if (!name) name = 'return';
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -114,7 +153,10 @@ function outAddress(name, id) {
     input.id = id;
     input.readOnly = true;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function outBytes(name, size, id) {
@@ -123,6 +165,8 @@ function outBytes(name, size, id) {
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
 
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -134,7 +178,10 @@ function outBytes(name, size, id) {
     input.id = id;
     input.readOnly = true;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function outInt(name, size, id) {
@@ -142,6 +189,9 @@ function outInt(name, size, id) {
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -153,7 +203,10 @@ function outInt(name, size, id) {
     input.id = id;
     input.readOnly = true;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function outUint(name, size, id) {
@@ -161,6 +214,9 @@ function outUint(name, size, id) {
     id = id + '_' + name
     if (name === null) name = 'Output' + id;
     if (size == null) size = '256';
+
+    var div = document.createElement('div');
+    div.className = cParamIn
 
     var label = document.createElement('label');
     label.htmlFor = id;
@@ -172,7 +228,10 @@ function outUint(name, size, id) {
     input.id = id;
     input.readOnly = true;
 
-    return [label, input];
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
 }
 
 function getAbi() {

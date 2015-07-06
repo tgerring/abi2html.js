@@ -296,20 +296,20 @@ function watchEvent(abiItem, filterFields) {
         if (err)
             alert(err)
         else {
+            console.log('Heard event:', result.event)
             fillEventOutput(result.event, result.args);
         }
     }
 
-    // get instance of contract
     var address = getContractAddress()
     if (address) {
+        // get instance of contract
         var contract = Contract.at(address);
         // get function as object
-        var contract_func_name = id.substring(cFuncId.length, id.length);
-        var func = contract[contract_func_name];
+        var func = contract[abiItem.name];
         // call the contract
         var eventFilter = func.apply(func, kv);
-        console.log('filtering for event', contract_func_name)
+        console.log('Watching for event', abiItem.name, 'at address', address)
         eventFilter.watch(callback);
         return eventFilter;
     }
@@ -346,10 +346,9 @@ function compileSolidity(sourceString, callback) {
     }
 }
 
-function generateDoc(watchEvents) {
-    if (watchEvents) {
-        unset()
-    }
+function generateDoc() {
+    document.getElementById('functions').innerHTML = '';
+    document.getElementById('events').innerHTML = '';
 
     var abi = getAbi()
     Contract = web3.eth.contract(abi);
@@ -360,17 +359,12 @@ function generateDoc(watchEvents) {
             alert('Unexpected ABI format');
             return
         }
-        console.log('Generating', val.type, 'for', val.name);
         switch (val.type) {
             case 'function':
                 render('functions', genFunction(val));
                 break;
             case 'event':
                 render('events', genEvent(val));
-                if (watchEvents === true) {
-                    var filter = watchEvent(val);
-                    filters.push(filter);
-                }
                 break;
             case 'constructor':
                 break;
@@ -378,6 +372,21 @@ function generateDoc(watchEvents) {
                 console.log('unknown type:', val.name, val.type);
         }
     });
+}
+
+function watchAllEvents() {
+    unset()
+    monitorBlocks()
+    var abi = getAbi()
+    abi.forEach(function(val) {
+        switch (val.type) {
+            case 'event':
+                var filter = watchEvent(val);
+                filters.push(filter);
+                break;
+        }
+
+    })
 }
 
 function connectInstance(ip, port) {
@@ -416,9 +425,6 @@ function monitorBlocks() {
 }
 
 function unset() {
-    document.getElementById('functions').innerHTML = '';
-    document.getElementById('events').innerHTML = '';
-
     console.log('Stopping filters')
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];

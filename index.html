@@ -23,7 +23,7 @@
 
         document.getElementById('gasprice-copy').addEventListener('click', function() {
             getNetworkGasPrice(renderUserGasPrice)
-            // renderGasPriceEstimate()
+                // renderGasPriceEstimate()
 
         }, false);
 
@@ -34,8 +34,11 @@
 
         document.getElementById('copy-receipt').addEventListener('click', function() {
             var v = web3.eth.getTransactionReceipt(getTransactionHash())
-            document.getElementById('contract_address').value = v.contractAddress
-            updateBalances()
+            if (v) {
+                document.getElementById('contract_address').value = v.contractAddress
+                updateBalances()
+                watchAllEvents()
+            }
         }, false);
 
         document.getElementById('sender_address').addEventListener('change', function() {
@@ -56,8 +59,10 @@
                     contracts = result
                     setContractSelector('contract-selector', result)
                     renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
-                    generateDoc(false);
+                    generateDoc();
                     document.getElementById('deploy-contract').disabled = false
+                    if (getContractAddress())
+                        watchAllEvents()
                 }
             })
 
@@ -66,7 +71,8 @@
         document.getElementById('contract-selector').addEventListener('change', function() {
             renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
             unset()
-            generateDoc(true);
+            generateDoc();
+            watchAllEvents();
         })
 
         document.getElementById('deploy-contract').addEventListener('click', function() {
@@ -99,12 +105,15 @@
         }, false);
 
         document.getElementById('generate-page').addEventListener('click', function() {
-            generateDoc(false)
+            generateDoc()
+            if (getContractAddress())
+                watchAllEvents()
         }, false);
 
         // document.getElementById('monitor-events').addEventListener('click', function() {
-        //     generateDoc(true)
-        //     monitorBlocks()
+        //     generateDoc()
+        //     if (getContractAddress())
+        //         watchAllEvents()
         // }, false);
     }
 
@@ -129,18 +138,19 @@
                 <button type="button" id="compile-contract" disabled>Compile</button>
                 <label for="contract-code">Contract</label>
                 <br>
-                <textarea id="contract-code"></textarea>
-                <!-- <button type="button" id="monitor-events" disabled>Monitor</button> -->
+                <textarea id="contract-code"></textarea>                
                 <button type="button" id="generate-page">Generate</button>
                 <label for="contract-abi">Contract ABI</label>
                 <br>
                 <textarea id="contract-abi"></textarea>
+                <!-- <br> -->
+                <!-- <button type="button" id="monitor-events" disabled>Monitor</button> -->
             </div>
             <div id="remote">
                 <!-- <button type="text" id="toggle-mine" disabled>Mine</button> -->
                 <br> Block height: <span id="block-height">?</span>
                 <br> Best hash: <span id="block-hash">?</span>
-                <br> Gas price avg: <span id="gas-price">?</span>
+                <br> Estimated gas price: <span id="gas-price">?</span>
                 <hr>
                 <label for="sender_address">From:</label>
                 <select id="sender_address" class="in-address"></select>
@@ -185,9 +195,9 @@
         <div id="bottom">
             <div id="main">
                 <div id="functions"></div>
-                <div id="events"></div>
             </div>
             <div id="status">
+                <div id="events"></div>
             </div>
         </div>
         <div id="foot">
