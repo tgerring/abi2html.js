@@ -406,7 +406,7 @@ function updateBalances() {
 function monitorBlocks() {
     var blockFilter = watchBlocks(function(result) {
         updateBalances()
-        getNetworkGasPrice(renderGasPriceEstimate)
+        // getNetworkGasPrice(renderGasPriceEstimate)
     });
     filters.push(blockFilter);
 }

@@ -17,6 +17,14 @@
         // set event handlers
         document.getElementById('send_value').addEventListener('click', sendValue, false);
 
+        document.getElementById('copy-from').addEventListener('click', function() {
+            document.getElementById('contract_address').value = getSenderAddress()
+        }, false);
+
+        document.getElementById('copy-receipt').addEventListener('click', function() {
+            document.getElementById('contract_address').value = web3.eth.getTransactionReceipt(getTransactionHash())
+        }, false);
+
         document.getElementById('sender_address').addEventListener('change', function() {
             renderAccountBalance('sender_balance', getBalance(getSenderAddress()))
         }, false);
@@ -32,7 +40,7 @@
                 else {
                     contracts = result
                     setContractSelector('contract-selector', result)
-                        // renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
+                    renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
                     generateDoc(false);
                     document.getElementById('deploy-contract').disabled = false
                         // monitorBlocks()
@@ -42,8 +50,8 @@
         }, false);
 
         document.getElementById('contract-selector').addEventListener('change', function() {
-            // renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
-            // unset()
+            renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
+            unset()
             generateDoc(true);
         })
 
@@ -70,9 +78,9 @@
             }
         }, false);
 
-        // document.getElementById('generate-page').addEventListener('click', function() {
-        //     generateDoc(false)
-        // }, false);
+        document.getElementById('generate-page').addEventListener('click', function() {
+            generateDoc(false)
+        }, false);
 
         // document.getElementById('monitor-events').addEventListener('click', function() {
         //     generateDoc(true)
@@ -98,17 +106,31 @@
         </p>
         <div id="local">
             <div>
+                <button type="button" id="compile-contract" disabled>Compile</button>
                 <label for="contract-code">Contract</label>
                 <br>
                 <textarea id="contract-code"></textarea>
-                <button type="button" id="compile-contract" disabled>Compile</button>
                 <!-- <button type="button" id="monitor-events" disabled>Monitor</button> -->
+                <button type="button" id="generate-page">Generate</button>
+                <label for="contract-abi">Contract ABI</label>
+                <br>
+                <textarea id="contract-abi">
+                </textarea>
             </div>
         </div>
-        <div id="net">
+        <div id="remote">
             <label for="sender_address">From:</label>
             <select id="sender_address" class="in-address"></select>
-            <br> Account balance: <span id="sender_balance">0</span>
+            <br> From balance: <span id="sender_balance">0</span>
+            <br>
+            <label for="contract_address">To:</label>
+            <input id="contract_address" type="text" class="in-address">
+            <button type="button" id="copy-from">From</button>
+            <button type="button" id="copy-receipt">Receipt</button>
+            <br>
+            <label for="contract_balance">To balance:</label>
+            <span id="contract_balance"></span>
+            <br>
             <label for="gas">Gas:</label>
             <input id="gas" type="text" class="" value="3000000">
             <br>
@@ -127,26 +149,13 @@
             <label for="ether_amt">&#926;</label>
             <input id="ether_amt" type="text" value="0">
             <button id="send_value" type="button" disabled>Send</button>
-            <hr>
+            <br>
             <label for="contract-selector">Deploy contract:</label>
             <select id="contract-selector"></select>
             <button type="button" id="deploy-contract" disabled>Deploy</button>
             <br>
-            <!--             <br> Contract ABI:
-            <br>
-            <textarea id="contract-abi">
-            </textarea> -->
-            <!-- <button type="button" id="generate-page">Generate</button> -->
-        </div>
-        <div id="remote">
             <label for="transaction-hash">Transaction hash:</label>
             <input id="transaction-hash" type="text" class="in-transaction">
-            <br>
-            <label for="contract_address">Contract/destination address:</label>
-            <input id="contract_address" type="text" class="in-address">
-            <br>
-            <label for="contract_balance">Balance:</label>
-            <span id="contract_balance"></span>
         </div>
     </div>
     <div id="main">

@@ -176,8 +176,8 @@ function outUint(name, size, id) {
 }
 
 function getAbi() {
-    // return JSON.parse(document.getElementById('contract-abi').value);
-    return getSelectedContract().info.abiDefinition;
+    return JSON.parse(document.getElementById('contract-abi').value);
+    // return getSelectedContract().info.abiDefinition;
 }
 
 function getInstanceHostname() {
@@ -429,6 +429,10 @@ function renderAccountBalance(domId, weiBalance) {
     var formattedBalance = web3.fromWei(weiBalance, defaultUnit).toString() + ' ' + defaultUnit
 
     document.getElementById(domId).innerHTML = formattedBalance;
+}
+
+function getTransactionHash() {
+    return document.getElementById('transaction-hash').value
 }
 
 function renderTransactionHash(hash) {
