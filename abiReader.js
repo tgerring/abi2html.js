@@ -310,7 +310,7 @@ function watchEvent(abiItem, filterFields) {
         var func = contract[contract_func_name];
         // call the contract
         var eventFilter = func.apply(func, kv);
-        // console.log('filtering for event', contract_func_name)
+        console.log('filtering for event', contract_func_name)
         eventFilter.watch(callback);
         return eventFilter;
     }
@@ -349,7 +349,10 @@ function compileSolidity(sourceString, callback) {
 }
 
 function generateDoc(watchEvents) {
-    unset()
+    if (watchEvents){
+        unset()
+    }
+    
     var abi = getAbi()
     Contract = web3.eth.contract(abi);
 
@@ -359,7 +362,7 @@ function generateDoc(watchEvents) {
             alert('Unexpected ABI format');
             return
         }
-        // console.log('Generating',val.type,'for',val.name);
+        console.log('Generating',val.type,'for',val.name);
         switch (val.type) {
             case 'function':
                 render('functions', genFunction(val));
@@ -413,6 +416,7 @@ function unset() {
     document.getElementById('functions').innerHTML = '';
     document.getElementById('events').innerHTML = '';
 
+    console.log('stopping filters')
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         if (filter) {

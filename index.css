@@ -28,8 +28,12 @@ html, body {
     background-color: #E6E6E6
 }
 
-.in_address {
-    width: 55ex;
+.in-address {
+    width: 30em;
+}
+
+.in-transaction {
+    width: 40em;
 }
 
 #main {

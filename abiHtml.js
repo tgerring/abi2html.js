@@ -176,7 +176,8 @@ function outUint(name, size, id) {
 }
 
 function getAbi() {
-    return JSON.parse(document.getElementById('contract-abi').value);
+    // return JSON.parse(document.getElementById('contract-abi').value);
+    return getSelectedContract().info.abiDefinition;
 }
 
 function getInstanceHostname() {
@@ -229,10 +230,12 @@ function setContractSelector(elemId, contracts) {
 }
 
 function renderContractInfo(elemId, abiObj) {
-     document.getElementById(elemId).value = JSON.stringify(abiObj.info.abiDefinition)
+    document.getElementById(elemId).value = JSON.stringify(abiObj.info.abiDefinition)
 }
 
 function getSelectedContract(elemId) {
+    if (!elemId)
+        elemId = 'contract-selector'
     var contractName = document.getElementById(elemId).value
     return contracts[contractName]
 }
@@ -358,7 +361,7 @@ function genFunction(abiItem) {
         leg.innerHTML = 'Outputs';
         fso.appendChild(leg);
 
-        fieldsOut.forEach(function(field){
+        fieldsOut.forEach(function(field) {
             fso.appendChild(field);
         });
         div.appendChild(fso);
