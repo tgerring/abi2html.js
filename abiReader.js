@@ -401,10 +401,16 @@ function updateBalances() {
         renderAccountBalance('contract_balance', getBalance(contract));
 }
 
+function updateBlocks() {
+    var block = web3.eth.getBlock('latest')
+    renderBlock(block)
+}
+
 function monitorBlocks() {
     var blockFilter = watchBlocks(function(result) {
         updateBalances()
-        // getNetworkGasPrice(renderGasPriceEstimate)
+        updateBlocks()
+        getNetworkGasPrice(renderGasPriceEstimate)
     });
     filters.push(blockFilter);
 }

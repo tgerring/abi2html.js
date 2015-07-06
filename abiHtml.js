@@ -439,3 +439,7 @@ function renderTransactionHash(hash) {
     document.getElementById('transaction-hash').value = hash
 }
 
+function renderBlock(block) {
+    document.getElementById('block-height').innerHTML = block.number
+    document.getElementById('block-hash').innerHTML = block.hash
+}

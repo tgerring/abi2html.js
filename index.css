@@ -3,6 +3,16 @@ html, body {
     font-size: 11pt;
 }
 
+#wrapper {
+    height: 100vh;
+}
+
+#head, #top, #bottom, #foot {
+    width: 100%;
+    clear: both;
+    margin: 1ex;
+}
+
 .border {
     margin: 1em 0 1em 0;
     padding: 1ex;
@@ -37,21 +47,27 @@ html, body {
 }
 
 #main {
-    width: 100%;
-    clear: both;
+    float: left;
+    width: 50%;
+    overflow-y: scroll;
+}
+
+#status {
+    float: right;
+    width: 50%;
 }
 
 #head {
-    padding-bottom: 3em;
+    padding-bottom: 1ex;
 }
 
 #remote {
-    width: 66%;
+    width: 50%;
     float: right;
 }
 
 #local {
-    width: 33%;
+    width: 50%;
     float: left;
 }
 
@@ -64,3 +80,4 @@ html, body {
     width: 100%;
     height: 8em;
 }
+

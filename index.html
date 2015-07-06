@@ -17,6 +17,10 @@
         // set event handlers
         document.getElementById('send_value').addEventListener('click', sendValue, false);
 
+        // document.getElementById('toggle-mine').addEventListener('click', function() {
+        //     toggleMining()
+        // }, false);
+
         document.getElementById('copy-from').addEventListener('click', function() {
             document.getElementById('contract_address').value = getSenderAddress()
             updateBalances()
@@ -74,9 +78,11 @@
             } else {
                 getNetworkGasPrice(renderGasPriceEstimate);
                 getAccounts('sender_address', updateBalances);
+                updateBlocks()
                 unset()
                 monitorBlocks()
                 document.getElementById('compile-contract').disabled = false
+                    // document.getElementById('toggle-mine').disabled = false
                     // document.getElementById('monitor-events').disabled = false
                 document.getElementById('send_value').disabled = false
             }
@@ -100,16 +106,16 @@
 </head>
 
 <body>
-    <div id="head">
-        <p>
+    <div id="wrapper">
+        <div id="head">
             <button type="button" id="connect-instance">Connect</button>
             <samp>geth --rpc --rpcaddr "</samp>
             <input type="text" id="instance-hostname" value="127.0.0.1">
             <samp>" --rpcport "
                 <input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
-        </p>
-        <div id="local">
-            <div>
+        </div>
+        <div id="top">
+            <div id="local">
                 <button type="button" id="compile-contract" disabled>Compile</button>
                 <label for="contract-code">Contract</label>
                 <br>
@@ -120,52 +126,59 @@
                 <br>
                 <textarea id="contract-abi"></textarea>
             </div>
+            <div id="remote">
+                <label for="sender_address">From:</label>
+                <select id="sender_address" class="in-address"></select>
+                <br> From balance: <span id="sender_balance">0</span>
+                <br>
+                <label for="contract_address">To:</label>
+                <input id="contract_address" type="text" class="in-address">
+                <button type="button" id="copy-from">From</button>
+                <button type="button" id="copy-receipt">Receipt</button>
+                <br>
+                <label for="contract_balance">To balance:</label>
+                <span id="contract_balance"></span>
+                <br>
+                <label for="gas">Gas:</label>
+                <input id="gas" type="text" class="" value="3000000">
+                <br>
+                <label for="gas_price">Gas price:</label>
+                <input id="gas_price" type="text" class="" value="10">
+                <select id="gas_price_unit">
+                    <option>ether</option>
+                    <option>finney</option>
+                    <option selected>szabo</option>
+                    <option>shannon</option>
+                    <option>babbage</option>
+                    <option>ada</option>
+                    <option>wei</option>
+                </select>
+                <br>
+                <label for="ether_amt">&#926;</label>
+                <input id="ether_amt" type="text" value="0">
+                <button id="send_value" type="button" disabled>Send</button>
+                <br>
+                <label for="contract-selector">Deploy contract:</label>
+                <select id="contract-selector"></select>
+                <button type="button" id="deploy-contract" disabled>Deploy</button>
+                <br>
+                <label for="transaction-hash">Transaction hash:</label>
+                <input id="transaction-hash" type="text" class="in-transaction">
+            </div>
         </div>
-        <div id="remote">
-            <label for="sender_address">From:</label>
-            <select id="sender_address" class="in-address"></select>
-            <br> From balance: <span id="sender_balance">0</span>
-            <br>
-            <label for="contract_address">To:</label>
-            <input id="contract_address" type="text" class="in-address">
-            <button type="button" id="copy-from">From</button>
-            <button type="button" id="copy-receipt">Receipt</button>
-            <br>
-            <label for="contract_balance">To balance:</label>
-            <span id="contract_balance"></span>
-            <br>
-            <label for="gas">Gas:</label>
-            <input id="gas" type="text" class="" value="3000000">
-            <br>
-            <label for="gas_price">Gas price:</label>
-            <input id="gas_price" type="text" class="" value="10">
-            <select id="gas_price_unit">
-                <option>ether</option>
-                <option>finney</option>
-                <option selected>szabo</option>
-                <option>shannon</option>
-                <option>babbage</option>
-                <option>ada</option>
-                <option>wei</option>
-            </select>
-            <br>
-            <label for="ether_amt">&#926;</label>
-            <input id="ether_amt" type="text" value="0">
-            <button id="send_value" type="button" disabled>Send</button>
-            <br>
-            <label for="contract-selector">Deploy contract:</label>
-            <select id="contract-selector"></select>
-            <button type="button" id="deploy-contract" disabled>Deploy</button>
-            <br>
-            <label for="transaction-hash">Transaction hash:</label>
-            <input id="transaction-hash" type="text" class="in-transaction">
+        <div id="bottom">
+            <div id="main">
+                <div id="functions"></div>
+                <div id="events"></div>
+            </div>
+            <div id="status">
+                <!-- <button type="text" id="toggle-mine" disabled>Mine</button> -->
+                <br> Block height: <span id="block-height">?</span>
+                <br> Best hash: <span id="block-hash">?</span>
+            </div>
         </div>
-    </div>
-    <div id="main">
-        <div id="functions"></div>
-        <div id="events"></div>
-    </div>
-    <div id="foot">
+        <div id="foot">
+        </div>
     </div>
 </body>
 
