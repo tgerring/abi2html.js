@@ -196,7 +196,8 @@ function deployContract(hexstring, callback) {
         gasPrice: web3.toWei(gp.amount, gp.unit)
     };
 
-    web3.eth.sendTransaction(options, callback);
+    // web3.eth.sendTransaction(options, callback);
+    return web3.eth.contract(getAbi()).new(options, callback);
 }
 
 function contractCall(id) {

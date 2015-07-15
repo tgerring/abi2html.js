@@ -32,14 +32,14 @@
             updateBalances()
         }, false);
 
-        document.getElementById('copy-receipt').addEventListener('click', function() {
-            var v = web3.eth.getTransactionReceipt(getTransactionHash())
-            if (v) {
-                document.getElementById('contract_address').value = v.contractAddress
-                updateBalances()
-                watchAllEvents()
-            }
-        }, false);
+        // document.getElementById('copy-receipt').addEventListener('click', function() {
+        //     var v = web3.eth.getTransactionReceipt(getTransactionHash())
+        //     if (v) {
+        //         document.getElementById('contract_address').value = v.contractAddress
+        //         updateBalances()
+        //         watchAllEvents()
+        //     }
+        // }, false);
 
         document.getElementById('sender_address').addEventListener('change', function() {
             renderAccountBalance('sender_balance', getBalance(getSenderAddress()))
@@ -76,13 +76,22 @@
         })
 
         document.getElementById('deploy-contract').addEventListener('click', function() {
-            contract = getSelectedContract('contract-selector')
-            deployContract(contract.code, function(error, result) {
-                if (!error)
-                    renderTransactionHash(result)
-                else
+            userContract = getSelectedContract('contract-selector')
+            contract = deployContract(userContract.code, function(error, result) {
+                if (!error) {
+                    console.log('Contract mined:', result)
+                    renderTransactionHash(contract.transactionHash)
+                    document.getElementById('contract_address').value = result.address
+                } else
                     alert(error)
             })
+            // run a few milliseconds later since transaction hash isn't available immediately
+            setTimeout(function(){
+                console.log(contract)
+                if (contract.transactionHash)
+                    renderTransactionHash(contract.transactionHash)
+            }, 100)
+            
         }, false);
 
         document.getElementById('connect-instance').addEventListener('click', function() {
@@ -154,12 +163,12 @@
                 <hr>
                 <label for="sender_address">From:</label>
                 <select id="sender_address" class="in-address"></select>
+                <button type="button" id="copy-from">Copy To</button>
                 <br> From balance: <span id="sender_balance">0</span>
                 <br>
                 <label for="contract_address">To:</label>
                 <input id="contract_address" type="text" class="in-address">
-                <button type="button" id="copy-from">From</button>
-                <button type="button" id="copy-receipt">Receipt</button>
+                <!-- <button type="button" id="copy-receipt">Receipt</button> -->
                 <br>
                 <label for="contract_balance">To balance:</label>
                 <span id="contract_balance"></span>
