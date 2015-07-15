@@ -393,7 +393,10 @@ function watchAllEvents() {
 function connectInstance(ip, port) {
     if (!ip) ip = '127.0.0.1'
     if (!port) port = '8545'
-    web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port));
+
+    if (!web3.currentProvider)
+        web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port));
+
     try {
         web3.eth.accounts;
     } catch (e) {
