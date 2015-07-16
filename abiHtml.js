@@ -511,3 +511,14 @@ function renderBlock(block) {
     document.getElementById('block-height').innerHTML = block.number
     document.getElementById('block-hash').innerHTML = block.hash
 }
+
+
+function renderTxCostTotal() {
+    var gp = getUserGasPrice()
+    var gas = getGas()
+    var wei  = web3.toWei(gp.amount, gp.unit)
+    var tot = wei * gas
+    // document.getElementById('txcost-total').innerHTML = web3.fromWei(wei, gp.unit) + ' ' + gp.unit
+    document.getElementById('txcost-total').innerHTML = web3.fromWei(tot, defaultUnit) + ' ' + defaultUnit
+    // document.getElementById('txcost-total').innerHTML = tot.toString() + ' ' + gp.unit
+}

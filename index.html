@@ -21,6 +21,7 @@
 
         document.getElementById('gasprice-copy').addEventListener('click', function() {
             getNetworkGasPrice(renderUserGasPrice)
+            renderTxCostTotal()
                 // renderGasPriceEstimate()
 
         }, false);
@@ -43,9 +44,18 @@
             renderAccountBalance('sender_balance', getBalance(getSenderAddress()))
         }, false);
 
+        document.getElementById('gas').addEventListener('keyup', function() {
+            renderTxCostTotal()
+        }, false)
+
+        document.getElementById('gas_price').addEventListener('keyup', function() {
+            renderTxCostTotal()
+        }, false)
+
         document.getElementById('gas_price_unit').addEventListener('change', function() {
             var gasprice = document.getElementById('gas_price').value
             var gaspriceunit = document.getElementById('gas_price_unit').value
+            renderTxCostTotal()
             getNetworkGasPrice(renderUserGasPrice) // this overrides the number part
         }, false);
 
@@ -185,7 +195,8 @@
                     <option>ada</option>
                     <option>wei</option>
                 </select>
-                <button id="gasprice-copy">Sync</button>
+                <button id="gasprice-copy">Sync estimate</button>
+                <br> Max cost: <span id="txcost-total">?</span>
                 <br>
                 <label for="ether_amt">&#926;</label>
                 <input id="ether_amt" type="text" value="0">
