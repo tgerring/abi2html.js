@@ -428,6 +428,14 @@ function monitorBlocks() {
     filters.push(blockFilter);
 }
 
+function isWatching() {
+    // block filter is first
+    if (filters.length > 1) {
+        return true
+    }
+    return false
+}
+
 function unset() {
     console.log('Stopping filters')
     for (var i = 0; i < filters.length; i++) {

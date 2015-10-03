@@ -87,3 +87,13 @@ html, body {
     width: 10em;
     text-align: right;
 }
+
+.fields_in, .fields_out {
+    clear: both;
+}
+
+/*#functions>div>h3 {
+    float: left;
+    width: 75%;
+}
+*/

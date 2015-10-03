@@ -370,21 +370,6 @@ function genFunction(abiItem) {
     h3.innerHTML = 'Function: ' + abiItem.name
     div.appendChild(h3);
 
-
-    var fieldsIn = makeInputs(abiItem.inputs, id);
-
-    var fsi = document.createElement('fieldset')
-    fsi.className = cFieldsIn;
-
-    var leg = document.createElement('legend');
-    leg.innerHTML = 'Inputs';
-    fsi.appendChild(leg);
-    if (fieldsIn.length > 0) {
-        fieldsIn.forEach(function(field) {
-            fsi.appendChild(field);
-        });
-    }
-
     // Call is only useful when there is a return value
     if (abiItem.outputs.length > 0) {
         var btn = document.createElement('button');
@@ -394,7 +379,7 @@ function genFunction(abiItem) {
         btn.addEventListener('click', function() {
             contractCall(div.id)
         });
-        fsi.appendChild(btn)
+        div.appendChild(btn)
     }
 
     // Transact available when not constant. (Constant functions cannot modify state)
@@ -406,9 +391,26 @@ function genFunction(abiItem) {
         btn.addEventListener('click', function() {
             contractTransact(div.id)
         });
-        fsi.appendChild(btn)
+        div.appendChild(btn)
     }
-    div.appendChild(fsi);
+
+    var fieldsIn = makeInputs(abiItem.inputs, id);
+
+    if (fieldsIn.length > 0) {
+        var fsi = document.createElement('fieldset')
+        fsi.className = cFieldsIn;
+
+        var leg = document.createElement('legend');
+        leg.innerHTML = 'Inputs';
+        fsi.appendChild(leg);
+
+        fieldsIn.forEach(function(field) {
+            fsi.appendChild(field);
+        });
+
+        div.appendChild(fsi);
+    }
+
 
 
     var fieldsOut = makeOutputs(abiItem.outputs, id);
@@ -423,6 +425,7 @@ function genFunction(abiItem) {
         fieldsOut.forEach(function(field) {
             fso.appendChild(field);
         });
+
         div.appendChild(fso);
     }
 
