@@ -320,14 +320,14 @@ SolHtml.prototype.makeBool = function(field, isEditable) {
 
     if (!!isEditable) {
         var input = document.createElement('input');
+        input.id = field.htmlId;
         input.type = 'checkbox';
         input.className = div.className
-        input.id = field.htmlId;
     } else {
         var input = document.createElement('input');
+        input.id = field.htmlId;
         input.type = 'text';
         input.className = [div.className, 'readonly'].join(' ')
-        input.id = field.htmlId;
         input.readOnly = true;
     }
 
@@ -349,14 +349,14 @@ SolHtml.prototype.makeAddress = function(field, isEditable) {
 
     if (!!isEditable) {
         var input = document.createElement('input');
+        input.id = field.htmlId;
         input.type = 'text';
         input.className = div.className
-        input.id = field.htmlId;
     } else {
         var input = document.createElement('input');
+        input.id = field.htmlId;
         input.type = 'text';
         input.className = [div.className, 'readonly'].join(' ')
-        input.id = field.htmlId;
         input.readOnly = true;
     }
 
@@ -409,17 +409,17 @@ SolHtml.prototype.makeInt = function(field, isEditable) {
     label.htmlFor = field.htmlId;
     label.innerHTML = field.name;
 
-    if (!isEditable) {
+    if (!!isEditable) {
         var input = document.createElement('input');
+        input.id = field.htmlId;
         input.type = 'number';
         input.className = div.className
-        input.id = field.htmlId;
-        input.readOnly = true;
     } else {
         var input = document.createElement('input');
+        input.id = field.htmlId;
         input.type = 'number';
         input.className = [div.className, 'readonly'].join(' ')
-        input.id = field.htmlId;
+        input.readOnly = true;
     }
 
     div.appendChild(label)

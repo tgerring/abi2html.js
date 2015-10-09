@@ -93,28 +93,7 @@ fieldset.output label {
     text-align: right;
 }
 
-
-/*.fields_in label,
-.fields_out label {
-    margin-right: 1em;
-    display: inline-block;
-    width: 10em;
-    text-align: right;
-}
-
-.fields_in,
-.fields_out {
-    clear: both;
-}
-*/
 fieldset.input,
 fieldset.output {
     clear: both;
 }
-
-
-/*#functions>div>h3 {
-    float: left;
-    width: 75%;
-}
-*/
