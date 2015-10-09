@@ -1,9 +1,14 @@
 "use strict";
 
-var AbiHtml = function(abiString) {
-    this.abi = [];
-    this.properties = {};
-    this.loadAbi(abiString);
+var AbiHtml = function(abiString, properties) {
+    // set propeties not specifid by the user
+    if (!properties) properties = {}
+    this.properties = this.getDefaults(properties)
+    console.log(this.properties)
+
+    this.abi = []
+    this.abi = this.loadAbi(abiString);
+
 }
 
 AbiHtml.prototype.getDefaults = function(properties) {
@@ -46,12 +51,8 @@ AbiHtml.prototype.getDefaults = function(properties) {
 }
 
 
-AbiHtml.prototype.loadAbi = function(abiString, properties) {
+AbiHtml.prototype.loadAbi = function(abiString) {
     var abi;
-
-    // set propeties not specifid by the user
-    if (!properties) properties = {}
-    this.properties = this.getDefaults(properties)
 
     // support multiple param types
     if (typeof abiString === 'string')
@@ -87,7 +88,7 @@ AbiHtml.prototype.loadAbi = function(abiString, properties) {
 
     }
 
-    this.abi = abi
+    return abi
 }
 
 AbiHtml.prototype.generateDocument = function() {
