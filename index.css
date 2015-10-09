@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
     font-family: Helvetica, Arial, sans-serif;
     font-size: 11pt;
 }
@@ -7,7 +8,10 @@ html, body {
     height: 100vh;
 }
 
-#head, #top, #bottom, #foot {
+#head,
+#top,
+#bottom,
+#foot {
     width: 100%;
     clear: both;
     margin: 1ex;
@@ -81,16 +85,33 @@ html, body {
     height: 8em;
 }
 
-.fields_in label, .fields_out label {
+fieldset.input label,
+fieldset.output label {
     margin-right: 1em;
     display: inline-block;
     width: 10em;
     text-align: right;
 }
 
-.fields_in, .fields_out {
+
+/*.fields_in label,
+.fields_out label {
+    margin-right: 1em;
+    display: inline-block;
+    width: 10em;
+    text-align: right;
+}
+
+.fields_in,
+.fields_out {
     clear: both;
 }
+*/
+fieldset.input,
+fieldset.output {
+    clear: both;
+}
+
 
 /*#functions>div>h3 {
     float: left;
