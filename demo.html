@@ -8,33 +8,36 @@
     <script type="text/javascript" src="./dist/web3-light.js"></script>
     <script type="text/javascript" src="./abi2html.js"></script>
     <script type="text/javascript">
-    var contracts;
+    // ABI output from Solidity compiler
+    var abiString = '[{"constant":true,"inputs":[],"name":"m_dailyLimit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"}],"name":"OwnerRemoved","type":"event"}]'
+
+    // Settable properties to override default behavior
+    var properties = {
+        callFunction: function(v) {
+            alert('custom call function!')
+        },
+        transactButtonText: 'DO NOT CLICK'
+    }
+
+    // Helper function
     var render = function(element, items) {
         var el = document.getElementById(element);
         items.forEach(function(value) {
             el.appendChild(value)
         })
+
+        // console.log(el.innerHTML)
     }
 
-    // set global events
     window.onload = function() {
-        var abiString = '[{"constant":true,"inputs":[],"name":"m_dailyLimit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"}],"name":"OwnerRemoved","type":"event"}]'
-
-        properties = {
-            callFunction: function(v) {
-                alert('custom call function!')
-            },
-            transactButtonText: 'DO NOT CLICK'
-        }
-
+        // Instantiate library with abi and optional properties
         var abihtml = new AbiHtml(abiString, properties);
+        // Generate DOM
         var doc = abihtml.generateDocument();
+        // Render functions as a form
         render('functions', doc.functions);
+        // Render events as popups
         render('events', doc.events);
-    }
-
-    window.onbeforeunload = function() {
-        // unlikely this fires, but try to clean up after oneself
     }
     </script>
 </head>

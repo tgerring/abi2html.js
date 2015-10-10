@@ -3,7 +3,7 @@
 var AbiHtml = function(abiString, properties) {
     // set propeties not specifid by the user
     if (!properties) properties = {}
-    this.properties = this.getDefaults(properties)
+    this.properties = this.applyMissingDefaults(properties)
     console.log(this.properties)
 
     this.abi = []
@@ -11,43 +11,43 @@ var AbiHtml = function(abiString, properties) {
 
 }
 
-AbiHtml.prototype.getDefaults = function(properties) {
-    // set default properties that the user can override
-    if (!("idJoinString" in properties))
-        properties.idJoinString = "-"
+AbiHtml.prototype.applyMissingDefaults = function(userProperties) {
+    // define default values here
+    var defaultProperties = {
+        idJoinString: "-",
 
-    if (!("outputEmptyName" in properties))
-        properties.outputEmptyName = "return"
+        idInputAffix: "-in",
 
-    if (!("idInputAffix" in properties))
-        properties.idInputAffix = '' //properties.idJoinString + "in"
+        idOutputAffix: "-out",
+        outputEmptyName: "return",
 
-    if (!("idOutputAffix" in properties))
-        properties.idOutputAffix = '' //properties.idJoinString + "out"
+        callButtonText: "Call",
+        callIdAffix: "-call",
+        callButtonText: "Call",
 
-    if (!("callButtonText" in properties))
-        properties.callButtonText = "Call"
+        transactButtonText: "Transact",
+        transactIdAffix: "-transact"
+    }
 
-    if (!("callIdAffix" in properties))
-        properties.callIdAffix = properties.idJoinString + "call"
+    defaultProperties.callFunction = function(ev) {
+        console.log(ev.target.id)
+    }
 
-    if (!("callFunction" in properties))
-        properties.callFunction = function(ev) {
-            console.log(ev.target.id)
-        }
+    defaultProperties.transactFunction = function(ev) {
+        console.log(ev.target.id)
+    }
 
-    if (!("transactButtonText" in properties))
-        properties.transactButtonText = "Transact"
+    // safety check
+    if (!userProperties)
+        userProperties = {}
 
-    if (!("transactIdAffix" in properties))
-        properties.transactIdAffix = properties.idJoinString + "transact"
+    // apply default properties to missing user properties
+    for (var k in defaultProperties) {
+        if (!userProperties.hasOwnProperty(k))
+            userProperties[k] = defaultProperties[k]
+    }
 
-    if (!("transactFunction" in properties))
-        properties.transactFunction = function(ev) {
-            console.log(ev.target.id)
-        }
-
-    return properties
+    return userProperties
 }
 
 
@@ -140,7 +140,7 @@ AbiHtml.prototype.generateFunctionForm = function(abiItem) {
         div.appendChild(btn)
     }
 
-    // Transact button available when not constant. (Constant functions cannot modify state)
+    // Transact button available when not constant (constant functions cannot modify state)
     if (!abiItem.constant) {
         var btn = this.makeHtmlTransact(abiItem)
         div.appendChild(btn)
@@ -367,8 +367,6 @@ SolHtml.prototype.makeAddress = function(field, isEditable) {
 }
 
 SolHtml.prototype.makeBytes = function(field, isEditable) {
-    // if (size == null) size = '256';
-
     var div = document.createElement('div');
     div.className = field.solType.base
     if (field.solType.size)
@@ -398,8 +396,6 @@ SolHtml.prototype.makeBytes = function(field, isEditable) {
 }
 
 SolHtml.prototype.makeInt = function(field, isEditable) {
-    // if (size == null) size = '256';
-
     var div = document.createElement('div');
     div.className = field.solType.base
     if (field.solType.size)
