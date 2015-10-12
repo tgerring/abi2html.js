@@ -16,7 +16,8 @@
         callFunction: function(v) {
             alert('custom call function!')
         },
-        transactButtonText: 'DO NOT CLICK'
+        transactButtonText: 'DO NOT CLICK',
+        outputFieldsetName: ''
     }
 
     // Helper function
@@ -36,8 +37,11 @@
         var doc = abihtml.generateDocument();
         // Render functions as a form
         render('functions', doc.functions);
+
         // Render events as popups
+        // watchEvents(
         render('events', doc.events);
+        // )
     }
     </script>
 </head>

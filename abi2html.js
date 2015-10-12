@@ -16,30 +16,46 @@ AbiHtml.prototype.applyMissingDefaults = function(userProperties) {
     var defaultProperties = {
         idJoinString: "-",
 
-        idInputAffix: "-in",
+        inputIdPrefix: "in",
+        inputFieldsetName: "Inputs",
+        inputScaffolding: function() {
 
-        idOutputAffix: "-out",
+        },
+
+        outputIdPrefex: "out",
         outputEmptyName: "return",
+        outputFieldsetName: "Outputs",
+        outputScaffolding: function() {
+
+        },
 
         callButtonText: "Call",
-        callIdAffix: "-call",
+        callIdAffix: "call",
         callButtonText: "Call",
+        callScaffolding: function() {
+
+        },
+        callFunction: function(ev) {
+            console.log(ev.target.id)
+        },
 
         transactButtonText: "Transact",
-        transactIdAffix: "-transact"
-    }
+        transactIdAffix: "transact",
+        transactScaffolding: function() {
 
-    defaultProperties.callFunction = function(ev) {
-        console.log(ev.target.id)
-    }
+        },
+        transactFunction: function(ev) {
+            console.log(ev.target.id)
+        },
 
-    defaultProperties.transactFunction = function(ev) {
-        console.log(ev.target.id)
+        eventFieldsetName: "Events",
+        eventScaffolding: function() {
+
+        }
     }
 
     // safety check
-    if (!userProperties)
-        userProperties = {}
+    if (!userProperties) userProperties = {}
 
     // apply default properties to missing user properties
     for (var k in defaultProperties) {
@@ -72,7 +88,12 @@ AbiHtml.prototype.loadAbi = function(abiString) {
         if ("inputs" in abiItem)
             for (var j = 0; j < abiItem.inputs.length; j++) {
                 var param = abiItem.inputs[j];
-                param.htmlId = [abiItem.name, param.name].join(this.properties.idJoinString) + this.properties.idInputAffix
+
+                if (this.properties.inputIdPrefix.length > 0)
+                    param.htmlId = [abiItem.name, this.properties.inputIdPrefix, param.name].join(this.properties.idJoinString)
+                else
+                    param.htmlId = [abiItem.name, param.name].join(this.properties.idJoinString)
+
                 console.log(abiItem.name, param)
             }
 
@@ -80,9 +101,15 @@ AbiHtml.prototype.loadAbi = function(abiString) {
         if ("outputs" in abiItem)
             for (var k = 0; k < abiItem.outputs.length; k++) {
                 var param = abiItem.outputs[k];
+
                 if (param.name.length < 1)
                     param.name = this.properties.outputEmptyName
-                param.htmlId = [abiItem.name, param.name].join(this.properties.idJoinString) + this.properties.idOutputAffix
+
+                if (this.properties.outputIdPrefex.length > 0)
+                    param.htmlId = [abiItem.name, this.properties.outputIdPrefex, param.name].join(this.properties.idJoinString)
+                else
+                    param.htmlId = [abiItem.name, param.name].join(this.properties.idJoinString)
+
                 console.log(abiItem.name, param)
             }
 
@@ -151,9 +178,11 @@ AbiHtml.prototype.generateFunctionForm = function(abiItem) {
         var fsi = document.createElement('fieldset')
         fsi.className = 'input';
 
-        var leg = document.createElement('legend');
-        leg.innerHTML = 'Inputs';
-        fsi.appendChild(leg);
+        if (this.properties.inputFieldsetName.length > 0) {
+            var leg = document.createElement('legend');
+            leg.innerHTML = this.properties.inputFieldsetName;
+            fsi.appendChild(leg);
+        }
 
         inputFields.forEach(function(field) {
             fsi.appendChild(field);
@@ -167,9 +196,11 @@ AbiHtml.prototype.generateFunctionForm = function(abiItem) {
         var fso = document.createElement('fieldset')
         fso.className = 'output';
 
-        var leg = document.createElement('legend');
-        leg.innerHTML = 'Outputs';
-        fso.appendChild(leg);
+        if (this.properties.outputFieldsetName.length > 0) {
+            var leg = document.createElement('legend');
+            leg.innerHTML = this.properties.outputFieldsetName;
+            fso.appendChild(leg);
+        }
 
         fieldsOut.forEach(function(field) {
             fso.appendChild(field);
@@ -187,18 +218,20 @@ AbiHtml.prototype.generateEventForm = function(abiItem) {
     div.id = 'event' + abiItem.name;
 
     var h3 = document.createElement('h3');
-    h3.innerHTML = 'Event: ' + abiItem.name
+    h3.innerHTML = this.properties.eventFieldsetName
     div.appendChild(h3);
 
     var fields = this.makeInputs(abiItem, false);
     if (fields.length > 0) {
 
         var fsi = document.createElement('fieldset')
-        fsi.className = 'output';
+        fsi.className = 'event';
 
-        var leg = document.createElement('legend');
-        leg.innerHTML = 'Outputs';
-        fsi.appendChild(leg);
+        if (this.properties.eventFieldsetName.length > 0) {
+            var leg = document.createElement('legend');
+            leg.innerHTML = abiItem.name;
+            fsi.appendChild(leg);
+        }
 
         fields.forEach(function(field) {
             fsi.appendChild(field);
@@ -243,7 +276,7 @@ AbiHtml.prototype.makeOutputs = function(abiItem, isEditable) {
 AbiHtml.prototype.makeHtmlCall = function(abiItem) {
     var btn = document.createElement('button')
     btn.type = 'button'
-    btn.id = [abiItem.name].join(this.properties.idJoinString) + this.properties.callIdAffix
+    btn.id = [abiItem.name, this.properties.callIdAffix].join(this.properties.idJoinString)
     btn.innerHTML = this.properties.callButtonText
     btn.addEventListener('click', this.properties.callFunction)
     return btn
@@ -252,7 +285,7 @@ AbiHtml.prototype.makeHtmlCall = function(abiItem) {
 AbiHtml.prototype.makeHtmlTransact = function(abiItem) {
     var btn = document.createElement('button')
     btn.type = 'button'
-    btn.id = [abiItem.name].join(this.properties.idJoinString) + this.properties.transactIdAffix
+    btn.id = [abiItem.name, this.properties.transactIdAffix].join(this.properties.idJoinString)
     btn.innerHTML = this.properties.transactButtonText
     btn.addEventListener('click', this.properties.transactFunction)
     return btn

@@ -86,7 +86,8 @@ body {
 }
 
 fieldset.input label,
-fieldset.output label {
+fieldset.output label,
+fieldset.event label {
     margin-right: 1em;
     display: inline-block;
     width: 10em;
@@ -94,6 +95,7 @@ fieldset.output label {
 }
 
 fieldset.input,
-fieldset.output {
+fieldset.output,
+fieldset.event {
     clear: both;
 }
