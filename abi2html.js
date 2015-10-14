@@ -1,69 +1,38 @@
 "use strict";
 
-var AbiHtml = function(abiString, properties) {
+var AbiHtml = function(abiString, config) {
     // set propeties not specifid by the user
-    if (!properties) properties = {}
-    this.properties = this.applyMissingDefaults(properties)
-    console.log(this.properties)
+    if (!config) config = {}
+    this.config = this.applyMissingDefaults(config)
 
     this.abi = []
     this.abi = this.loadAbi(abiString);
 
+    this.doc = {}
 }
 
-AbiHtml.prototype.applyMissingDefaults = function(userProperties) {
+AbiHtml.prototype.applyMissingDefaults = function(userConfig) {
     // define default values here
-    var defaultProperties = {
+    var defaultConfig = {
         idJoinString: "-",
-
         inputIdPrefix: "in",
-        inputFieldsetName: "Inputs",
-        inputScaffolding: function() {
-
-        },
-
         outputIdPrefex: "out",
         outputEmptyName: "return",
-        outputFieldsetName: "Outputs",
-        outputScaffolding: function() {
 
-        },
-
-        callButtonText: "Call",
-        callIdAffix: "call",
-        callButtonText: "Call",
-        callScaffolding: function() {
-
-        },
-        callFunction: function(ev) {
-            console.log(ev.target.id)
-        },
-
-        transactButtonText: "Transact",
-        transactIdAffix: "transact",
-        transactScaffolding: function() {
-
-        },
-        transactFunction: function(ev) {
-            console.log(ev.target.id)
-        },
-
-        eventFieldsetName: "Events",
-        eventScaffolding: function() {
-
-        }
+        function: {},
+        event: {}
     }
 
     // safety check
-    if (!userProperties) userProperties = {}
+    if (!userConfig) userConfig = {}
 
     // apply default properties to missing user properties
-    for (var k in defaultProperties) {
-        if (!userProperties.hasOwnProperty(k))
-            userProperties[k] = defaultProperties[k]
+    for (var k in defaultConfig) {
+        if (!userConfig.hasOwnProperty(k))
+            userConfig[k] = defaultConfig[k]
     }
 
-    return userProperties
+    return userConfig
 }
 
 
@@ -89,12 +58,12 @@ AbiHtml.prototype.loadAbi = function(abiString) {
             for (var j = 0; j < abiItem.inputs.length; j++) {
                 var param = abiItem.inputs[j];
 
-                if (this.properties.inputIdPrefix.length > 0)
-                    param.htmlId = [abiItem.name, this.properties.inputIdPrefix, param.name].join(this.properties.idJoinString)
+                if (this.config.inputIdPrefix.length > 0)
+                    param.htmlId = [abiItem.name, this.config.inputIdPrefix, param.name].join(this.config.idJoinString)
                 else
-                    param.htmlId = [abiItem.name, param.name].join(this.properties.idJoinString)
+                    param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
 
-                console.log(abiItem.name, param)
+                // console.log(abiItem.name, param)
             }
 
         // generate internal representation of outputs
@@ -103,14 +72,14 @@ AbiHtml.prototype.loadAbi = function(abiString) {
                 var param = abiItem.outputs[k];
 
                 if (param.name.length < 1)
-                    param.name = this.properties.outputEmptyName
+                    param.name = this.config.outputEmptyName
 
-                if (this.properties.outputIdPrefex.length > 0)
-                    param.htmlId = [abiItem.name, this.properties.outputIdPrefex, param.name].join(this.properties.idJoinString)
+                if (this.config.outputIdPrefex.length > 0)
+                    param.htmlId = [abiItem.name, this.config.outputIdPrefex, param.name].join(this.config.idJoinString)
                 else
-                    param.htmlId = [abiItem.name, param.name].join(this.properties.idJoinString)
+                    param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
 
-                console.log(abiItem.name, param)
+                // console.log(abiItem.name, param)
             }
 
     }
@@ -120,39 +89,107 @@ AbiHtml.prototype.loadAbi = function(abiString) {
 
 AbiHtml.prototype.generateDocument = function() {
     var abi = this.abi;
-    var doc = {
+    this.doc = {
         functions: [],
         events: []
     }
 
     for (var i = 0; i < abi.length; i++) {
-        var val = abi[i];
+        var abiItem = abi[i];
 
         // safety check
-        if (!val.type) {
+        if (!abiItem.type) {
             console.log('Unexpected ABI format')
             return
         }
 
-        switch (val.type) {
+        switch (abiItem.type) {
             case 'function':
-                doc.functions.push(this.generateFunctionForm(val))
+                var func = new Function(this.config.functions, abiItem)
+                this.doc.functions.push(func)
                 break;
             case 'event':
-                doc.events.push(this.generateEventForm(val))
+                var ev = new Event(this.config.events, abi, abiItem)
+                this.doc.events.push(ev)
                 break;
             case 'constructor':
                 // contructors are not accessible
                 break;
             default:
-                console.log('Unknown field type', val.name, val.type)
+                console.log('Unknown field type', abiItem.name, abiItem.type)
         }
     }
 
-    return doc
+    return this.doc
 }
 
-AbiHtml.prototype.generateFunctionForm = function(abiItem) {
+/*
+
+
+
+
+*/
+
+
+var Function = function(config, abiItem) {
+    if (abiItem.type != 'function') return
+    this.abiItem = abiItem
+    this.config = this.applyMissingDefaults(config)
+
+}
+
+Function.prototype.applyMissingDefaults = function(userConfig) {
+    var defaultConfig = {
+        inputFieldsetName: "Inputs",
+        inputScaffolding: function() {
+
+        },
+
+        outputIdPrefex: "out",
+        outputFieldsetName: "Outputs",
+        outputScaffolding: function() {
+
+        },
+
+        callButtonText: "Call",
+        callIdAffix: "call",
+        callButtonText: "Call",
+        callScaffolding: function() {
+
+        },
+        callFunction: function(ev) {
+            console.log(ev.target.id)
+        },
+
+        transactButtonText: "Transact",
+        transactIdAffix: "transact",
+        transactScaffolding: function() {
+
+        },
+        transactFunction: function(ev) {
+            console.log(ev.target.id)
+        },
+
+        renderCallback: function(htmlDom) {
+            console.log('Got DOM', htmlDom)
+        }
+    }
+
+    // safety check
+    if (!userConfig) userConfig = {}
+
+    // apply default config to missing user config
+    for (var k in defaultConfig) {
+        if (!userConfig.hasOwnProperty(k))
+            userConfig[k] = defaultConfig[k]
+    }
+
+    return userConfig
+}
+
+Function.prototype.generateHtml = function() {
+    var abiItem = this.abiItem
+
     var div = document.createElement('div')
     div.className = ['border', 'function'].join(' ')
     div.id = 'function' + abiItem.name
@@ -178,9 +215,9 @@ AbiHtml.prototype.generateFunctionForm = function(abiItem) {
         var fsi = document.createElement('fieldset')
         fsi.className = 'input';
 
-        if (this.properties.inputFieldsetName.length > 0) {
+        if (this.config.inputFieldsetName.length > 0) {
             var leg = document.createElement('legend');
-            leg.innerHTML = this.properties.inputFieldsetName;
+            leg.innerHTML = this.config.inputFieldsetName;
             fsi.appendChild(leg);
         }
 
@@ -196,9 +233,9 @@ AbiHtml.prototype.generateFunctionForm = function(abiItem) {
         var fso = document.createElement('fieldset')
         fso.className = 'output';
 
-        if (this.properties.outputFieldsetName.length > 0) {
+        if (this.config.outputFieldsetName.length > 0) {
             var leg = document.createElement('legend');
-            leg.innerHTML = this.properties.outputFieldsetName;
+            leg.innerHTML = this.config.outputFieldsetName;
             fso.appendChild(leg);
         }
 
@@ -209,41 +246,10 @@ AbiHtml.prototype.generateFunctionForm = function(abiItem) {
         div.appendChild(fso);
     }
 
-    return div;
+    this.config.renderCallback(div);
 }
 
-AbiHtml.prototype.generateEventForm = function(abiItem) {
-    var div = document.createElement('div');
-    div.className = ['border', 'event'].join(' ');
-    div.id = 'event' + abiItem.name;
-
-    var h3 = document.createElement('h3');
-    h3.innerHTML = this.properties.eventFieldsetName
-    div.appendChild(h3);
-
-    var fields = this.makeInputs(abiItem, false);
-    if (fields.length > 0) {
-
-        var fsi = document.createElement('fieldset')
-        fsi.className = 'event';
-
-        if (this.properties.eventFieldsetName.length > 0) {
-            var leg = document.createElement('legend');
-            leg.innerHTML = abiItem.name;
-            fsi.appendChild(leg);
-        }
-
-        fields.forEach(function(field) {
-            fsi.appendChild(field);
-        });
-
-        div.appendChild(fsi);
-    }
-
-    return div;
-}
-
-AbiHtml.prototype.makeInputs = function(abiItem, isEditable) {
+Function.prototype.makeInputs = function(abiItem, isEditable) {
     var results = [];
     var sol = new SolHtml();
 
@@ -258,7 +264,7 @@ AbiHtml.prototype.makeInputs = function(abiItem, isEditable) {
     return results
 }
 
-AbiHtml.prototype.makeOutputs = function(abiItem, isEditable) {
+Function.prototype.makeOutputs = function(abiItem, isEditable) {
     var results = [];
     var sol = new SolHtml();
 
@@ -273,25 +279,183 @@ AbiHtml.prototype.makeOutputs = function(abiItem, isEditable) {
     return results
 }
 
-AbiHtml.prototype.makeHtmlCall = function(abiItem) {
+Function.prototype.makeHtmlCall = function(abiItem) {
     var btn = document.createElement('button')
     btn.type = 'button'
-    btn.id = [abiItem.name, this.properties.callIdAffix].join(this.properties.idJoinString)
-    btn.innerHTML = this.properties.callButtonText
-    btn.addEventListener('click', this.properties.callFunction)
+    btn.id = [abiItem.name, this.config.callIdAffix].join(this.config.idJoinString)
+    btn.innerHTML = this.config.callButtonText
+    btn.addEventListener('click', this.config.callFunction)
     return btn
 }
 
-AbiHtml.prototype.makeHtmlTransact = function(abiItem) {
+Function.prototype.makeHtmlTransact = function(abiItem) {
     var btn = document.createElement('button')
     btn.type = 'button'
-    btn.id = [abiItem.name, this.properties.transactIdAffix].join(this.properties.idJoinString)
-    btn.innerHTML = this.properties.transactButtonText
-    btn.addEventListener('click', this.properties.transactFunction)
+    btn.id = [abiItem.name, this.config.transactIdAffix].join(this.config.idJoinString)
+    btn.innerHTML = this.config.transactButtonText
+    btn.addEventListener('click', this.config.transactFunction)
     return btn
-};
+}
+
 
 /*
+
+
+
+
+
+*/
+
+
+var Event = function(config, abi, abiItem) {
+    if (abiItem.type != 'event') return;
+    this.abi = abi
+    this.abiItem = abiItem
+    this.config = this.applyMissingDefaults(config)
+}
+
+
+Event.prototype.applyMissingDefaults = function(userConfig) {
+    var defaultConfig = {
+        idJoinString: "-",
+
+        inputIdPrefix: "in",
+        inputFieldsetName: "Inputs",
+        inputScaffolding: function() {
+
+        },
+
+        outputFieldsetName: "Outputs",
+        outputScaffolding: function() {
+
+        },
+        eventFieldsetName: "Events",
+        renderCallback: function(err, results, htmlDom) {
+
+        },
+        watchCallback: function(err, results, htmlDom) {
+            if (err)
+                console.log(err)
+            else {
+                console.log('Heard event', results)
+            }
+        },
+    }
+
+    // safety check
+    if (!userConfig) userConfig = {}
+
+    // apply default config to missing user config
+    for (var k in defaultConfig) {
+        if (!userConfig.hasOwnProperty(k))
+            userConfig[k] = defaultConfig[k]
+    }
+
+    return userConfig
+}
+
+Event.prototype.watch = function(address, filterFields) {
+    var params = [];
+
+    if (!filterFields)
+        params.push({});
+
+    // set transaction options to only watch for newly mined
+    var options = {
+        fromBlock: 'latest',
+        toBlock: 'latest',
+        address: address
+    }
+    params.push(options)
+
+    // get instance of contract
+    var contract = web3.eth.contract(this.abi).at(address);
+    // get function as object
+    var func = contract[this.abiItem.name];
+
+    // call the contract storing result
+    this.filter = func.apply(func, params);
+
+    if (this.filter) {
+        console.log('Watching for event', this.abiItem.name, 'at address', address)
+
+        var that = this
+        this.filter.watch(function(err, results) {
+            console.log('saw event')
+            var doc = that.generateHtml(err, results)
+            that.config.watchCallback(err, results, doc)
+        })
+    }
+}
+
+Event.prototype.generateHtml = function(err, results) {
+    var div = document.createElement('div');
+    div.className = ['border', 'event'].join(' ');
+    div.id = 'event' + this.abiItem.name;
+
+    var h3 = document.createElement('h3');
+    h3.innerHTML = this.config.eventFieldsetName
+    div.appendChild(h3);
+
+    var fields = this.makeInputs(this.abiItem, false);
+    // fields.selector('input[i]').value = results.args.value
+    // fields.selector('input[i]').address = results.args.address
+    if (fields.length > 0) {
+
+        var fsi = document.createElement('fieldset')
+        fsi.className = 'event';
+
+        if (this.config.eventFieldsetName.length > 0) {
+            var leg = document.createElement('legend');
+            leg.innerHTML = this.abiItem.name;
+            fsi.appendChild(leg);
+        }
+
+        fields.forEach(function(field) {
+            fsi.appendChild(field);
+        });
+
+        div.appendChild(fsi);
+    }
+
+    if (this.config.renderCallback)
+        this.config.renderCallback(err, results, div)
+
+    return div
+}
+
+Event.prototype.makeInputs = function(abiItem, isEditable) {
+    var results = [];
+    var sol = new SolHtml();
+
+    for (var i = 0; i < abiItem.inputs.length; i++) {
+        var field = abiItem.inputs[i]
+        var html = sol.makeField(field, isEditable)
+        html.forEach(function(el) {
+            results.push(el);
+        })
+    }
+
+    return results
+}
+
+// Event.prototype.makeOutputs = function(abiItem, isEditable) {
+//     var results = [];
+//     var sol = new SolHtml();
+
+//     for (var i = 0; i < abiItem.outputs.length; i++) {
+//         var field = abiItem.outputs[i]
+//         var html = sol.makeField(field, isEditable)
+//         html.forEach(function(el) {
+//             results.push(el);
+//         })
+//     }
+
+//     return results
+// }
+
+/*
+
 
 
 
@@ -315,25 +479,26 @@ SolHtml.prototype.splitType = function(solidityType) {
     }
 }
 
-SolHtml.prototype.makeField = function(field, isEditable) {
+SolHtml.prototype.makeField = function(field, isEditable, value) {
     var html = [];
+    if (!value) var value = ""
 
     var solType = this.splitType(field)
     field.solType = solType;
     switch (solType.base) {
         case 'bool':
-            html = this.makeBool(field, isEditable)
+            html = this.makeBool(field, isEditable, value)
             break
         case 'address':
-            html = this.makeAddress(field, isEditable)
+            html = this.makeAddress(field, isEditable, value)
             break
         case 'string':
         case 'bytes':
-            html = this.makeBytes(field, isEditable)
+            html = this.makeBytes(field, isEditable, value)
             break
         case 'int':
         case 'uint':
-            html = this.makeInt(field, isEditable)
+            html = this.makeInt(field, isEditable, value)
             break
         default:
             console.log('unknown field type:', field.name, solType.base, solType.size)
@@ -341,7 +506,7 @@ SolHtml.prototype.makeField = function(field, isEditable) {
     return html;
 }
 
-SolHtml.prototype.makeBool = function(field, isEditable) {
+SolHtml.prototype.makeBool = function(field, isEditable, value) {
     var div = document.createElement('div');
     div.className = field.solType.base
     if (field.solType.size)
@@ -370,7 +535,7 @@ SolHtml.prototype.makeBool = function(field, isEditable) {
     return [div];
 };
 
-SolHtml.prototype.makeAddress = function(field, isEditable) {
+SolHtml.prototype.makeAddress = function(field, isEditable, value) {
     var div = document.createElement('div');
     div.className = field.solType.base
     if (field.solType.size)
@@ -399,7 +564,7 @@ SolHtml.prototype.makeAddress = function(field, isEditable) {
     return [div];
 }
 
-SolHtml.prototype.makeBytes = function(field, isEditable) {
+SolHtml.prototype.makeBytes = function(field, isEditable, value) {
     var div = document.createElement('div');
     div.className = field.solType.base
     if (field.solType.size)
@@ -428,7 +593,7 @@ SolHtml.prototype.makeBytes = function(field, isEditable) {
     return [div];
 }
 
-SolHtml.prototype.makeInt = function(field, isEditable) {
+SolHtml.prototype.makeInt = function(field, isEditable, value) {
     var div = document.createElement('div');
     div.className = field.solType.base
     if (field.solType.size)
