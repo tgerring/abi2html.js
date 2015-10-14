@@ -127,23 +127,53 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
 
         inputIdPrefix: "func-in",
         inputFieldsetName: "Inputs",
-        inputScaffolding: function() {
+        inputScaffolding: function(fieldsIn) {
+            if (fieldsIn.length > 0) {
+                var fsi = document.createElement('fieldset')
+                fsi.className = 'input';
 
+                if (this.inputFieldsetName.length > 0) {
+                    var leg = document.createElement('legend');
+                    leg.innerHTML = this.inputFieldsetName;
+                    fsi.appendChild(leg);
+                }
+            }
+            fieldsIn.forEach(function(field) {
+                fsi.appendChild(field)
+            })
+            return fsi
         },
 
         outputIdPrefex: "func-out",
         outputFieldsetName: "Outputs",
         outputEmptyName: "return",
+        outputScaffolding: function(fieldsOut) {
+            if (fieldsOut.length > 0) {
+                var fso = document.createElement('fieldset')
+                fso.className = 'output';
 
-        outputScaffolding: function() {
-
+                if (this.outputFieldsetName.length > 0) {
+                    var leg = document.createElement('legend');
+                    leg.innerHTML = this.outputFieldsetName;
+                    fso.appendChild(leg);
+                }
+            }
+            fieldsOut.forEach(function(field) {
+                fso.appendChild(field);
+            })
+            return fso
         },
 
         callButtonText: "Call",
         callIdAffix: "call",
         callButtonText: "Call",
-        callScaffolding: function() {
-
+        callScaffolding: function(abiItem) {
+            var btn = document.createElement('button')
+            btn.type = 'button'
+            btn.id = [abiItem.name, this.callIdAffix].join(this.idJoinString)
+            btn.innerHTML = this.callButtonText
+            btn.addEventListener('click', this.callFunction)
+            return btn
         },
         callFunction: function(ev) {
             console.log(ev.target.id)
@@ -151,13 +181,17 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
 
         transactButtonText: "Transact",
         transactIdAffix: "transact",
-        transactScaffolding: function() {
-
+        transactScaffolding: function(abiItem) {
+            var btn = document.createElement('button')
+            btn.type = 'button'
+            btn.id = [abiItem.name, this.transactIdAffix].join(this.idJoinString)
+            btn.innerHTML = this.transactButtonText
+            btn.addEventListener('click', this.transactFunction)
+            return btn
         },
         transactFunction: function(ev) {
             console.log(ev.target.id)
         },
-
         renderCallback: function(htmlDom) {
             console.log('Got DOM', htmlDom)
         }
@@ -187,100 +221,31 @@ Function.prototype.generateHtml = function() {
     div.appendChild(h3)
 
     // Call button is only useful when there is a return value
-    if (abiItem.outputs.length > 0) {
-        var btn = this.makeHtmlCall(abiItem)
-        div.appendChild(btn)
-    }
+    if (abiItem.outputs.length > 0)
+        div.appendChild(this.config.callScaffolding(abiItem))
 
     // Transact button available when not constant (constant functions cannot modify state)
-    if (!abiItem.constant) {
-        var btn = this.makeHtmlTransact(abiItem)
-        div.appendChild(btn)
-    }
+    if (!abiItem.constant)
+        div.appendChild(this.config.transactScaffolding(abiItem))
 
-    var inputFields = this.makeInputs(abiItem, true)
-    if (inputFields.length > 0) {
-        var fsi = document.createElement('fieldset')
-        fsi.className = 'input';
-
-        if (this.config.inputFieldsetName.length > 0) {
-            var leg = document.createElement('legend');
-            leg.innerHTML = this.config.inputFieldsetName;
-            fsi.appendChild(leg);
-        }
-
-        inputFields.forEach(function(field) {
-            fsi.appendChild(field);
-        });
-
-        div.appendChild(fsi);
-    }
-
-    var fieldsOut = this.makeOutputs(abiItem, false);
-    if (fieldsOut.length > 0) {
-        var fso = document.createElement('fieldset')
-        fso.className = 'output';
-
-        if (this.config.outputFieldsetName.length > 0) {
-            var leg = document.createElement('legend');
-            leg.innerHTML = this.config.outputFieldsetName;
-            fso.appendChild(leg);
-        }
-
-        fieldsOut.forEach(function(field) {
-            fso.appendChild(field);
-        });
-
-        div.appendChild(fso);
-    }
-
-    this.config.renderCallback(div);
-}
-
-Function.prototype.makeInputs = function(abiItem, isEditable, value) {
-    var dom = [];
-
+    // Make inputs
     for (var i = 0; i < abiItem.inputs.length; i++) {
-        var field = abiItem.inputs[i]
-        var html = this.makeField(field, isEditable)
-        html.forEach(function(el) {
-            dom.push(el);
-        })
+        var inDom = this.makeField(abiItem.inputs[i], true)
     }
+    if (inDom)
+        div.appendChild(this.config.inputScaffolding(inDom));
 
-    return dom
-}
 
-Function.prototype.makeOutputs = function(abiItem, isEditable, value) {
-    var dom = [];
-
+    // Make outputs
     for (var i = 0; i < abiItem.outputs.length; i++) {
-        var field = abiItem.outputs[i]
-        var html = this.makeField(field, isEditable)
-        html.forEach(function(el) {
-            dom.push(el);
-        })
+        var outDom = this.makeField(abiItem.outputs[i], false)
     }
+    if (outDom)
+        div.appendChild(this.config.outputScaffolding(outDom));
 
-    return dom
-}
-
-Function.prototype.makeHtmlCall = function(abiItem) {
-    var btn = document.createElement('button')
-    btn.type = 'button'
-    btn.id = [abiItem.name, this.config.callIdAffix].join(this.config.idJoinString)
-    btn.innerHTML = this.config.callButtonText
-    btn.addEventListener('click', this.config.callFunction)
-    return btn
-}
-
-Function.prototype.makeHtmlTransact = function(abiItem) {
-    var btn = document.createElement('button')
-    btn.type = 'button'
-    btn.id = [abiItem.name, this.config.transactIdAffix].join(this.config.idJoinString)
-    btn.innerHTML = this.config.transactButtonText
-    btn.addEventListener('click', this.config.transactFunction)
-    return btn
+    // callback if available
+    // if (typeof this.config.renderCallback === "function")
+    this.config.renderCallback(div);
 }
 
 Function.prototype.splitType = function(solidityType) {
@@ -336,7 +301,10 @@ Function.prototype.makeBool = function(field, isEditable) {
 
     var input = document.createElement('input');
     input.id = field.htmlId;
-    input.type = 'checkbox';
+    if (!!isEditable)
+        input.type = 'checkbox'
+    else
+        input.type = 'text'
     input.className = div.className
     if (!isEditable) {
         input.className = [div.className, 'readonly'].join(' ')

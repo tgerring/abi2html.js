@@ -52,7 +52,7 @@
     window.onload = function() {
         // dev doce block for testing outside Mist
         if (!web3.currentProvider)
-            web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8548'));
+            web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'));
 
         try {
             web3.eth.accounts;
