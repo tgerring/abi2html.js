@@ -70,12 +70,11 @@
 
         // Instantiate library with abi and optional properties
         var abihtml = new AbiHtml(abiString, properties);
-        // Generate DOM
-        var doc = abihtml.generateDocument();
-        doc.functions.forEach(function(func) {
+
+        abihtml.functions.forEach(function(func) {
             func.generateHtml()
         })
-        doc.events.forEach(function(ev) {
+        abihtml.events.forEach(function(ev) {
             ev.watch(address)
                 // ev.generateHtml()
         })

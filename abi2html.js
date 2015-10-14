@@ -5,20 +5,16 @@ var AbiHtml = function(abiString, config) {
     if (!config) config = {}
     this.config = this.applyMissingDefaults(config)
 
+    this.functions = []
+    this.events = []
     this.abi = []
     this.abi = this.loadAbi(abiString);
 
-    this.doc = {}
 }
 
 AbiHtml.prototype.applyMissingDefaults = function(userConfig) {
     // define default values here
     var defaultConfig = {
-        idJoinString: "-",
-        inputIdPrefix: "in",
-        outputIdPrefex: "out",
-        outputEmptyName: "return",
-
         function: {},
         event: {}
     }
@@ -53,46 +49,6 @@ AbiHtml.prototype.loadAbi = function(abiString) {
     for (var i = 0; i < abi.length; i++) {
         var abiItem = abi[i];
 
-        // generate internal representation of inputs
-        if ("inputs" in abiItem)
-            for (var j = 0; j < abiItem.inputs.length; j++) {
-                var param = abiItem.inputs[j];
-
-                if (this.config.inputIdPrefix.length > 0)
-                    param.htmlId = [abiItem.name, this.config.inputIdPrefix, param.name].join(this.config.idJoinString)
-                else
-                    param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
-            }
-
-        // generate internal representation of outputs
-        if ("outputs" in abiItem)
-            for (var k = 0; k < abiItem.outputs.length; k++) {
-                var param = abiItem.outputs[k];
-
-                if (param.name.length < 1)
-                    param.name = this.config.outputEmptyName
-
-                if (this.config.outputIdPrefex.length > 0)
-                    param.htmlId = [abiItem.name, this.config.outputIdPrefex, param.name].join(this.config.idJoinString)
-                else
-                    param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
-            }
-
-    }
-
-    return abi
-}
-
-AbiHtml.prototype.generateDocument = function() {
-    var abi = this.abi;
-    this.doc = {
-        functions: [],
-        events: []
-    }
-
-    for (var i = 0; i < abi.length; i++) {
-        var abiItem = abi[i];
-
         // safety check
         if (!abiItem.type) {
             console.log('Unexpected ABI format')
@@ -102,11 +58,11 @@ AbiHtml.prototype.generateDocument = function() {
         switch (abiItem.type) {
             case 'function':
                 var func = new Function(this.config.functions, abiItem)
-                this.doc.functions.push(func)
+                this.functions.push(func)
                 break;
             case 'event':
                 var ev = new Event(this.config.events, abi, abiItem)
-                this.doc.events.push(ev)
+                this.events.push(ev)
                 break;
             case 'constructor':
                 // contructors are not accessible
@@ -114,9 +70,10 @@ AbiHtml.prototype.generateDocument = function() {
             default:
                 console.log('Unknown field type', abiItem.name, abiItem.type)
         }
+
     }
 
-    return this.doc
+    return abi
 }
 
 /*
@@ -129,20 +86,55 @@ AbiHtml.prototype.generateDocument = function() {
 
 var Function = function(config, abiItem) {
     if (abiItem.type != 'function') return
-    this.abiItem = abiItem
     this.config = this.applyMissingDefaults(config)
+
+    // generate internal representation of inputs
+    if ("inputs" in abiItem) {
+        {
+            for (var j = 0; j < abiItem.inputs.length; j++) {
+                var param = abiItem.inputs[j];
+
+                if (this.config.inputIdPrefix.length > 0)
+                    param.htmlId = [this.config.inputIdPrefix, abiItem.name, param.name].join(this.config.idJoinString)
+                else
+                    param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
+            }
+        }
+    }
+
+    // generate internal representation of outputs
+    if ("outputs" in abiItem) {
+        for (var k = 0; k < abiItem.outputs.length; k++) {
+            var param = abiItem.outputs[k];
+
+            if (param.name.length < 1)
+                param.name = this.config.outputEmptyName
+
+            if (this.config.outputIdPrefex.length > 0)
+                param.htmlId = [this.config.outputIdPrefex, abiItem.name, param.name].join(this.config.idJoinString)
+            else
+                param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
+        }
+    }
+
+    this.abiItem = abiItem
 
 }
 
 Function.prototype.applyMissingDefaults = function(userConfig) {
     var defaultConfig = {
+        idJoinString: "-",
+
+        inputIdPrefix: "func-in",
         inputFieldsetName: "Inputs",
         inputScaffolding: function() {
 
         },
 
-        outputIdPrefex: "out",
+        outputIdPrefex: "func-out",
         outputFieldsetName: "Outputs",
+        outputEmptyName: "return",
+
         outputScaffolding: function() {
 
         },
@@ -446,9 +438,23 @@ Function.prototype.makeInt = function(field, isEditable) {
 
 var Event = function(config, abi, abiItem) {
     if (abiItem.type != 'event') return;
-    this.abi = abi
     this.abiItem = abiItem
     this.config = this.applyMissingDefaults(config)
+
+    // generate internal representation of inputs
+    if ("inputs" in abiItem) {
+        for (var j = 0; j < abiItem.inputs.length; j++) {
+            var param = abiItem.inputs[j];
+
+            if (this.config.eventIdPrefix.length > 0)
+                param.htmlId = [this.config.eventIdPrefix, abiItem.name, param.name].join(this.config.idJoinString)
+            else
+                param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
+        }
+    }
+
+    this.abi = abi
+
 }
 
 
@@ -456,17 +462,11 @@ Event.prototype.applyMissingDefaults = function(userConfig) {
     var defaultConfig = {
         idJoinString: "-",
 
-        inputIdPrefix: "in",
-        inputFieldsetName: "Inputs",
-        inputScaffolding: function() {
-
-        },
-
-        outputFieldsetName: "Outputs",
-        outputScaffolding: function() {
-
-        },
+        eventIdPrefix: "event",
         eventFieldsetName: "Events",
+        eventScaffolding: function() {
+
+        },
         renderCallback: function(err, results, htmlDom) {
             console.log(htmlDom)
         },
