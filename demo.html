@@ -49,24 +49,16 @@
         }
     }
 
-    var connectInstance = function(ip, port) {
-        if (!ip) ip = '127.0.0.1'
-        if (!port) port = '8545'
-
+    window.onload = function() {
+        // dev doce block for testing outside Mist
         if (!web3.currentProvider)
-            web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port));
+            web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8548'));
 
         try {
             web3.eth.accounts;
         } catch (e) {
             console.log('Could not connect to instance')
-            return false
         }
-        return true
-    }
-
-    window.onload = function() {
-        connectInstance()
 
         // Instantiate library with abi and optional properties
         var abihtml = new AbiHtml(abiString, properties);
@@ -74,6 +66,7 @@
         abihtml.functions.forEach(function(func) {
             func.generateHtml()
         })
+
         abihtml.events.forEach(function(ev) {
             ev.watch(address)
                 // ev.generateHtml()
