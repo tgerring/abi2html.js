@@ -17,6 +17,17 @@
     // Settable properties to override default behavior
     var properties = {
         events: {
+            watchCallback: function(err, results, htmlDoc) {
+                if (err) {
+                    var p = document.createElement('p')
+                    p.innerHTML = err
+                    p.className = 'warning'
+                    document.getElementById('events').appendChild(p)
+                } else {
+                    console.log(results)
+                    document.getElementById('events').appendChild(htmlDoc)
+                }
+            },
             renderCallback: function(err, results, htmlDoc) {
                 if (err)
                     alert(err)
@@ -65,8 +76,8 @@
             func.generateHtml()
         })
         doc.events.forEach(function(ev) {
-            // ev.watch(address)
-            ev.generateHtml()
+            ev.watch(address)
+                // ev.generateHtml()
         })
     }
 

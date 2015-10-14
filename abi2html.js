@@ -62,8 +62,6 @@ AbiHtml.prototype.loadAbi = function(abiString) {
                     param.htmlId = [abiItem.name, this.config.inputIdPrefix, param.name].join(this.config.idJoinString)
                 else
                     param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
-
-                // console.log(abiItem.name, param)
             }
 
         // generate internal representation of outputs
@@ -78,8 +76,6 @@ AbiHtml.prototype.loadAbi = function(abiString) {
                     param.htmlId = [abiItem.name, this.config.outputIdPrefex, param.name].join(this.config.idJoinString)
                 else
                     param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
-
-                // console.log(abiItem.name, param)
             }
 
     }
@@ -249,34 +245,32 @@ Function.prototype.generateHtml = function() {
     this.config.renderCallback(div);
 }
 
-Function.prototype.makeInputs = function(abiItem, isEditable) {
-    var results = [];
-    var sol = new SolHtml();
+Function.prototype.makeInputs = function(abiItem, isEditable, value) {
+    var dom = [];
 
     for (var i = 0; i < abiItem.inputs.length; i++) {
         var field = abiItem.inputs[i]
-        var html = sol.makeField(field, isEditable)
+        var html = this.makeField(field, isEditable)
         html.forEach(function(el) {
-            results.push(el);
+            dom.push(el);
         })
     }
 
-    return results
+    return dom
 }
 
-Function.prototype.makeOutputs = function(abiItem, isEditable) {
-    var results = [];
-    var sol = new SolHtml();
+Function.prototype.makeOutputs = function(abiItem, isEditable, value) {
+    var dom = [];
 
     for (var i = 0; i < abiItem.outputs.length; i++) {
         var field = abiItem.outputs[i]
-        var html = sol.makeField(field, isEditable)
+        var html = this.makeField(field, isEditable)
         html.forEach(function(el) {
-            results.push(el);
+            dom.push(el);
         })
     }
 
-    return results
+    return dom
 }
 
 Function.prototype.makeHtmlCall = function(abiItem) {
@@ -297,6 +291,149 @@ Function.prototype.makeHtmlTransact = function(abiItem) {
     return btn
 }
 
+Function.prototype.splitType = function(solidityType) {
+    var firstDigit = solidityType.type.match(/\d/);
+    if (firstDigit === null) {
+        return {
+            base: solidityType.type,
+            size: null
+        }
+    }
+    var index = solidityType.type.indexOf(firstDigit);
+    return {
+        base: solidityType.type.substring(0, index),
+        size: solidityType.type.substring(index, solidityType.length)
+    }
+}
+
+Function.prototype.makeField = function(field, isEditable) {
+    var html = [];
+
+    var solType = this.splitType(field)
+    field.solType = solType;
+    switch (solType.base) {
+        case 'bool':
+            html = this.makeBool(field, isEditable)
+            break
+        case 'address':
+            html = this.makeAddress(field, isEditable)
+            break
+        case 'string':
+        case 'bytes':
+            html = this.makeBytes(field, isEditable)
+            break
+        case 'int':
+        case 'uint':
+            html = this.makeInt(field, isEditable)
+            break
+        default:
+            console.log('unknown field type:', field.name, solType.base, solType.size)
+    }
+    return html;
+}
+
+Function.prototype.makeBool = function(field, isEditable) {
+    var div = document.createElement('div');
+    div.className = field.solType.base
+    if (field.solType.size)
+        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
+
+    var label = document.createElement('label');
+    label.htmlFor = field.htmlId;
+    label.innerHTML = field.name;
+
+    var input = document.createElement('input');
+    input.id = field.htmlId;
+    input.type = 'checkbox';
+    input.className = div.className
+    if (!isEditable) {
+        input.className = [div.className, 'readonly'].join(' ')
+        input.readOnly = true;
+    }
+
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
+};
+
+Function.prototype.makeAddress = function(field, isEditable) {
+    var div = document.createElement('div');
+    div.className = field.solType.base
+    if (field.solType.size)
+        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
+
+    var label = document.createElement('label');
+    label.htmlFor = field.htmlId;
+    label.innerHTML = field.name;
+
+    var input = document.createElement('input');
+    input.id = field.htmlId;
+    input.type = 'text';
+    input.className = div.className
+
+    if (!isEditable) {
+        input.className = [div.className, 'readonly'].join(' ')
+        input.readOnly = true;
+    }
+
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
+}
+
+Function.prototype.makeBytes = function(field, isEditable) {
+    var div = document.createElement('div');
+    div.className = field.solType.base
+    if (field.solType.size)
+        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
+
+    var label = document.createElement('label');
+    label.htmlFor = field.htmlId;
+    label.innerHTML = field.name;
+
+    var input = document.createElement('input');
+    input.id = field.htmlId;
+    input.type = 'text';
+    input.className = div.className
+
+    if (!isEditable) {
+        input.className = [div.className, 'readonly'].join(' ')
+        input.readOnly = true;
+    }
+
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
+}
+
+Function.prototype.makeInt = function(field, isEditable) {
+    var div = document.createElement('div');
+    div.className = field.solType.base
+    if (field.solType.size)
+        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
+
+    var label = document.createElement('label');
+    label.htmlFor = field.htmlId;
+    label.innerHTML = field.name;
+
+    var input = document.createElement('input');
+    input.id = field.htmlId;
+    input.type = 'number';
+    input.className = div.className
+
+    if (!isEditable) {
+        input.className = [div.className, 'readonly'].join(' ')
+        input.readOnly = true;
+    }
+
+    div.appendChild(label)
+    div.appendChild(input)
+
+    return [div];
+}
 
 /*
 
@@ -331,7 +468,7 @@ Event.prototype.applyMissingDefaults = function(userConfig) {
         },
         eventFieldsetName: "Events",
         renderCallback: function(err, results, htmlDom) {
-
+            console.log(htmlDom)
         },
         watchCallback: function(err, results, htmlDom) {
             if (err)
@@ -377,11 +514,8 @@ Event.prototype.watch = function(address, filterFields) {
     this.filter = func.apply(func, params);
 
     if (this.filter) {
-        console.log('Watching for event', this.abiItem.name, 'at address', address)
-
         var that = this
         this.filter.watch(function(err, results) {
-            console.log('saw event')
             var doc = that.generateHtml(err, results)
             that.config.watchCallback(err, results, doc)
         })
@@ -389,6 +523,7 @@ Event.prototype.watch = function(address, filterFields) {
 }
 
 Event.prototype.generateHtml = function(err, results) {
+    this.abiItem.name
     var div = document.createElement('div');
     div.className = ['border', 'event'].join(' ');
     div.id = 'event' + this.abiItem.name;
@@ -397,9 +532,7 @@ Event.prototype.generateHtml = function(err, results) {
     h3.innerHTML = this.config.eventFieldsetName
     div.appendChild(h3);
 
-    var fields = this.makeInputs(this.abiItem, false);
-    // fields.selector('input[i]').value = results.args.value
-    // fields.selector('input[i]').address = results.args.address
+    var fields = this.makeEvent(false, results);
     if (fields.length > 0) {
 
         var fsi = document.createElement('fieldset')
@@ -418,206 +551,50 @@ Event.prototype.generateHtml = function(err, results) {
         div.appendChild(fsi);
     }
 
+    var p = document.createElement('p')
+    p.innerHTML = 'Transaction Hash: ' + results.transactionHash
+    div.appendChild(p)
+
     if (this.config.renderCallback)
         this.config.renderCallback(err, results, div)
 
     return div
 }
 
-Event.prototype.makeInputs = function(abiItem, isEditable) {
-    var results = [];
-    var sol = new SolHtml();
-
-    for (var i = 0; i < abiItem.inputs.length; i++) {
-        var field = abiItem.inputs[i]
-        var html = sol.makeField(field, isEditable)
+Event.prototype.makeEvent = function(isEditable, results) {
+    var dom = [];
+    for (var i = 0; i < this.abiItem.inputs.length; i++) {
+        var field = this.abiItem.inputs[i]
+        var html = this.makeText(field, results.args[this.abiItem.inputs[i].name])
         html.forEach(function(el) {
-            results.push(el);
+            dom.push(el);
         })
     }
 
-    return results
+    return dom
 }
 
-// Event.prototype.makeOutputs = function(abiItem, isEditable) {
-//     var results = [];
-//     var sol = new SolHtml();
-
-//     for (var i = 0; i < abiItem.outputs.length; i++) {
-//         var field = abiItem.outputs[i]
-//         var html = sol.makeField(field, isEditable)
-//         html.forEach(function(el) {
-//             results.push(el);
-//         })
-//     }
-
-//     return results
-// }
-
-/*
 
 
-
-
-
-*/
-
-var SolHtml = function() {}
-
-SolHtml.prototype.splitType = function(solidityType) {
-    var firstDigit = solidityType.type.match(/\d/);
-    if (firstDigit === null) {
-        return {
-            base: solidityType.type,
-            size: null
-        }
-    }
-    var index = solidityType.type.indexOf(firstDigit);
-    return {
-        base: solidityType.type.substring(0, index),
-        size: solidityType.type.substring(index, solidityType.length)
-    }
-}
-
-SolHtml.prototype.makeField = function(field, isEditable, value) {
-    var html = [];
-    if (!value) var value = ""
-
-    var solType = this.splitType(field)
-    field.solType = solType;
-    switch (solType.base) {
-        case 'bool':
-            html = this.makeBool(field, isEditable, value)
-            break
-        case 'address':
-            html = this.makeAddress(field, isEditable, value)
-            break
-        case 'string':
-        case 'bytes':
-            html = this.makeBytes(field, isEditable, value)
-            break
-        case 'int':
-        case 'uint':
-            html = this.makeInt(field, isEditable, value)
-            break
-        default:
-            console.log('unknown field type:', field.name, solType.base, solType.size)
-    }
-    return html;
-}
-
-SolHtml.prototype.makeBool = function(field, isEditable, value) {
+Event.prototype.makeText = function(field, value) {
     var div = document.createElement('div');
-    div.className = field.solType.base
-    if (field.solType.size)
-        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
+    // div.className = field.solType.base
+    // if (field.solType.size)
+    //     div.className = [div.className, field.solType.base + field.solType.size].join(' ')
 
     var label = document.createElement('label');
     label.htmlFor = field.htmlId;
     label.innerHTML = field.name;
 
-    if (!!isEditable) {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'checkbox';
-        input.className = div.className
-    } else {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'text';
-        input.className = [div.className, 'readonly'].join(' ')
-        input.readOnly = true;
-    }
-
-    div.appendChild(label)
-    div.appendChild(input)
-
-    return [div];
-};
-
-SolHtml.prototype.makeAddress = function(field, isEditable, value) {
-    var div = document.createElement('div');
-    div.className = field.solType.base
-    if (field.solType.size)
-        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
-
-    var label = document.createElement('label');
-    label.htmlFor = field.htmlId;
-    label.innerHTML = field.name;
-
-    if (!!isEditable) {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'text';
-        input.className = div.className
-    } else {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'text';
-        input.className = [div.className, 'readonly'].join(' ')
-        input.readOnly = true;
-    }
+    var input = document.createElement('input');
+    input.id = field.htmlId;
+    input.type = 'text';
+    input.className = [div.className, 'readonly'].join(' ')
+    input.readOnly = true;
+    input.value = value
 
     div.appendChild(label)
     div.appendChild(input)
 
     return [div];
 }
-
-SolHtml.prototype.makeBytes = function(field, isEditable, value) {
-    var div = document.createElement('div');
-    div.className = field.solType.base
-    if (field.solType.size)
-        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
-
-    var label = document.createElement('label');
-    label.htmlFor = field.htmlId;
-    label.innerHTML = field.name;
-
-    if (!!isEditable) {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'text';
-        input.className = div.className
-    } else {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'text';
-        input.className = [div.className, 'readonly'].join(' ')
-        input.readOnly = true;
-    }
-
-    div.appendChild(label)
-    div.appendChild(input)
-
-    return [div];
-}
-
-SolHtml.prototype.makeInt = function(field, isEditable, value) {
-    var div = document.createElement('div');
-    div.className = field.solType.base
-    if (field.solType.size)
-        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
-
-    var label = document.createElement('label');
-    label.htmlFor = field.htmlId;
-    label.innerHTML = field.name;
-
-    if (!!isEditable) {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'number';
-        input.className = div.className
-    } else {
-        var input = document.createElement('input');
-        input.id = field.htmlId;
-        input.type = 'number';
-        input.className = [div.className, 'readonly'].join(' ')
-        input.readOnly = true;
-    }
-
-    div.appendChild(label)
-    div.appendChild(input)
-
-    return [div];
-};
