@@ -47,14 +47,18 @@ AbiHtml.prototype.loadAbi = function(abiString) {
 
     // loop through all abi items
     for (var i = 0; i < abi.length; i++) {
-        var abiItem = abi[i];
+        var abiItem = abi[i]
+        if ("inputs" in abiItem)
+            for (var j = 0; j < abiItem.inputs.length; j++) {
+                abiItem.inputs[j].solType = this.splitType(abiItem.inputs[j].type)
+            }
 
-        // safety check
-        if (!abiItem.type) {
-            console.log('Unexpected ABI format')
-            return
-        }
+        if ("outputs" in abiItem)
+            for (var j = 0; j < abiItem.outputs.length; j++) {
+                abiItem.outputs[j].solType = this.splitType(abiItem.outputs[j].type)
+            }
 
+        // console.log(abiItem)
         switch (abiItem.type) {
             case 'function':
                 var func = new Function(this.config.functions, abiItem)
@@ -70,10 +74,25 @@ AbiHtml.prototype.loadAbi = function(abiString) {
             default:
                 console.log('Unknown field type', abiItem.name, abiItem.type)
         }
-
     }
 
     return abi
+}
+
+
+AbiHtml.prototype.splitType = function(solidityType) {
+    var firstDigit = solidityType.match(/\d/);
+    if (firstDigit === null) {
+        return {
+            base: solidityType,
+            size: null
+        }
+    }
+    var index = solidityType.indexOf(firstDigit);
+    return {
+        base: solidityType.substring(0, index),
+        size: solidityType.substring(index, solidityType.length)
+    }
 }
 
 /*
@@ -90,15 +109,13 @@ var Function = function(config, abiItem) {
 
     // generate internal representation of inputs
     if ("inputs" in abiItem) {
-        {
-            for (var j = 0; j < abiItem.inputs.length; j++) {
-                var param = abiItem.inputs[j];
+        for (var j = 0; j < abiItem.inputs.length; j++) {
+            var param = abiItem.inputs[j];
 
-                if (this.config.inputIdPrefix.length > 0)
-                    param.htmlId = [this.config.inputIdPrefix, abiItem.name, param.name].join(this.config.idJoinString)
-                else
-                    param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
-            }
+            if (this.config.inputIdPrefix.length > 0)
+                param.htmlId = [this.config.inputIdPrefix, abiItem.name, param.name].join(this.config.idJoinString)
+            else
+                param.htmlId = [abiItem.name, param.name].join(this.config.idJoinString)
         }
     }
 
@@ -233,7 +250,7 @@ Function.prototype.generateHtml = function() {
         var inDom = this.makeField(abiItem.inputs[i], true)
     }
     if (inDom)
-        div.appendChild(this.config.inputScaffolding(inDom));
+        div.appendChild(this.config.inputScaffolding(inDom))
 
 
     // Make outputs
@@ -241,34 +258,16 @@ Function.prototype.generateHtml = function() {
         var outDom = this.makeField(abiItem.outputs[i], false)
     }
     if (outDom)
-        div.appendChild(this.config.outputScaffolding(outDom));
+        div.appendChild(this.config.outputScaffolding(outDom))
 
     // callback if available
     // if (typeof this.config.renderCallback === "function")
     this.config.renderCallback(div);
 }
 
-Function.prototype.splitType = function(solidityType) {
-    var firstDigit = solidityType.type.match(/\d/);
-    if (firstDigit === null) {
-        return {
-            base: solidityType.type,
-            size: null
-        }
-    }
-    var index = solidityType.type.indexOf(firstDigit);
-    return {
-        base: solidityType.type.substring(0, index),
-        size: solidityType.type.substring(index, solidityType.length)
-    }
-}
-
 Function.prototype.makeField = function(field, isEditable) {
-    var html = [];
-
-    var solType = this.splitType(field)
-    field.solType = solType;
-    switch (solType.base) {
+    var html = []
+    switch (field.solType.base) {
         case 'bool':
             html = this.makeBool(field, isEditable)
             break
@@ -353,9 +352,10 @@ Function.prototype.makeBytes = function(field, isEditable) {
     label.htmlFor = field.htmlId;
     label.innerHTML = field.name;
 
-    var input = document.createElement('input');
+    var input = document.createElement('textarea');
     input.id = field.htmlId;
-    input.type = 'text';
+    input.rows = 4
+    input.cols = 40
     input.className = div.className
 
     if (!isEditable) {
@@ -476,10 +476,9 @@ Event.prototype.watch = function(address, filterFields) {
     // get instance of contract
     var contract = web3.eth.contract(this.abi).at(address);
     // get function as object
-    var func = contract[this.abiItem.name];
-
-    // call the contract storing result
-    this.filter = func.apply(func, params);
+    var func = contract[this.abiItem.name]
+        // call the contract storing result
+    this.filter = func.apply(func, params)
 
     if (this.filter) {
         var that = this
@@ -500,7 +499,18 @@ Event.prototype.generateHtml = function(err, results) {
     h3.innerHTML = this.config.eventFieldsetName
     div.appendChild(h3);
 
-    var fields = this.makeEvent(false, results);
+    var fields = [];
+    for (var i = 0; i < this.abiItem.inputs.length; i++) {
+        var field = this.abiItem.inputs[i]
+        var v = null
+        if (results)
+            v = results.args[this.abiItem.inputs[i].name]
+        var html = this.makeText(field, v)
+        html.forEach(function(el) {
+            fields.push(el)
+        })
+    }
+
     if (fields.length > 0) {
 
         var fsi = document.createElement('fieldset')
@@ -519,9 +529,11 @@ Event.prototype.generateHtml = function(err, results) {
         div.appendChild(fsi);
     }
 
-    var p = document.createElement('p')
-    p.innerHTML = 'Transaction Hash: ' + results.transactionHash
-    div.appendChild(p)
+    if (results) {
+        var p = document.createElement('p')
+        p.innerHTML = 'Transaction Hash: ' + results.transactionHash
+        div.appendChild(p)
+    }
 
     if (this.config.renderCallback)
         this.config.renderCallback(err, results, div)
@@ -529,34 +541,20 @@ Event.prototype.generateHtml = function(err, results) {
     return div
 }
 
-Event.prototype.makeEvent = function(isEditable, results) {
-    var dom = [];
-    for (var i = 0; i < this.abiItem.inputs.length; i++) {
-        var field = this.abiItem.inputs[i]
-        var html = this.makeText(field, results.args[this.abiItem.inputs[i].name])
-        html.forEach(function(el) {
-            dom.push(el);
-        })
-    }
-
-    return dom
-}
-
-
-
 Event.prototype.makeText = function(field, value) {
     var div = document.createElement('div');
-    // div.className = field.solType.base
-    // if (field.solType.size)
-    //     div.className = [div.className, field.solType.base + field.solType.size].join(' ')
+    div.className = field.solType.base
+    if (field.solType.size)
+        div.className = [div.className, field.solType.base + field.solType.size].join(' ')
 
     var label = document.createElement('label');
     label.htmlFor = field.htmlId;
     label.innerHTML = field.name;
 
-    var input = document.createElement('input');
-    input.id = field.htmlId;
-    input.type = 'text';
+    var input = document.createElement('textarea');
+    input.id = field.htmlId
+    input.cols = 40
+    input.rows = 4
     input.className = [div.className, 'readonly'].join(' ')
     input.readOnly = true;
     input.value = value

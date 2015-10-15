@@ -5,7 +5,7 @@
     <title>abi2html</title>
     <link rel="stylesheet" href="index.css">
     <script type="text/javascript" src="./dist/bignumber.min.js"></script>
-    <script type="text/javascript" src="./dist/web3-light.js"></script>
+    <script type="text/javascript" src="./dist/web3-light.min.js"></script>
     <script type="text/javascript" src="./abi2html.js"></script>
     <script type="text/javascript">
     // Address of the contract with this ABI
@@ -24,7 +24,6 @@
                     p.className = 'warning'
                     document.getElementById('events').appendChild(p)
                 } else {
-                    console.log(results)
                     document.getElementById('events').appendChild(htmlDoc)
                 }
             },
@@ -41,7 +40,7 @@
                 alert('custom call function!')
             },
             callButtonText: 'Read',
-            transactButtonText: 'Publish',
+            transactButtonText: 'Update',
             outputFieldsetName: '',
             renderCallback: function(htmlDoc) {
                 document.getElementById('functions').appendChild(htmlDoc)
