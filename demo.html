@@ -38,12 +38,21 @@
         },
         functions: {
             callCallback: function(err, results, abiItem) {
+
                 // TODO handle multiple return values
-                var el = document.getElementById(abiItem.outputs[0].htmlId)
-                var v = results
-                if (abiItem.outputs[0].solType.base == "int" || abiItem.outputs[0].solType.base == "uint")
-                    v = web3.toHex(results)
-                el.value = v
+                if (abiItem.outputs.length > 0) {
+                    var el = document.getElementById(abiItem.outputs[0].htmlId)
+                    var v = results
+                    if (abiItem.outputs[0].solType.base == "int" || abiItem.outputs[0].solType.base == "uint")
+                        v = web3.toHex(results)
+                    el.value = v
+                }
+            },
+            transactCallback: function(err, results, abiItem) {
+                if (err)
+                    alert("Transaction error:\n" + err)
+                else
+                    alert("Transaction hash:\n" + results)
             },
             callButtonText: 'Read',
             transactButtonText: 'Update',

@@ -233,11 +233,29 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
             btn.type = 'button'
             btn.id = [abiItem.name, this.transactIdAffix].join(this.idJoinString)
             btn.innerHTML = this.transactButtonText
-            btn.addEventListener('click', this.transactFunction)
+            btn.addEventListener('click', function(ev) {
+                that.config.transactFunction(address, abiItem)
+            })
             return btn
         },
-        transactFunction: function(ev) {
-            console.log(ev.target.id)
+        transactFunction: function(address, abiItem) {
+            var inputMap = []
+            for (var i = 0; i < abiItem.inputs.length; i++) {
+                var item = abiItem.inputs[i]
+                var v = document.getElementById(item.htmlId).value
+                if (item.solType.base == "int" || item.solType.base == "uint")
+                    if (v.substring(0, 2) != "0x")
+                        v = web3.toHex(v)
+                inputMap.push(v)
+            }
+
+            that.transact(address, inputMap, abiItem)
+        },
+        transactCallback: function(err, result, abiItem) {
+            if (err)
+                console.log(err)
+            else
+                console.log('Transaction returned', result)
         },
         renderCallback: function(htmlDom) {
             console.log('Got DOM', htmlDom)
@@ -280,6 +298,31 @@ Function.prototype.call = function(toAddress, kv, abiItem) {
     func.call.apply(func, kv)
 }
 
+Function.prototype.transact = function(toAddress, kv, abiItem) {
+    // set transaction options
+    var options = {
+        from: "0x392af429f1b9537f28d97b8467e4b4e3498d5108",
+        to: toAddress,
+        gas: 1000000,
+        gasPrice: web3.gasPrice
+    }
+    kv.push(options);
+
+
+    // set callback
+    var that = this
+    var cb = function(err, results) {
+        if (that.config.transactCallback)
+            that.config.transactCallback(err, results, abiItem)
+    }
+    kv.push(cb)
+
+    // get instance of contract
+    var contract = this.contract.at(toAddress)
+    var func = contract[abiItem.name]
+    func.sendTransaction.apply(func, kv)
+}
+
 Function.prototype.generateHtml = function() {
     var abiItem = this.abiItem
 
@@ -291,13 +334,6 @@ Function.prototype.generateHtml = function() {
     h3.innerHTML = abiItem.name
     div.appendChild(h3)
 
-    // Call button is only useful when there is a return value
-    if (abiItem.outputs.length > 0)
-        div.appendChild(this.config.callScaffolding(abiItem))
-
-    // Transact button available when not constant (constant functions cannot modify state)
-    if (!abiItem.constant)
-        div.appendChild(this.config.transactScaffolding(abiItem))
 
     // Make inputs
     var ins = []
@@ -309,6 +345,13 @@ Function.prototype.generateHtml = function() {
     if (ins.length > 0)
         div.appendChild(this.config.inputScaffolding(ins))
 
+    // Call button is only useful when there is a return value
+    if (abiItem.outputs.length > 0)
+        div.appendChild(this.config.callScaffolding(abiItem))
+
+    // Transact button available when not constant (constant functions cannot modify state)
+    if (!abiItem.constant)
+        div.appendChild(this.config.transactScaffolding(abiItem))
 
     // Make outputs
     var outs = []
