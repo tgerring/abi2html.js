@@ -230,7 +230,7 @@ Function.prototype.generateHtml = function() {
     var abiItem = this.abiItem
 
     var div = document.createElement('div')
-    div.className = ['border', 'function'].join(' ')
+    div.className = ['function'].join(' ')
     div.id = 'function' + abiItem.name
 
     var h3 = document.createElement('h3')
@@ -459,6 +459,38 @@ Event.prototype.applyMissingDefaults = function(userConfig) {
     return userConfig
 }
 
+Event.prototype.get = function(address, filterFields) {
+    var params = [];
+
+    if (!filterFields)
+        params.push({});
+
+    // set transaction options to only watch for newly mined
+    var options = {
+        fromBlock: '0',
+        toBlock: 'latest',
+        address: address
+    }
+    params.push(options)
+
+    // get instance of contract
+    var contract = web3.eth.contract(this.abi).at(address);
+    // get function as object
+    var func = contract[this.abiItem.name]
+        // call the contract storing result
+    this.filter = func.apply(func, params)
+
+    if (this.filter) {
+        var that = this
+        this.filter.get(function(err, results) {
+            for (var i = 0; i < results.length; i++) {
+                var doc = that.generateHtml(err, results[i])
+                that.config.watchCallback(err, results[i], doc)
+            }
+        })
+    }
+}
+
 Event.prototype.watch = function(address, filterFields) {
     var params = [];
 
@@ -484,7 +516,8 @@ Event.prototype.watch = function(address, filterFields) {
         var that = this
         this.filter.watch(function(err, results) {
             var doc = that.generateHtml(err, results)
-            that.config.watchCallback(err, results, doc)
+            that.config.renderCallback(err, results, doc)
+
         })
     }
 }
@@ -492,7 +525,7 @@ Event.prototype.watch = function(address, filterFields) {
 Event.prototype.generateHtml = function(err, results) {
     this.abiItem.name
     var div = document.createElement('div');
-    div.className = ['border', 'event'].join(' ');
+    div.className = ['event'].join(' ');
     div.id = 'event' + this.abiItem.name;
 
     var h3 = document.createElement('h3');
@@ -555,7 +588,7 @@ Event.prototype.makeText = function(field, value) {
     input.id = field.htmlId
     input.cols = 40
     input.rows = 4
-    input.className = [div.className, 'readonly'].join(' ')
+    input.className = [div.className, 'event', 'readonly'].join(' ')
     input.readOnly = true;
     input.value = value
 

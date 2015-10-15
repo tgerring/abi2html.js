@@ -17,21 +17,6 @@ body {
     margin: 1ex;
 }
 
-.border {
-    margin: 1em 0 1em 0;
-    padding: 1ex;
-}
-
-.function {
-    background-color: #CCFFCC;
-    border-color: green;
-}
-
-.event {
-    background-color: #B2E6FF;
-    border-color: gray;
-}
-
 .clearboth {
     clear: both;
 }
@@ -42,12 +27,27 @@ body {
     background-color: #E6E6E6
 }
 
-.in-address {
-    width: 30em;
+div.function {
+    background-color: #CCFFCC;
+    margin: 1em 0 1em 0;
+    padding: 1ex;
 }
 
-.in-transaction {
-    width: 40em;
+div.event {
+    background-color: #B2E6FF;
+    margin: 1em 0 1em 0;
+    padding: 1ex;
+}
+
+.event.address {
+    width: 80ex;
+    height: 1.8em;
+}
+
+.event.int,
+.event.uint {
+    width: 20ex;
+    height: 1.8em;
 }
 
 #main {

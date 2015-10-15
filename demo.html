@@ -17,6 +17,7 @@
     // Settable properties to override default behavior
     var properties = {
         events: {
+            eventFieldsetName: 'Notification',
             watchCallback: function(err, results, htmlDoc) {
                 if (err) {
                     var p = document.createElement('p')
@@ -67,8 +68,9 @@
         })
 
         abihtml.events.forEach(function(ev) {
-            ev.watch(address)
-                // ev.generateHtml()
+            // ev.watch(address)
+            // ev.generateHtml()
+            ev.get(address)
         })
     }
 
