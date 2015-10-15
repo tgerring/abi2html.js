@@ -9,7 +9,6 @@ var AbiHtml = function(abiString, config) {
     this.events = []
     this.abi = []
     this.abi = this.loadAbi(abiString);
-
 }
 
 AbiHtml.prototype.applyMissingDefaults = function(userConfig) {
@@ -45,6 +44,9 @@ AbiHtml.prototype.loadAbi = function(abiString) {
     if (abi == null || !abi instanceof Array)
         return
 
+    // create contract
+    this.contract = web3.eth.contract(abi)
+
     // loop through all abi items
     for (var i = 0; i < abi.length; i++) {
         var abiItem = abi[i]
@@ -61,11 +63,11 @@ AbiHtml.prototype.loadAbi = function(abiString) {
         // console.log(abiItem)
         switch (abiItem.type) {
             case 'function':
-                var func = new Function(this.config.functions, abiItem)
+                var func = new Function(this.config.functions, abiItem, this.contract)
                 this.functions.push(func)
                 break;
             case 'event':
-                var ev = new Event(this.config.events, abi, abiItem)
+                var ev = new Event(this.config.events, abi, abiItem, this.contract)
                 this.events.push(ev)
                 break;
             case 'constructor':
@@ -103,9 +105,10 @@ AbiHtml.prototype.splitType = function(solidityType) {
 */
 
 
-var Function = function(config, abiItem) {
+var Function = function(config, abiItem, contract) {
     if (abiItem.type != 'function') return
     this.config = this.applyMissingDefaults(config)
+    this.contract = contract
 
     // generate internal representation of inputs
     if ("inputs" in abiItem) {
@@ -139,6 +142,7 @@ var Function = function(config, abiItem) {
 }
 
 Function.prototype.applyMissingDefaults = function(userConfig) {
+    var that = this
     var defaultConfig = {
         idJoinString: "-",
 
@@ -154,11 +158,17 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
                     leg.innerHTML = this.inputFieldsetName;
                     fsi.appendChild(leg);
                 }
+
+                for (var i = 0; i < fieldsIn.length; i++) {
+                    fsi.appendChild(fieldsIn[i])
+                }
+                // fieldsIn.forEach(function(field) {
+                //     console.log(field)
+                //     fsi.appendChild(field)
+                // })
+                return fsi
             }
-            fieldsIn.forEach(function(field) {
-                fsi.appendChild(field)
-            })
-            return fsi
+
         },
 
         outputIdPrefex: "func-out",
@@ -174,11 +184,12 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
                     leg.innerHTML = this.outputFieldsetName;
                     fso.appendChild(leg);
                 }
+                fieldsOut.forEach(function(field) {
+                    fso.appendChild(field);
+                })
+                return fso
             }
-            fieldsOut.forEach(function(field) {
-                fso.appendChild(field);
-            })
-            return fso
+
         },
 
         callButtonText: "Call",
@@ -189,11 +200,30 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
             btn.type = 'button'
             btn.id = [abiItem.name, this.callIdAffix].join(this.idJoinString)
             btn.innerHTML = this.callButtonText
-            btn.addEventListener('click', this.callFunction)
+            btn.addEventListener('click', function(ev) {
+                that.config.callFunction(address, abiItem)
+            })
             return btn
         },
-        callFunction: function(ev) {
-            console.log(ev.target.id)
+        callFunction: function(address, abiItem) {
+            var inputMap = []
+            for (var i = 0; i < abiItem.inputs.length; i++) {
+                var item = abiItem.inputs[i]
+                var v = document.getElementById(item.htmlId).value
+                if (item.solType.base == "int" || item.solType.base == "uint")
+                    if (v.substring(0, 2) != "0x")
+                        v = web3.toHex(v)
+                inputMap.push(v)
+            }
+
+            that.call(address, inputMap, abiItem)
+        },
+        callCallback: function(err, result, abiItem) {
+            if (err)
+                console.log(err)
+            else {
+                console.log('Contract call returned', result);
+            }
         },
 
         transactButtonText: "Transact",
@@ -226,6 +256,30 @@ Function.prototype.applyMissingDefaults = function(userConfig) {
     return userConfig
 }
 
+Function.prototype.call = function(toAddress, kv, abiItem) {
+    // set transaction options
+    var options = {
+        from: toAddress,
+        gas: 1000000,
+        gasPrice: web3.toWei(500, 'finney')
+    }
+    kv.push(options);
+
+
+    // set callback
+    var that = this
+    var cb = function(err, results) {
+        if (that.config.callCallback)
+            that.config.callCallback(err, results, abiItem)
+    }
+    kv.push(cb)
+
+    // get instance of contract
+    var contract = this.contract.at(toAddress)
+    var func = contract[abiItem.name]
+    func.call.apply(func, kv)
+}
+
 Function.prototype.generateHtml = function() {
     var abiItem = this.abiItem
 
@@ -246,19 +300,25 @@ Function.prototype.generateHtml = function() {
         div.appendChild(this.config.transactScaffolding(abiItem))
 
     // Make inputs
+    var ins = []
     for (var i = 0; i < abiItem.inputs.length; i++) {
         var inDom = this.makeField(abiItem.inputs[i], true)
+        if (inDom)
+            ins.push(inDom)
     }
-    if (inDom)
-        div.appendChild(this.config.inputScaffolding(inDom))
+    if (ins.length > 0)
+        div.appendChild(this.config.inputScaffolding(ins))
 
 
     // Make outputs
+    var outs = []
     for (var i = 0; i < abiItem.outputs.length; i++) {
         var outDom = this.makeField(abiItem.outputs[i], false)
+        if (outDom)
+            outs.push(outDom)
     }
-    if (outDom)
-        div.appendChild(this.config.outputScaffolding(outDom))
+    if (outs.length > 0)
+        div.appendChild(this.config.outputScaffolding(outs))
 
     // callback if available
     // if (typeof this.config.renderCallback === "function")
@@ -313,7 +373,7 @@ Function.prototype.makeBool = function(field, isEditable) {
     div.appendChild(label)
     div.appendChild(input)
 
-    return [div];
+    return div;
 };
 
 Function.prototype.makeAddress = function(field, isEditable) {
@@ -339,7 +399,7 @@ Function.prototype.makeAddress = function(field, isEditable) {
     div.appendChild(label)
     div.appendChild(input)
 
-    return [div];
+    return div;
 }
 
 Function.prototype.makeBytes = function(field, isEditable) {
@@ -366,7 +426,7 @@ Function.prototype.makeBytes = function(field, isEditable) {
     div.appendChild(label)
     div.appendChild(input)
 
-    return [div];
+    return div;
 }
 
 Function.prototype.makeInt = function(field, isEditable) {
@@ -381,7 +441,7 @@ Function.prototype.makeInt = function(field, isEditable) {
 
     var input = document.createElement('input');
     input.id = field.htmlId;
-    input.type = 'number';
+    input.type = 'input';
     input.className = div.className
 
     if (!isEditable) {
@@ -392,7 +452,7 @@ Function.prototype.makeInt = function(field, isEditable) {
     div.appendChild(label)
     div.appendChild(input)
 
-    return [div];
+    return div;
 }
 
 /*

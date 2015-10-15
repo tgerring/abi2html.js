@@ -37,8 +37,13 @@
             },
         },
         functions: {
-            callFunction: function(v) {
-                alert('custom call function!')
+            callCallback: function(err, results, abiItem) {
+                // TODO handle multiple return values
+                var el = document.getElementById(abiItem.outputs[0].htmlId)
+                var v = results
+                if (abiItem.outputs[0].solType.base == "int" || abiItem.outputs[0].solType.base == "uint")
+                    v = web3.toHex(results)
+                el.value = v
             },
             callButtonText: 'Read',
             transactButtonText: 'Update',
@@ -68,9 +73,9 @@
         })
 
         abihtml.events.forEach(function(ev) {
-            // ev.watch(address)
-            // ev.generateHtml()
-            ev.get(address)
+            ev.watch(address)
+                // ev.generateHtml()
+                // ev.get(address)
         })
     }
 
