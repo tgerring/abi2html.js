@@ -37,21 +37,51 @@
             document.getElementById('functions').appendChild(htmlDom)
         })
 
-        // watch event history
-        abihtml.GetEvents({
-            address: document.getElementById('contract-address').value,
-        }, {}, function(htmlDom) {
-            document.getElementById('events').appendChild(htmlDom)
+        // get event history
+        document.getElementById('event-history').addEventListener('click', function() {
+            var options = {
+                address: document.getElementById('contract-address').value,
+            }
+            var callback = function(htmlDom) {
+                // var parent = document.createElement('div')
+                // var btn = document.createElement('button')
+                // btn.innerHTML = 'Dismiss'
+                // btn.addEventListener("click", function() {
+                //     parent.style.display = 'none'
+                // })
+                // parent.appendChild(btn)
+                // parent.appendChild(htmlDom)
+                // document.getElementById('events').appendChild(parent)
+
+                document.getElementById('events').appendChild(htmlDom)
+            }
+
+
+            abihtml.GetEvents(options, {}, callback)
         })
+
 
         // watch events
-        abihtml.WatchEvents({
-            address: document.getElementById('contract-address').value,
-        }, {}, function(htmlDom) {
-            var el = document.getElementById('events')
-            el.insertBefore(htmlDom, el.childNodes[0])
-        })
+        document.getElementById('watch-events').addEventListener('click', function() {
+            var options = {
+                address: document.getElementById('contract-address').value,
+            }
+            var callback = function(htmlDom) {
+                var parent = document.createElement('div')
+                var btn = document.createElement('button')
+                btn.addEventListener("click", function() {
+                    parent.style.display = 'none'
+                })
+                parent.appendChild(btn)
+                parent.appendChild(htmlDom)
 
+                var el = document.getElementById('events')
+                el.insertBefore(htmlDom, el.childNodes[0])
+            }
+
+
+            abihtml.WatchEvents(options, {}, callback)
+        })
     }
 
     window.onbeforeunload = function() {
@@ -75,6 +105,9 @@
             <div class="pull-right">
                 <label for="contract-address" class="clearboth">Contract address:</label>
                 <input type="text" id="contract-address" class="address clearboth" value="0x63f33b08404987648ce2dde79715e14e8b69e4d8">
+                <br>
+                <button id="event-history">Show Event History</button>
+                <button id="watch-events">Watch for events</button>
             </div>
         </div>
         <div id="bottom">
