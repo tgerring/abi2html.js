@@ -18,6 +18,7 @@ body {
 }
 
 .clearboth {
+    display: inline-block;
     clear: both;
 }
 
@@ -37,17 +38,6 @@ div.event {
     background-color: #B2E6FF;
     margin: 1em 0 1em 0;
     padding: 1ex;
-}
-
-.event.address {
-    width: 80ex;
-    height: 1.8em;
-}
-
-.event.int,
-.event.uint {
-    width: 20ex;
-    height: 1.8em;
 }
 
 #main {
@@ -90,7 +80,7 @@ fieldset.output label,
 fieldset.event label {
     margin-right: 1em;
     display: inline-block;
-    width: 10em;
+    width: 8em;
     text-align: right;
 }
 
@@ -98,4 +88,26 @@ fieldset.input,
 fieldset.output,
 fieldset.event {
     clear: both;
+}
+
+.pull-left {
+    float: left;
+    width: 50%;
+    /*overflow-y: scroll;*/
+}
+
+.pull-right {
+    float: right;
+    width: 50%;
+}
+
+.address,
+.string {
+    /*    width: 40ex;*/
+    height: 1.8em;
+}
+
+.int,
+.uint {
+    height: 1.8em;
 }
