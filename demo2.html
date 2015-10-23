@@ -37,12 +37,21 @@
             document.getElementById('functions').appendChild(htmlDom)
         })
 
-        // watch events
-        abihtml.WatchEvents({
+        // watch event history
+        abihtml.GetEvents({
             address: document.getElementById('contract-address').value,
         }, {}, function(htmlDom) {
             document.getElementById('events').appendChild(htmlDom)
         })
+
+        // watch events
+        abihtml.WatchEvents({
+            address: document.getElementById('contract-address').value,
+        }, {}, function(htmlDom) {
+            var el = document.getElementById('events')
+            el.insertBefore(htmlDom, el.childNodes[0])
+        })
+
     }
 
     window.onbeforeunload = function() {
