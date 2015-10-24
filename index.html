@@ -10,6 +10,12 @@
     <script type="text/javascript">
     var abihtml
 
+    /***
+
+       This is all stuff that Mist should handle, but is included for dev purposes
+
+       ***/
+
     var testConnection = function(ip, port) {
         if (!ip) ip = '127.0.0.1'
         if (!port) port = '8545'
@@ -24,17 +30,6 @@
             return false
         }
         return true
-    }
-
-    var sendValue = function() {
-        var cb = function(error, result) {
-            if (error)
-                alert(error);
-            else
-                renderTransactionHash(result)
-
-        }
-        web3.eth.sendTransaction(getTransactionOptions(), cb)
     }
 
     var updateGasprice = function() {
@@ -67,11 +62,6 @@
                 updateBlocks(result)
                 updateBalances()
             })
-            document.getElementById('compile-contract').disabled = false
-                // document.getElementById('toggle-mine').disabled = false
-                // document.getElementById('monitor-events').disabled = false
-            document.getElementById('send-value').disabled = false
-                // set user gas price once
         }
     }
 
@@ -121,10 +111,88 @@
         return web3.fromWei(weiAmount, unit) + ' ' + unit
     }
 
+    /***
+
+    Convenience functions for this DApp
+
+    ***/
+
+    var generatePage = function() {
+        var abi = document.getElementById('contract-abi').value
+        var toAddress = document.getElementById('contract-address').value
+
+        var eventCallback = function(htmlDom) {
+            var parent = document.createElement('div')
+            var btn = document.createElement('button')
+            btn.innerHTML = 'Dismiss'
+            btn.addEventListener("click", function() {
+                parent.style.display = 'none'
+            })
+            parent.appendChild(btn)
+            parent.appendChild(htmlDom)
+
+            var el = document.getElementById('events')
+            el.insertBefore(parent, el.childNodes[0])
+        }
+
+        var functionCallback = function(htmlDom) {
+            var name = htmlDom.childNodes[0].innerHTML
+            var li = document.createElement('li')
+            var a = document.createElement('a')
+            a.href = '#' + name
+            a.innerHTML = name
+            a.addEventListener('click', function() {
+                displayTab(name)
+            }, false)
+            li.appendChild(a)
+            var el = document.getElementById('tab-container').children[0].appendChild(li)
+
+            htmlDom.style.display = 'none'
+            var main = document.getElementById('main-container')
+            main.appendChild(htmlDom)
+            main.style.display = 'block'
+        }
+
+        if (abi) {
+            abihtml = new AbiHtml(abi)
+            abihtml.RenderFunctions(getTransactionOptions(), functionCallback)
+            if (toAddress)
+                abihtml.WatchEvents({
+                    address: toAddress
+                }, {}, eventCallback)
+        }
+    }
+
+    var displayTab = function(htmlId) {
+        var target = document.getElementById('function' + htmlId)
+        var parent = document.getElementById('main-container')
+        for (var i = 0; i < parent.childNodes.length; i++) {
+            var child = parent.childNodes[i]
+            if (child.tagName == 'DIV')
+                child.style.display = 'none'
+        }
+        target.style.display = 'block'
+    }
+
+
+    var sendValue = function() {
+        var cb = function(error, result) {
+            if (error)
+                alert(error);
+            else
+                renderTransactionHash(result)
+
+        }
+        web3.eth.sendTransaction(getTransactionOptions(), cb)
+    }
 
 
 
     window.onload = function() {
+        document.getElementById('compile-contract').disabled = false
+            // document.getElementById('monitor-events').disabled = false
+        document.getElementById('send-value').disabled = false
+
         // set event handlers
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
         document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
@@ -220,43 +288,18 @@
 
 
 
-        document.getElementById('generate-page').addEventListener('click', function() {
-            // generateDoc()
-            // if (getContractAddress())
-            //     watchAllEvents()
-            var abi = document.getElementById('contract-abi').value
-            var toAddress = document.getElementById('contract-address').value
-            var eventCallback = function(htmlDom) {
-                var parent = document.createElement('div')
-                var btn = document.createElement('button')
-                btn.addEventListener("click", function() {
-                    parent.style.display = 'none'
-                })
-                parent.appendChild(btn)
-                parent.appendChild(htmlDom)
-
-                var el = document.getElementById('events')
-                el.insertBefore(htmlDom, el.childNodes[0])
-            }
-            var functionCallback = function(htmlDom) {
-                document.getElementById('functions').appendChild(htmlDom)
-            }
-
-            if (abi) {
-                abihtml = new AbiHtml(abi)
-                abihtml.RenderFunctions(getTransactionOptions(), functionCallback)
-                if (toAddress)
-                    abihtml.WatchEvents({
-                        address: toAddress
-                    }, {}, eventCallback)
-            }
-        }, false)
+        document.getElementById('generate-page').addEventListener('click', generatePage, false)
 
         // document.getElementById('monitor-events').addEventListener('click', function() {
         //     generateDoc()
         //     if (getContractAddress())
         //         watchAllEvents()
         // }, false);
+
+        connectInstance()
+        if (document.getElementById('contract-abi').value)
+            generatePage()
+
     }
 
     window.onbeforeunload = function() {
@@ -300,7 +343,7 @@
                     <select id="sender-address" class="in-address"></select>
                     <button type="button" id="copy-from">Copy To</button>
                     <label for="contract-address">To:</label>
-                    <input id="contract-address" type="text" class="in-address">
+                    <input id="contract-address" type="text" class="in-address" value="0x63f33b08404987648ce2dde79715e14e8b69e4d8">
                     <!-- <label for="contract-balance">Balance:</label> -->
                     <!-- <span id="contract-balance"></span> -->
                     <label for="value-amount">Value</label>
@@ -338,7 +381,15 @@
         </div>
     </div>
     <div id="main">
-        <div id="functions"></div>
+        <div id="functions">
+            <h2>Functions</h2>
+            <div id="tab-container">
+                <ul>
+                </ul>
+            </div>
+            <div id="main-container">
+            </div>
+        </div>
         <div id="events"></div>
     </div>
     <div id="footer">
