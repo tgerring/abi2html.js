@@ -136,7 +136,8 @@
             a.href = '#' + name
             a.innerHTML = name
             a.addEventListener('click', function() {
-                displayTab(name)
+                window.location = a.href
+                setSelectedTab()
             }, false)
             li.appendChild(a)
             var ul = document.getElementById('tab-container').children[0]
@@ -197,6 +198,23 @@
 
         var el = document.getElementById('notifications')
         el.insertBefore(parent, el.childNodes[0])
+    }
+
+    var setSelectedTab = function() {
+        var el = document.getElementById('tab-container')
+        var x = el.querySelectorAll("ul>li>a")
+        for (var i = 0; i < x.length; i++) {
+            var item = x[i]
+            console.log(item, window.location)
+            if (item.href == window.location.href) {
+                item.parentNode.className = 'selected'
+                var htmlId = item.getAttribute('href').substring(1, item.href.length)
+                displayTab(htmlId)
+            } else {
+                item.parentNode.className = ''
+            }
+        }
+
     }
 
 
@@ -310,8 +328,10 @@
         document.getElementById('generate-page').addEventListener('click', generatePage, false)
 
         connectInstance()
-        if (document.getElementById('contract-abi').value)
+        if (document.getElementById('contract-abi').value) {
             generatePage()
+            setSelectedTab()
+        }
 
     }
     </script>
