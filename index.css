@@ -1,21 +1,32 @@
+* {
+    margin: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
 html,
 body {
     font-family: Helvetica, Arial, sans-serif;
     font-size: 11pt;
 }
 
-#wrapper {
-    height: 100vh;
-}
 
-#head,
+/*#wrapper {
+    height: 100vh;
+}*/
+
+
+/*#head,
 #top,
 #bottom,
 #foot {
     width: 100%;
     clear: both;
     margin: 1ex;
-}
+}*/
 
 .clearboth {
     display: inline-block;
@@ -40,27 +51,41 @@ div.event {
     padding: 1ex;
 }
 
-#main {
+#functions {
     float: left;
     width: 50%;
     /*overflow-y: scroll;*/
 }
 
-#status {
+#events {
     float: right;
     width: 50%;
 }
 
-#head {
-    padding-bottom: 1ex;
+#header {
+    position: fixed;
+    top: 0px;
+    margin: auto;
+    z-index: 100000;
+    width: 100%;
+    background-color: white;
 }
 
-#remote {
+#header-wrapper: {
+    background: #000;
+    height: 200px;
+}
+
+#main {
+    margin-top: 200px;
+}
+
+#abi {
     width: 50%;
     float: right;
 }
 
-#local {
+#contract {
     width: 50%;
     float: left;
 }

@@ -6,58 +6,174 @@
     <link rel="stylesheet" href="index.css">
     <script type="text/javascript" src="./dist/bignumber.min.js"></script>
     <script type="text/javascript" src="./dist/web3-light.js"></script>
-    <script type="text/javascript" src="./abiHtml.js"></script>
-    <script type="text/javascript" src="./abiReader.js"></script>
+    <script type="text/javascript" src="./lib/abi2html.js"></script>
     <script type="text/javascript">
-    var contracts;
-    // set global events
+    var abihtml
+
+    var testConnection = function(ip, port) {
+        if (!ip) ip = '127.0.0.1'
+        if (!port) port = '8545'
+
+        if (!web3.currentProvider)
+            web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port));
+
+        try {
+            web3.eth.accounts
+        } catch (e) {
+            console.log(e.toString())
+            return false
+        }
+        return true
+    }
+
+    var sendValue = function() {
+        var cb = function(error, result) {
+            if (error)
+                alert(error);
+            else
+                renderTransactionHash(result)
+
+        }
+        web3.eth.sendTransaction(getTransactionOptions(), cb)
+    }
+
+    var updateGasprice = function() {
+        var gasPrice = web3.eth.gasPrice
+        document.getElementById('gasprice-amount').value = web3.fromWei(gasPrice, document.getElementById('gasprice-unit').value)
+        document.getElementById('network-gasprice').innerHTML = formattedBalance(gasPrice, document.getElementById('gasprice-unit').value)
+    }
+
+    var connectInstance = function() {
+        if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
+            alert('could not connect to ethereum client')
+        } else {
+            console.log('Connected')
+
+            // set network gas estimate
+            updateGasprice()
+
+            // set addresses select
+            updateBalances()
+
+            // update block info
+            updateBlocks(web3.eth.getBlock('latest'))
+
+            renderTxCostTotal()
+
+            // unset()
+            var filter = web3.eth.filter('latest');
+            filter.watch(function(error, result) {
+                console.log('Saw new block', result);
+                updateBlocks(result)
+                updateBalances()
+            })
+            document.getElementById('compile-contract').disabled = false
+                // document.getElementById('toggle-mine').disabled = false
+                // document.getElementById('monitor-events').disabled = false
+            document.getElementById('send-value').disabled = false
+                // set user gas price once
+        }
+    }
+
+    var updateBlocks = function(block) {
+        document.getElementById('block-height').innerHTML = block.number
+        document.getElementById('block-hash').innerHTML = block.hash
+    }
+
+    var updateBalances = function() {
+        var select = document.getElementById('sender-address')
+        select.options.length = 0;
+        var accounts = web3.eth.accounts
+            // accounts.forEach(function(address) {
+
+        for (var i = 0; i < accounts.length; i++) {
+            var address = accounts[i]
+            var balance = web3.eth.getBalance(address)
+            var text = formattedBalance(balance, document.getElementById('value-unit').value)
+            var option = document.createElement('option')
+            option.value = address
+            option.innerHTML = address + ' (' + text + ')'
+            select.options.add(option)
+        }
+    }
+
+    var getTransactionOptions = function() {
+        return {
+            from: document.getElementById('sender-address').value,
+            to: document.getElementById('contract-address').value,
+            value: web3.toWei(document.getElementById('value-amount').value, document.getElementById('value-unit').value),
+            gas: document.getElementById('gas').value,
+            gasPrice: web3.toWei(document.getElementById('gasprice-amount').value, document.getElementById('gasprice-unit').value),
+        }
+    }
+
+    var renderTxCostTotal = function() {
+        var gasunit = document.getElementById('gasprice-unit').value
+        var valueunit = document.getElementById('value-unit').value
+        var gas = document.getElementById('gas').value
+        var gaswei = web3.toWei(document.getElementById('gasprice-amount').value, gasunit)
+        var totalwei = gaswei * gas
+        var text = formattedBalance(totalwei, valueunit)
+        document.getElementById('txcost-total').innerHTML = text
+    }
+
+    var formattedBalance = function(weiAmount, unit) {
+        return web3.fromWei(weiAmount, unit) + ' ' + unit
+    }
+
+
+
+
     window.onload = function() {
         // set event handlers
-        document.getElementById('send_value').addEventListener('click', sendValue, false);
-
-        // document.getElementById('toggle-mine').addEventListener('click', function() {
-        //     toggleMining()
-        // }, false);
-
+        document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
+        document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
+        document.getElementById('gasprice-amount').addEventListener('keyup', renderTxCostTotal, false)
         document.getElementById('gasprice-copy').addEventListener('click', function() {
-            getNetworkGasPrice(renderUserGasPrice)
+            updateGasprice()
             renderTxCostTotal()
-                // renderGasPriceEstimate()
+        }, false)
 
-        }, false);
+        document.getElementById('send-value').addEventListener('click', function() {
+            txhash = web3.eth.sendTransaction(getTransactionOptions())
+            web3.eth.getTransactionReceipt(txhash, function(txReceipt) {
+                console.log(txReceipt)
+            })
+            alert(txhash)
+        }, false)
 
         document.getElementById('copy-from').addEventListener('click', function() {
-            document.getElementById('contract_address').value = getSenderAddress()
+            var address = document.getElementById('sender-address').value
+            document.getElementById('contract-address').value = address
+                // document.getElementById('contract-balance').innerHTML = formattedBalance(web3.eth.getBalance(address), document.getElementById('value-unit').value)
+        }, false)
+
+        document.getElementById('sender-address').addEventListener('change', function() {
+            var accounts = abihtml.GetAccounts(true)
+            var wei = accounts[document.getElementById('sender-address').value]
+            var unit = document.getElementById('gasprice-unit').value
+            var text = web3.fromWei(wei, unit).toString() + ' ' + unit
+            document.getElementById('sender-balance').value = text
+        }, false);
+
+
+
+        document.getElementById('value-unit').addEventListener('change', function() {
             updateBalances()
-        }, false);
-
-        // document.getElementById('copy-receipt').addEventListener('click', function() {
-        //     var v = web3.eth.getTransactionReceipt(getTransactionHash())
-        //     if (v) {
-        //         document.getElementById('contract_address').value = v.contractAddress
-        //         updateBalances()
-        //         watchAllEvents()
-        //     }
-        // }, false);
-
-        document.getElementById('sender_address').addEventListener('change', function() {
-            renderAccountBalance('sender_balance', getBalance(getSenderAddress()))
-        }, false);
-
-        document.getElementById('gas').addEventListener('keyup', function() {
             renderTxCostTotal()
+            var address = document.getElementById('contract-address').value
+                // if (address)
+                //     document.getElementById('contract-balance').innerHTML = formattedBalance(web3.eth.getBalance(address), document.getElementById('value-unit').value)
+                // else
+                //     document.getElementById('contract-balance').innerHTML = ''
         }, false)
 
-        document.getElementById('gas_price').addEventListener('keyup', function() {
+        document.getElementById('gasprice-unit').addEventListener('change', function() {
+            // below will override the number part, which is ugly
+            // this also requires us to update the maximum cost
+            updateGasprice()
             renderTxCostTotal()
         }, false)
-
-        document.getElementById('gas_price_unit').addEventListener('change', function() {
-            var gasprice = document.getElementById('gas_price').value
-            var gaspriceunit = document.getElementById('gas_price_unit').value
-            renderTxCostTotal()
-            getNetworkGasPrice(renderUserGasPrice) // this overrides the number part
-        }, false);
 
         document.getElementById('compile-contract').addEventListener('click', function() {
             compileSolidity(document.getElementById('contract-code').value, function(err, result) {
@@ -86,46 +202,55 @@
         document.getElementById('deploy-contract').addEventListener('click', function() {
             userContract = getSelectedContract('contract-selector')
             contract = deployContract(userContract.code, function(error, result) {
-                if (!error) {
-                    console.log('Contract mined:', result)
-                    renderTransactionHash(contract.transactionHash)
-                    document.getElementById('contract_address').value = result.address
-                } else
-                    alert(error)
-            })
-            // run a few milliseconds later since transaction hash isn't available immediately
-            setTimeout(function(){
+                    if (!error) {
+                        console.log('Contract mined:', result)
+                        renderTransactionHash(contract.transactionHash)
+                        document.getElementById('contract-address').value = result.address
+                    } else
+                        alert(error)
+                })
+                // run a few milliseconds later since transaction hash isn't available immediately
+            setTimeout(function() {
                 console.log(contract)
                 if (contract.transactionHash)
                     renderTransactionHash(contract.transactionHash)
             }, 100)
-            
-        }, false);
 
-        document.getElementById('connect-instance').addEventListener('click', function() {
-            if (!connectInstance(getInstanceHostname(), getInstancePort())) {
-                alert('could not connect to ethereum client')
-            } else {
-                renderGasPriceEstimate()
-                getAccounts('sender_address', updateBalances);
-                updateBlocks()
-                getNetworkGasPrice(renderUserGasPrice)
+        }, false)
 
-                unset()
-                monitorBlocks()
-                document.getElementById('compile-contract').disabled = false
-                    // document.getElementById('toggle-mine').disabled = false
-                    // document.getElementById('monitor-events').disabled = false
-                document.getElementById('send_value').disabled = false
-                    // set user gas price once
-            }
-        }, false);
+
 
         document.getElementById('generate-page').addEventListener('click', function() {
-            generateDoc()
-            if (getContractAddress())
-                watchAllEvents()
-        }, false);
+            // generateDoc()
+            // if (getContractAddress())
+            //     watchAllEvents()
+            var abi = document.getElementById('contract-abi').value
+            var toAddress = document.getElementById('contract-address').value
+            var eventCallback = function(htmlDom) {
+                var parent = document.createElement('div')
+                var btn = document.createElement('button')
+                btn.addEventListener("click", function() {
+                    parent.style.display = 'none'
+                })
+                parent.appendChild(btn)
+                parent.appendChild(htmlDom)
+
+                var el = document.getElementById('events')
+                el.insertBefore(htmlDom, el.childNodes[0])
+            }
+            var functionCallback = function(htmlDom) {
+                document.getElementById('functions').appendChild(htmlDom)
+            }
+
+            if (abi) {
+                abihtml = new AbiHtml(abi)
+                abihtml.RenderFunctions(getTransactionOptions(), functionCallback)
+                if (toAddress)
+                    abihtml.WatchEvents({
+                        address: toAddress
+                    }, {}, eventCallback)
+            }
+        }, false)
 
         // document.getElementById('monitor-events').addEventListener('click', function() {
         //     generateDoc()
@@ -142,84 +267,81 @@
 </head>
 
 <body>
-    <div id="wrapper">
-        <div id="head">
-            <button type="button" id="connect-instance">Connect</button>
-            <samp>geth --rpc --rpcaddr "</samp>
-            <input type="text" id="instance-hostname" value="127.0.0.1">
-            <samp>" --rpcport "
-                <input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"</samp>
-        </div>
-        <div id="top">
-            <div id="local">
-                <button type="button" id="compile-contract" disabled>Compile</button>
-                <label for="contract-code">Contract</label>
-                <br>
-                <textarea id="contract-code"></textarea>                
-                <button type="button" id="generate-page">Generate</button>
-                <label for="contract-abi">Contract ABI</label>
-                <br>
-                <textarea id="contract-abi"></textarea>
-                <!-- <br> -->
-                <!-- <button type="button" id="monitor-events" disabled>Monitor</button> -->
+    <div id="header">
+        <div id="header-wrapper">
+            <div id="node">
+                <button type="button" id="connect-instance" onclick="connectInstance">Connect</button>
+                <samp>geth --rpc --rpcaddr "</samp>
+                <input type="text" id="instance-hostname" value="127.0.0.1">
+                <samp>" --rpcport "
+                    <input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"
+                </samp>
+                <p>
+                    Block height: <span id="block-height">?</span> Best hash: <span id="block-hash">?</span> Estimated gas price: <span id="network-gasprice">?</span>
+                </p>
             </div>
-            <div id="remote">
-                <!-- <button type="text" id="toggle-mine" disabled>Mine</button> -->
-                <br> Block height: <span id="block-height">?</span>
-                <br> Best hash: <span id="block-hash">?</span>
-                <br> Estimated gas price: <span id="gas-price">?</span>
-                <hr>
-                <label for="sender_address">From:</label>
-                <select id="sender_address" class="in-address"></select>
-                <button type="button" id="copy-from">Copy To</button>
-                <br> From balance: <span id="sender_balance">0</span>
-                <br>
-                <label for="contract_address">To:</label>
-                <input id="contract_address" type="text" class="in-address">
-                <!-- <button type="button" id="copy-receipt">Receipt</button> -->
-                <br>
-                <label for="contract_balance">To balance:</label>
-                <span id="contract_balance"></span>
-                <br>
-                <label for="gas">Gas:</label>
-                <input id="gas" type="text" class="" value="3000000">
-                <br>
-                <label for="gas_price">Gas price:</label>
-                <input id="gas_price" type="text" class="" value="10">
-                <select id="gas_price_unit">
-                    <option>ether</option>
-                    <option>finney</option>
-                    <option selected>szabo</option>
-                    <option>shannon</option>
-                    <option>babbage</option>
-                    <option>ada</option>
-                    <option>wei</option>
-                </select>
-                <button id="gasprice-copy">Sync estimate</button>
-                <br> Max cost: <span id="txcost-total">?</span>
-                <br>
-                <label for="ether_amt">&#926;</label>
-                <input id="ether_amt" type="text" value="0">
-                <button id="send_value" type="button" disabled>Send</button>
-                <br>
-                <label for="contract-selector">Deploy contract:</label>
-                <select id="contract-selector"></select>
-                <button type="button" id="deploy-contract" disabled>Deploy</button>
-                <br>
-                <label for="transaction-hash">Transaction hash:</label>
-                <input id="transaction-hash" type="text" class="in-transaction">
-            </div>
-        </div>
-        <div id="bottom">
-            <div id="main">
-                <div id="functions"></div>
-            </div>
-            <div id="status">
-                <div id="events"></div>
+            <div id="dashboard">
+                <div id="contract">
+                    <label for="contract-code">Contract</label>
+                    <button type="button" id="compile-contract" disabled>Compile to ABI</button>
+                    <br>
+                    <textarea id="contract-code"></textarea>
+                </div>
+                <div id="abi">
+                    <label for="contract-abi">Contract ABI</label>
+                    <button type="button" id="generate-page">Generate Form</button>
+                    <br>
+                    <textarea id="contract-abi">[{"constant":false,"inputs":[{"name":"_owner","type":"address"}],"name":"removeOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"m_numOwners","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"resetSpentToday","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_owner","type":"address"}],"name":"addOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"m_required","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_h","type":"bytes32"}],"name":"confirm","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_newLimit","type":"uint256"}],"name":"setDailyLimit","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"},{"name":"_data","type":"bytes"}],"name":"execute","outputs":[{"name":"_r","type":"bytes32"}],"type":"function"},{"constant":false,"inputs":[{"name":"_operation","type":"bytes32"}],"name":"revoke","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_newRequired","type":"uint256"}],"name":"changeRequirement","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"_operation","type":"bytes32"},{"name":"_owner","type":"address"}],"name":"hasConfirmed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"}],"name":"kill","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"}],"name":"changeOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"m_dailyLimit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"inputs":[{"name":"identifier","type":"bytes32"}],"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"identifier","type":"bytes32"}],"name":"Created","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"}],"name":"Confirmation","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"}],"name":"Revoke","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"},{"indexed":false,"name":"newOwner","type":"address"}],"name":"OwnerChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"newOwner","type":"address"}],"name":"OwnerAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"}],"name":"OwnerRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"newRequirement","type":"uint256"}],"name":"RequirementChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"from","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"SingleTransact","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"MultiTransact","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"operation","type":"bytes32"},{"indexed":false,"name":"initiator","type":"address"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"ConfirmationNeeded","type":"event"}]</textarea>
+                    <!-- <br> -->
+                    <!-- <button type="button" id="monitor-events" disabled>Monitor</button> -->
+                </div>
+                <div id="controls">
+                    <label for="sender-address">From:</label>
+                    <select id="sender-address" class="in-address"></select>
+                    <button type="button" id="copy-from">Copy To</button>
+                    <label for="contract-address">To:</label>
+                    <input id="contract-address" type="text" class="in-address">
+                    <!-- <label for="contract-balance">Balance:</label> -->
+                    <!-- <span id="contract-balance"></span> -->
+                    <label for="value-amount">Value</label>
+                    <input id="value-amount" type="text" value="0">
+                    <select id="value-unit">
+                        <option selected="">ether</option>
+                        <option>finney</option>
+                        <option>szabo</option>
+                        <option>shannon</option>
+                        <option>babbage</option>
+                        <option>ada</option>
+                        <option>wei</option>
+                    </select>
+                    <label for="gas">Gas:</label>
+                    <input id="gas" type="text" class="" value="3000000">
+                    <label for="gas-price">Gas price:</label>
+                    <input id="gasprice-amount" type="text" class="" value="10">
+                    <select id="gasprice-unit">
+                        <option>ether</option>
+                        <option>finney</option>
+                        <option selected>szabo</option>
+                        <option>shannon</option>
+                        <option>babbage</option>
+                        <option>ada</option>
+                        <option>wei</option>
+                    </select>
+                    <button id="gasprice-copy">Sync estimate</button>
+                    <span>Max cost: <span id="txcost-total">?</span></span>
+                    <button id="send-value" type="button" disabled>Send</button>
+                    <label for="contract-selector">Deploy contract:</label>
+                    <select id="contract-selector"></select>
+                    <button type="button" id="deploy-contract" disabled>Deploy</button>
+                </div>
             </div>
         </div>
-        <div id="foot">
-        </div>
+    </div>
+    <div id="main">
+        <div id="functions"></div>
+        <div id="events"></div>
+    </div>
+    <div id="footer">
     </div>
 </body>
 
