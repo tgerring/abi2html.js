@@ -40,9 +40,13 @@
 
     var connectInstance = function() {
         if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
-            alert('could not connect to ethereum client')
+            var p = document.createElement('p')
+            p.innerHTML = 'Could not connect to Ethereum client'
+            makeNotification(p)
         } else {
-            console.log('Connected')
+            var p = document.createElement('p')
+            p.innerHTML = 'Connected'
+            makeNotification(p)
 
             // set network gas estimate
             updateGasprice()
@@ -122,17 +126,7 @@
         var toAddress = document.getElementById('contract-address').value
 
         var eventCallback = function(htmlDom) {
-            var parent = document.createElement('div')
-            var btn = document.createElement('button')
-            btn.innerHTML = 'Dismiss'
-            btn.addEventListener("click", function() {
-                parent.style.display = 'none'
-            })
-            parent.appendChild(btn)
-            parent.appendChild(htmlDom)
-
-            var el = document.getElementById('events')
-            el.insertBefore(parent, el.childNodes[0])
+            makeNotification(htmlDom)
         }
 
         var functionCallback = function(htmlDom) {
@@ -145,7 +139,8 @@
                 displayTab(name)
             }, false)
             li.appendChild(a)
-            var el = document.getElementById('tab-container').children[0].appendChild(li)
+            var ul = document.getElementById('tab-container').children[0]
+            ul.appendChild(li)
 
             htmlDom.style.display = 'none'
             var main = document.getElementById('main-container')
@@ -155,11 +150,13 @@
 
         if (abi) {
             abihtml = new AbiHtml(abi)
+            document.getElementById('tab-container').children[0].innerHTML = ''
             abihtml.RenderFunctions(getTransactionOptions(), functionCallback)
-            if (toAddress)
+            if (toAddress) {
                 abihtml.WatchEvents({
                     address: toAddress
                 }, {}, eventCallback)
+            }
         }
     }
 
@@ -177,22 +174,34 @@
 
     var sendValue = function() {
         var cb = function(error, result) {
-            if (error)
-                alert(error);
-            else
+            if (error) {
+                var p = document.createElement('p')
+                p.innerHTML = error.toString()
+                makeNotification(p)
+            } else
                 renderTransactionHash(result)
 
         }
         web3.eth.sendTransaction(getTransactionOptions(), cb)
     }
 
+    var makeNotification = function(htmlDom) {
+        var parent = document.createElement('div')
+        var btn = document.createElement('button')
+        btn.innerHTML = 'Dismiss'
+        btn.addEventListener("click", function() {
+            parent.style.display = 'none'
+        })
+        parent.appendChild(btn)
+        parent.appendChild(htmlDom)
+
+        var el = document.getElementById('notifications')
+        el.insertBefore(parent, el.childNodes[0])
+    }
+
 
 
     window.onload = function() {
-        document.getElementById('compile-contract').disabled = false
-            // document.getElementById('monitor-events').disabled = false
-        document.getElementById('send-value').disabled = false
-
         // set event handlers
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
         document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
@@ -204,10 +213,15 @@
 
         document.getElementById('send-value').addEventListener('click', function() {
             txhash = web3.eth.sendTransaction(getTransactionOptions())
-            web3.eth.getTransactionReceipt(txhash, function(txReceipt) {
-                console.log(txReceipt)
-            })
-            alert(txhash)
+
+            // // below doesn't work because it doens't wait for it to be mined
+            // web3.eth.getTransactionReceipt(txhash, function(err, txReceipt) {
+            //     console.log(err, txReceipt)
+            // })
+
+            var p = document.createElement('p')
+            p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
+            makeNotification(p)
         }, false)
 
         document.getElementById('copy-from').addEventListener('click', function() {
@@ -229,7 +243,7 @@
         document.getElementById('value-unit').addEventListener('change', function() {
             updateBalances()
             renderTxCostTotal()
-            var address = document.getElementById('contract-address').value
+                // var address = document.getElementById('contract-address').value
                 // if (address)
                 //     document.getElementById('contract-balance').innerHTML = formattedBalance(web3.eth.getBalance(address), document.getElementById('value-unit').value)
                 // else
@@ -245,9 +259,11 @@
 
         document.getElementById('compile-contract').addEventListener('click', function() {
             compileSolidity(document.getElementById('contract-code').value, function(err, result) {
-                if (err)
-                    alert(err)
-                else {
+                if (err) {
+                    var p = document.createElement('p')
+                    p.innerHTML = err.toString()
+                    makeNotification(p)
+                } else {
                     contracts = result
                     setContractSelector('contract-selector', result)
                     renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
@@ -274,8 +290,11 @@
                         console.log('Contract mined:', result)
                         renderTransactionHash(contract.transactionHash)
                         document.getElementById('contract-address').value = result.address
-                    } else
-                        alert(error)
+                    } else {
+                        var p = document.createElement('p')
+                        p.innerHTML = error.toString()
+                        makeNotification(p)
+                    }
                 })
                 // run a few milliseconds later since transaction hash isn't available immediately
             setTimeout(function() {
@@ -290,21 +309,10 @@
 
         document.getElementById('generate-page').addEventListener('click', generatePage, false)
 
-        // document.getElementById('monitor-events').addEventListener('click', function() {
-        //     generateDoc()
-        //     if (getContractAddress())
-        //         watchAllEvents()
-        // }, false);
-
         connectInstance()
         if (document.getElementById('contract-abi').value)
             generatePage()
 
-    }
-
-    window.onbeforeunload = function() {
-        // unlikely this fires, but try to clean up after oneself
-        unset()
     }
     </script>
 </head>
@@ -347,7 +355,7 @@
                     <!-- <label for="contract-balance">Balance:</label> -->
                     <!-- <span id="contract-balance"></span> -->
                     <label for="value-amount">Value</label>
-                    <input id="value-amount" type="text" value="0">
+                    <input id="value-amount" type="text" value="0.01">
                     <select id="value-unit">
                         <option selected="">ether</option>
                         <option>finney</option>
@@ -372,7 +380,7 @@
                     </select>
                     <button id="gasprice-copy">Sync estimate</button>
                     <span>Max cost: <span id="txcost-total">?</span></span>
-                    <button id="send-value" type="button" disabled>Send</button>
+                    <button id="send-value" type="button">Send</button>
                     <label for="contract-selector">Deploy contract:</label>
                     <select id="contract-selector"></select>
                     <button type="button" id="deploy-contract" disabled>Deploy</button>
@@ -390,7 +398,10 @@
             <div id="main-container">
             </div>
         </div>
-        <div id="events"></div>
+        <div id="events">
+            <h2>Events</h2>
+            <div id="notifications"></div>
+        </div>
     </div>
     <div id="footer">
     </div>
