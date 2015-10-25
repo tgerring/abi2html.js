@@ -163,18 +163,6 @@
         }
     }
 
-    var displayTab = function(htmlId) {
-        var target = document.getElementById('function' + htmlId)
-        var parent = document.getElementById('main-container')
-        for (var i = 0; i < parent.childNodes.length; i++) {
-            var child = parent.childNodes[i]
-            if (child.tagName == 'DIV')
-                child.style.display = 'none'
-        }
-        target.style.display = 'block'
-    }
-
-
     var sendValue = function() {
         var cb = function(error, result) {
             if (error) {
@@ -203,6 +191,16 @@
         var el = document.getElementById('notifications')
         el.insertBefore(div, el.childNodes[0])
     }
+
+    var displayTab = function(htmlId) {
+        var target = document.getElementById('function' + htmlId)
+        var parent = document.getElementById('main-container')
+        for (var i = 0; i < parent.childNodes.length; i++) {
+            var child = parent.childNodes[i]
+            if (child.tagName == 'DIV')
+                child.style.display = 'none'
+        }
+        target.style.display = 'block'
     }
 
     var setSelectedTab = function() {
@@ -210,7 +208,6 @@
         var x = el.querySelectorAll("ul>li>a")
         for (var i = 0; i < x.length; i++) {
             var item = x[i]
-            console.log(item, window.location)
             if (item.href == window.location.href) {
                 item.parentNode.className = 'selected'
                 var htmlId = item.getAttribute('href').substring(1, item.href.length)
@@ -222,9 +219,7 @@
 
     }
 
-
-
-    window.onload = function() {
+    var setHandlers = function() {
         // set event handlers
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
         document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
@@ -332,10 +327,13 @@
 
         document.getElementById('generate-page').addEventListener('click', generatePage, false)
 
+    }
+
+    window.onload = function() {
         connectInstance()
+        setHandlers()
         if (document.getElementById('contract-abi').value) {
             generatePage()
-            setSelectedTab()
         }
 
     }
@@ -346,7 +344,7 @@
     <div id="header">
         <div id="header-wrapper">
             <div id="node">
-                <button type="button" id="connect-instance" onclick="connectInstance">Connect</button>
+                <button type="button" id="connect-instance">Connect</button>
                 <samp>geth --rpc --rpcaddr "</samp>
                 <input type="text" id="instance-hostname" value="127.0.0.1">
                 <samp>" --rpcport "
