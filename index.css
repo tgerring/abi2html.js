@@ -231,6 +231,21 @@ fieldset.event {
     border-right: 8px solid #006699;
 }
 
+#tab-container ul li.call {
+    border-left: 8px solid green;
+}
+
+
+/* transact must be before call because anything can be transacted to */
+
+#tab-container ul li a.transact::after {
+    content: " \2192";
+}
+
+#tab-container ul li a.call::after {
+    content: " \2190";
+}
+
 #main-container {
     min-height: 400px;
     margin: 1em 1em 0 15em;

@@ -131,10 +131,14 @@
             makeNotification(htmlDom)
         }
 
-        var functionCallback = function(htmlDom) {
+        var functionCallback = function(htmlDom, evmFunction) {
             var name = htmlDom.childNodes[0].innerHTML
             var li = document.createElement('li')
             var a = document.createElement('a')
+            if (evmFunction.outputs.length > 0)
+                a.className += ' call'
+            if (!evmFunction.constant)
+                a.className += ' transact'
             a.href = '#' + name
             a.innerHTML = name
             a.addEventListener('click', function() {
@@ -156,7 +160,7 @@
             document.getElementById('tab-container').children[0].innerHTML = ''
             for (var name in abihtml.functions) {
                 var dom = makeFunction(abihtml.functions[name])
-                functionCallback(dom)
+                functionCallback(dom, abihtml.functions[name])
             }
             setSelectedTab()
 
@@ -187,33 +191,38 @@
         h3.innerHTML = evmFunction.name
         div.appendChild(h3)
 
-        var btn = document.createElement('button')
-        btn.type = 'button'
-        btn.id = [evmFunction.name, "call"].join(evmFunction.config.idJoinString)
-        btn.innerHTML = "Call"
-        btn.addEventListener('click', function(ev) {
-            evmFunction.Call(getTransactionOptions())
-        })
-        div.appendChild(btn)
-
-        var tbtn = document.createElement('button')
-        tbtn.type = 'button'
-        tbtn.id = [evmFunction.name, "transact"].join(evmFunction.config.idJoinString)
-        tbtn.innerHTML = "Transact"
-        tbtn.addEventListener('click', function(ev) {
-            evmFunction.Transact(getTransactionOptions(), function(err, txhash) {
-                var p = document.createElement('p')
-                if (err) {
-                    p.innerHTML = err.toString()
-                    makeNotification(p, 'error')
-                } else {
-                    p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
-                    makeNotification(p, 'warning')
-                }
+        if (evmFunction.outputs.length > 0) {
+            var btn = document.createElement('button')
+            btn.type = 'button'
+            btn.id = [evmFunction.name, "call"].join(evmFunction.config.idJoinString)
+            btn.innerHTML = "Call"
+            btn.addEventListener('click', function(ev) {
+                evmFunction.Call(getTransactionOptions())
             })
-        })
+            div.appendChild(btn)
+        }
 
-        div.appendChild(tbtn)
+        if (!evmFunction.constant) {
+            var tbtn = document.createElement('button')
+            tbtn.type = 'button'
+            tbtn.id = [evmFunction.name, "transact"].join(evmFunction.config.idJoinString)
+            tbtn.innerHTML = "Transact"
+            tbtn.addEventListener('click', function(ev) {
+                evmFunction.Transact(getTransactionOptions(), function(err, txhash) {
+                    var p = document.createElement('p')
+                    if (err) {
+                        p.innerHTML = err.toString()
+                        makeNotification(p, 'error')
+                    } else {
+                        p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
+                        makeNotification(p, 'warning')
+                    }
+                })
+            })
+            div.appendChild(tbtn)
+        }
+
+
 
         if (evmFunction.inputs.length > 0) {
             var fs = document.createElement('fieldset')
@@ -354,7 +363,7 @@
                 var htmlId = item.getAttribute('href').substring(1, item.href.length)
                 displayTab(htmlId)
             } else {
-                item.parentNode.className = ''
+                item.parentNode.className = item.parentNode.className.replace('selected', '')
             }
         }
 
