@@ -137,7 +137,9 @@ fieldset.event {
 #notifications > div {
     margin: 1em 0;
     border: 1px solid gray;
-    padding: 5px;
+    padding: 10px 5px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
 }
 
 #notifications > div > button {
@@ -151,6 +153,18 @@ fieldset.event {
     padding: 5px;
     line-height: .8;
     margin-top: 1ex;
+}
+
+#notifications .success {
+    background-color: #BCF5A9
+}
+
+#notifications .warning {
+    background-color: #F3F781
+}
+
+#notifications .error {
+    background-color: #F5A9A9
 }
 
 #tab-container {

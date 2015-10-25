@@ -42,11 +42,11 @@
         if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
             var p = document.createElement('p')
             p.innerHTML = 'Could not connect to Ethereum client'
-            makeNotification(p)
+            makeNotification(p, 'error')
         } else {
             var p = document.createElement('p')
             p.innerHTML = 'Connected'
-            makeNotification(p)
+            makeNotification(p, 'success')
 
             // set network gas estimate
             updateGasprice()
@@ -128,7 +128,7 @@
         var toAddress = document.getElementById('contract-address').value
 
         var eventCallback = function(htmlDom) {
-            makeNotification(htmlDom)
+            makeNotification(htmlDom, 'success')
         }
 
         var functionCallback = function(htmlDom) {
@@ -188,18 +188,21 @@
         web3.eth.sendTransaction(getTransactionOptions(), cb)
     }
 
-    var makeNotification = function(htmlDom) {
-        var parent = document.createElement('div')
+    var makeNotification = function(htmlDom, className) {
+        var div = document.createElement('div')
+        if (className)
+            div.className = className
         var btn = document.createElement('button')
         btn.innerHTML = 'Dismiss'
         btn.addEventListener("click", function() {
-            parent.style.display = 'none'
+            div.style.display = 'none'
         })
-        parent.appendChild(btn)
-        parent.appendChild(htmlDom)
+        div.appendChild(btn)
+        div.appendChild(htmlDom)
 
         var el = document.getElementById('notifications')
-        el.insertBefore(parent, el.childNodes[0])
+        el.insertBefore(div, el.childNodes[0])
+    }
     }
 
     var setSelectedTab = function() {
@@ -282,7 +285,7 @@
                 if (err) {
                     var p = document.createElement('p')
                     p.innerHTML = err.toString()
-                    makeNotification(p)
+                    makeNotification(p, 'error')
                 } else {
                     contracts = result
                     setContractSelector('contract-selector', result)
@@ -313,7 +316,7 @@
                     } else {
                         var p = document.createElement('p')
                         p.innerHTML = error.toString()
-                        makeNotification(p)
+                        makeNotification(p, 'success')
                     }
                 })
                 // run a few milliseconds later since transaction hash isn't available immediately
