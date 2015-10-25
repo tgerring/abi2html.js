@@ -258,3 +258,13 @@ fieldset.event {
 #functions>h2 {
     margin-left: 220px;
 }
+
+div.solfield {
+    margin: 1ex 0;
+}
+
+div.solfield > label {
+    display: inline-block;
+    min-width: 5em;
+    margin-right: 1em;
+}
