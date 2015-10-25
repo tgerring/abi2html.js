@@ -42,11 +42,11 @@
         if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
             var p = document.createElement('p')
             p.innerHTML = 'Could not connect to Ethereum client'
-            makeNotification(p)
+            makeNotification(p, 'error')
         } else {
             var p = document.createElement('p')
             p.innerHTML = 'Connected'
-            makeNotification(p)
+            makeNotification(p, 'success')
 
             // set network gas estimate
             updateGasprice()
@@ -55,23 +55,25 @@
             updateBalances()
 
             // update block info
-            updateBlocks(web3.eth.getBlock('latest'))
+            updateWithBlock(web3.eth.getBlock('latest'))
 
             renderTxCostTotal()
 
-            // unset()
-            var filter = web3.eth.filter('latest');
-            filter.watch(function(error, result) {
+            var filter = web3.eth.filter('latest')
+            filter.watch(function(err, result) {
                 console.log('Saw new block', result);
-                updateBlocks(result)
+                var block = web3.eth.getBlock(result)
+                updateWithBlock(block)
                 updateBalances()
             })
         }
     }
 
-    var updateBlocks = function(block) {
-        document.getElementById('block-height').innerHTML = block.number
-        document.getElementById('block-hash').innerHTML = block.hash
+    var updateWithBlock = function(block) {
+        if (block) {
+            document.getElementById('block-height').innerHTML = block.number
+            document.getElementById('block-hash').innerHTML = block.hash
+        }
     }
 
     var updateBalances = function() {
@@ -126,7 +128,7 @@
         var toAddress = document.getElementById('contract-address').value
 
         var eventCallback = function(htmlDom) {
-            makeNotification(htmlDom)
+            makeNotification(htmlDom, 'success')
         }
 
         var functionCallback = function(htmlDom) {
@@ -161,18 +163,6 @@
         }
     }
 
-    var displayTab = function(htmlId) {
-        var target = document.getElementById('function' + htmlId)
-        var parent = document.getElementById('main-container')
-        for (var i = 0; i < parent.childNodes.length; i++) {
-            var child = parent.childNodes[i]
-            if (child.tagName == 'DIV')
-                child.style.display = 'none'
-        }
-        target.style.display = 'block'
-    }
-
-
     var sendValue = function() {
         var cb = function(error, result) {
             if (error) {
@@ -186,18 +176,31 @@
         web3.eth.sendTransaction(getTransactionOptions(), cb)
     }
 
-    var makeNotification = function(htmlDom) {
-        var parent = document.createElement('div')
+    var makeNotification = function(htmlDom, className) {
+        var div = document.createElement('div')
+        if (className)
+            div.className = className
         var btn = document.createElement('button')
         btn.innerHTML = 'Dismiss'
         btn.addEventListener("click", function() {
-            parent.style.display = 'none'
+            div.style.display = 'none'
         })
-        parent.appendChild(btn)
-        parent.appendChild(htmlDom)
+        div.appendChild(btn)
+        div.appendChild(htmlDom)
 
         var el = document.getElementById('notifications')
-        el.insertBefore(parent, el.childNodes[0])
+        el.insertBefore(div, el.childNodes[0])
+    }
+
+    var displayTab = function(htmlId) {
+        var target = document.getElementById('function' + htmlId)
+        var parent = document.getElementById('main-container')
+        for (var i = 0; i < parent.childNodes.length; i++) {
+            var child = parent.childNodes[i]
+            if (child.tagName == 'DIV')
+                child.style.display = 'none'
+        }
+        target.style.display = 'block'
     }
 
     var setSelectedTab = function() {
@@ -205,7 +208,6 @@
         var x = el.querySelectorAll("ul>li>a")
         for (var i = 0; i < x.length; i++) {
             var item = x[i]
-            console.log(item, window.location)
             if (item.href == window.location.href) {
                 item.parentNode.className = 'selected'
                 var htmlId = item.getAttribute('href').substring(1, item.href.length)
@@ -217,9 +219,7 @@
 
     }
 
-
-
-    window.onload = function() {
+    var setHandlers = function() {
         // set event handlers
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
         document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
@@ -280,7 +280,7 @@
                 if (err) {
                     var p = document.createElement('p')
                     p.innerHTML = err.toString()
-                    makeNotification(p)
+                    makeNotification(p, 'error')
                 } else {
                     contracts = result
                     setContractSelector('contract-selector', result)
@@ -311,7 +311,7 @@
                     } else {
                         var p = document.createElement('p')
                         p.innerHTML = error.toString()
-                        makeNotification(p)
+                        makeNotification(p, 'success')
                     }
                 })
                 // run a few milliseconds later since transaction hash isn't available immediately
@@ -327,10 +327,13 @@
 
         document.getElementById('generate-page').addEventListener('click', generatePage, false)
 
+    }
+
+    window.onload = function() {
         connectInstance()
+        setHandlers()
         if (document.getElementById('contract-abi').value) {
             generatePage()
-            setSelectedTab()
         }
 
     }
@@ -341,7 +344,7 @@
     <div id="header">
         <div id="header-wrapper">
             <div id="node">
-                <button type="button" id="connect-instance" onclick="connectInstance">Connect</button>
+                <button type="button" id="connect-instance">Connect</button>
                 <samp>geth --rpc --rpcaddr "</samp>
                 <input type="text" id="instance-hostname" value="127.0.0.1">
                 <samp>" --rpcport "
