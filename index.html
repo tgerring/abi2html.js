@@ -154,14 +154,98 @@
         if (abi) {
             abihtml = new AbiHtml(abi)
             document.getElementById('tab-container').children[0].innerHTML = ''
-            abihtml.RenderFunctions(getTransactionOptions(), functionCallback)
-            if (toAddress) {
-                abihtml.WatchEvents({
-                    address: toAddress
-                }, {}, eventCallback)
+            for (var name in abihtml.functions) {
+                var dom = makeFunction(abihtml.functions[name])
+                functionCallback(dom)
+            }
+
+            setSelectedTab()
+
+            var opts = getTransactionOptions()
+            if (opts.to) {
+                for (var name in abihtml.events) {
+                    var ev = abihtml.events[name]
+
+                    // ev.Get({
+                    //     address: opts.to
+                    // }, {}, eventCallback)
+
+                    ev.Watch({
+                        address: opts.to
+                    }, {}, eventCallback)
+                }
             }
         }
     }
+
+    var makeFunction = function(evmFunction) {
+        var div = document.createElement('div')
+        div.className = ['function'].join(' ')
+        div.id = 'function' + evmFunction.name
+
+        var h3 = document.createElement('h3')
+        h3.innerHTML = evmFunction.name
+        div.appendChild(h3)
+
+        var btn = document.createElement('button')
+        btn.type = 'button'
+        btn.id = [evmFunction.name, "call"].join(evmFunction.config.idJoinString)
+        btn.innerHTML = "Call"
+        btn.addEventListener('click', function(ev) {
+            evmFunction.Call(getTransactionOptions())
+        })
+        div.appendChild(btn)
+
+        var tbtn = document.createElement('button')
+        tbtn.type = 'button'
+        tbtn.id = [evmFunction.name, "transact"].join(evmFunction.config.idJoinString)
+        tbtn.innerHTML = "Transact"
+        tbtn.addEventListener('click', function(ev) {
+            evmFunction.Transact(getTransactionOptions(), function(err, txhash) {
+                var p = document.createElement('p')
+                if (err) {
+                    p.innerHTML = err.toString()
+                    makeNotification(p, 'error')
+                } else {
+                    p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
+                    makeNotification(p)
+                }
+            })
+        })
+
+        div.appendChild(tbtn)
+
+        if (evmFunction.inputs.length > 0) {
+            var fs = document.createElement('fieldset')
+            fs.className = 'inputs'
+
+            var leg = document.createElement('legend')
+            leg.innerHTML = 'Inputs'
+            fs.appendChild(leg)
+
+            evmFunction.inputs.forEach(function(field) {
+                fs.appendChild(field.renderDom(true))
+            })
+            div.appendChild(fs)
+        }
+
+        if (evmFunction.outputs.length > 0) {
+            var fso = document.createElement('fieldset')
+            fso.className = 'outputs'
+
+            var leg = document.createElement('legend')
+            leg.innerHTML = 'Outputs'
+            fso.appendChild(leg)
+
+            evmFunction.outputs.forEach(function(field) {
+                fso.appendChild(field.renderDom(false))
+            })
+            div.appendChild(fso)
+        }
+
+        return div
+    }
+
 
     var sendValue = function() {
         var cb = function(error, result) {
@@ -413,7 +497,7 @@
     </div>
     <div id="main">
         <div id="functions">
-            <h2>Functions</h2>
+            <h2>Actions</h2>
             <div id="tab-container">
                 <ul>
                 </ul>
@@ -422,7 +506,7 @@
             </div>
         </div>
         <div id="events">
-            <h2>Events</h2>
+            <h2>Notifications</h2>
             <div id="notifications"></div>
         </div>
     </div>
