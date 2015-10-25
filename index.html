@@ -162,7 +162,7 @@
             setSelectedTab()
 
             var opts = getTransactionOptions()
-            if (opts.to) {
+            if (testConnection() && opts.to) {
                 for (var name in abihtml.events) {
                     var ev = abihtml.events[name]
 
