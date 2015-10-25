@@ -167,6 +167,12 @@ fieldset.event {
     background-color: #F5A9A9
 }
 
+#notifications > div dt {
+    float: left;
+    margin-right: 1ex;
+    font-weight: bold;
+}
+
 #tab-container {
     float: left;
     margin: 25px 0 0 0;
