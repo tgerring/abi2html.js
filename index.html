@@ -158,11 +158,11 @@
                 var dom = makeFunction(abihtml.functions[name])
                 functionCallback(dom)
             }
-
             setSelectedTab()
 
             var opts = getTransactionOptions()
             if (testConnection() && opts.to) {
+                document.getElementById('notifications').innerHTML = ''
                 for (var name in abihtml.events) {
                     var ev = abihtml.events[name]
 
@@ -303,6 +303,24 @@
 
     }
 
+    var compileSolidity = function(sourceString, callback) {
+        var c = web3.eth.getCompilers()
+        var i = 0;
+        for (; i < c.length; i++) {
+            if (c[i] == 'Solidity')
+                break;
+        }
+        if (i < c.length) {
+            web3.eth.compile.solidity(sourceString, callback)
+        } else {
+            var p = document.createElement('p')
+            p.innerHTML = 'Solidity compiler not available'
+            makeNotification(p, 'warning')
+        }
+    }
+
+
+
     var setHandlers = function() {
         // set event handlers
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
@@ -360,29 +378,42 @@
         }, false)
 
         document.getElementById('compile-contract').addEventListener('click', function() {
-            compileSolidity(document.getElementById('contract-code').value, function(err, result) {
+            compileSolidity(document.getElementById('contract-code').value, function(err, results) {
                 if (err) {
                     var p = document.createElement('p')
                     p.innerHTML = err.toString()
                     makeNotification(p, 'error')
                 } else {
-                    contracts = result
-                    setContractSelector('contract-selector', result)
-                    renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
-                    generateDoc();
-                    document.getElementById('deploy-contract').disabled = false
-                    if (getContractAddress())
-                        watchAllEvents()
+
+                    // update contract selector
+                    select = document.getElementById('contract-selector');
+                    select.options.length = 0;
+                    for (var k in results) {
+                        var obj = results[k];
+                        var el = document.createElement('option');
+                        el.textContent = k;
+                        el.value = JSON.stringify(results[k]);
+                        select.options.add(el);
+                    }
+
+                    // set index && display abi
+                    select.selectedIndex = 0
+
+                    var userContract = JSON.parse(select.options[0].value)
+                    document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
+
+                    document.getElementById('contract-selector').disabled = false
+                        // document.getElementById('deploy-contract').disabled = false
+                    generatePage()
                 }
             })
 
         }, false);
 
         document.getElementById('contract-selector').addEventListener('change', function() {
-            renderContractInfo('contract-abi', getSelectedContract('contract-selector'))
-            unset()
-            generateDoc();
-            watchAllEvents();
+            var select = document.getElementById('contract-selector')
+            var userContract = JSON.parse(select.options[select.selectedIndex].value)
+            document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
         })
 
         document.getElementById('deploy-contract').addEventListener('click', function() {
@@ -441,7 +472,10 @@
             <div id="dashboard">
                 <div id="contract">
                     <label for="contract-code">Contract</label>
-                    <button type="button" id="compile-contract" disabled>Compile to ABI</button>
+                    <button type="button" id="compile-contract">Compile</button>
+                    <label for="contract-selector">Deploy contract:</label>
+                    <select id="contract-selector" disabled></select>
+                    <button type="button" id="deploy-contract" disabled>Deploy</button>
                     <br>
                     <textarea id="contract-code"></textarea>
                 </div>
@@ -450,17 +484,19 @@
                     <button type="button" id="generate-page">Generate Form</button>
                     <br>
                     <textarea id="contract-abi">[{"constant":false,"inputs":[{"name":"_owner","type":"address"}],"name":"removeOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"m_numOwners","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"resetSpentToday","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_owner","type":"address"}],"name":"addOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"m_required","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_h","type":"bytes32"}],"name":"confirm","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_newLimit","type":"uint256"}],"name":"setDailyLimit","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"},{"name":"_data","type":"bytes"}],"name":"execute","outputs":[{"name":"_r","type":"bytes32"}],"type":"function"},{"constant":false,"inputs":[{"name":"_operation","type":"bytes32"}],"name":"revoke","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_newRequired","type":"uint256"}],"name":"changeRequirement","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"_operation","type":"bytes32"},{"name":"_owner","type":"address"}],"name":"hasConfirmed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"}],"name":"kill","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"}],"name":"changeOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"m_dailyLimit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"inputs":[{"name":"identifier","type":"bytes32"}],"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"identifier","type":"bytes32"}],"name":"Created","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"}],"name":"Confirmation","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"}],"name":"Revoke","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"},{"indexed":false,"name":"newOwner","type":"address"}],"name":"OwnerChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"newOwner","type":"address"}],"name":"OwnerAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"}],"name":"OwnerRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"newRequirement","type":"uint256"}],"name":"RequirementChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"from","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"SingleTransact","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"MultiTransact","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"operation","type":"bytes32"},{"indexed":false,"name":"initiator","type":"address"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"ConfirmationNeeded","type":"event"}]</textarea>
-                    <!-- <br> -->
-                    <!-- <button type="button" id="monitor-events" disabled>Monitor</button> -->
                 </div>
-                <div id="controls">
+            </div>
+            <div id="controls">
                     <label for="sender-address">From:</label>
                     <select id="sender-address" class="in-address"></select>
                     <button type="button" id="copy-from">Copy To</button>
+                </div>
                     <label for="contract-address">To:</label>
                     <input id="contract-address" type="text" class="in-address" value="0x63f33b08404987648ce2dde79715e14e8b69e4d8">
                     <!-- <label for="contract-balance">Balance:</label> -->
                     <!-- <span id="contract-balance"></span> -->
+                </div>
+                <div>
                     <label for="value-amount">Value</label>
                     <input id="value-amount" type="text" value="0.01">
                     <select id="value-unit">
@@ -472,8 +508,11 @@
                         <option>ada</option>
                         <option>wei</option>
                     </select>
+                </div>
                     <label for="gas">Gas:</label>
                     <input id="gas" type="text" class="" value="3000000">
+                </div>
+                <div>
                     <label for="gas-price">Gas price:</label>
                     <input id="gasprice-amount" type="text" class="" value="10">
                     <select id="gasprice-unit">
@@ -486,11 +525,10 @@
                         <option>wei</option>
                     </select>
                     <button id="gasprice-copy">Sync estimate</button>
+                </div>
+                <div>
                     <span>Max cost: <span id="txcost-total">?</span></span>
                     <button id="send-value" type="button">Send</button>
-                    <label for="contract-selector">Deploy contract:</label>
-                    <select id="contract-selector"></select>
-                    <button type="button" id="deploy-contract" disabled>Deploy</button>
                 </div>
             </div>
         </div>

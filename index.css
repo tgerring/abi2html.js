@@ -73,6 +73,10 @@ div.function > h3 {
     height: 200px;
 }
 
+#header-wrapper > div {
+    margin: 0 0 1em 0;
+}
+
 #main {
     margin: 200px 1em 0 1em;
 }
@@ -80,6 +84,7 @@ div.function > h3 {
 #abi {
     width: 50%;
     float: right;
+    display: none;
 }
 
 #contract {
