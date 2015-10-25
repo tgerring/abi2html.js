@@ -74,7 +74,7 @@ div.function > h3 {
 }
 
 #header-wrapper > div {
-    margin: 0 0 1em 0;
+    margin: 0.5em 1em;
 }
 
 #main {
@@ -90,6 +90,7 @@ div.function > h3 {
 #contract {
     width: 50%;
     float: left;
+    margin-right: 1em;
 }
 
 #contract-abi {
@@ -140,7 +141,7 @@ fieldset.event {
 }
 
 #notifications > div {
-    margin: 1em 0;
+    margin: 2em 0 1em 0;
     border: 1px solid gray;
     padding: 10px 5px;
     -moz-border-radius: 8px;
@@ -150,6 +151,7 @@ fieldset.event {
 #notifications > div > button {
     position: absolute;
     right: 20;
+    margin-top: -0.5em;
 }
 
 #notifications pre {
@@ -157,7 +159,14 @@ fieldset.event {
     border: 1px solid black;
     padding: 5px;
     line-height: .8;
-    margin-top: 1ex;
+    /*margin-top: 1ex;*/
+}
+
+#notifications samp {
+    background-color: silver;
+    border: 1px solid black;
+    padding: 2px;
+    line-height: .8;
 }
 
 #notifications .success {

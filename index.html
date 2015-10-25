@@ -128,7 +128,7 @@
         var toAddress = document.getElementById('contract-address').value
 
         var eventCallback = function(htmlDom) {
-            makeNotification(htmlDom, 'success')
+            makeNotification(htmlDom)
         }
 
         var functionCallback = function(htmlDom) {
@@ -208,7 +208,7 @@
                     makeNotification(p, 'error')
                 } else {
                     p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
-                    makeNotification(p)
+                    makeNotification(p, 'warning')
                 }
             })
         })
@@ -265,7 +265,7 @@
             if (!receipt.contractAddress) {
                 console.log('This should have a contractAddress', receipt)
                 var p = document.createElement('p')
-                p.innerHTML = 'Contract mined but receipt has no creation address'
+                p.innerHTML = 'Contract in transaction <pre>' + result.transactionHash + '</pre> mined in block <pre>' + transaction.blockHash + '</pre>  (height ' + transaction.blockNumber + ') but receipt has no creation address'
                 makeNotification(p, 'warning')
                 return
             }
@@ -376,6 +376,21 @@
         }
     }
 
+    var updateToBalance = function() {
+        var address = document.getElementById('contract-address').value
+        if (address) {
+            try {
+                var balance = web3.eth.getBalance(address)
+                if (balance)
+                    document.getElementById('contract-balance').innerHTML = formattedBalance(balance, document.getElementById('value-unit').value)
+            } catch (e) {
+                document.getElementById('contract-balance').innerHTML = ''
+            }
+        } else {
+            document.getElementById('contract-balance').innerHTML = ''
+        }
+    }
+
 
 
     var setHandlers = function() {
@@ -401,12 +416,6 @@
             makeNotification(p)
         }, false)
 
-        document.getElementById('copy-from').addEventListener('click', function() {
-            var address = document.getElementById('sender-address').value
-            document.getElementById('contract-address').value = address
-                // document.getElementById('contract-balance').innerHTML = formattedBalance(web3.eth.getBalance(address), document.getElementById('value-unit').value)
-        }, false)
-
         document.getElementById('sender-address').addEventListener('change', function() {
             var accounts = abihtml.GetAccounts(true)
             var wei = accounts[document.getElementById('sender-address').value]
@@ -415,16 +424,23 @@
             document.getElementById('sender-balance').value = text
         }, false);
 
+        document.getElementById('contract-address').addEventListener('keyup', updateToBalance, false)
+        document.getElementById('contract-address').addEventListener('change', updateToBalance, false)
 
+        document.getElementById('copy-from').addEventListener('click', function() {
+            var address = document.getElementById('sender-address').value
+            document.getElementById('contract-address').value = address
+            updateToBalance()
+        }, false)
 
         document.getElementById('value-unit').addEventListener('change', function() {
             updateBalances()
             renderTxCostTotal()
-                // var address = document.getElementById('contract-address').value
-                // if (address)
-                //     document.getElementById('contract-balance').innerHTML = formattedBalance(web3.eth.getBalance(address), document.getElementById('value-unit').value)
-                // else
-                //     document.getElementById('contract-balance').innerHTML = ''
+            var address = document.getElementById('contract-address').value
+            if (address)
+                document.getElementById('contract-balance').innerHTML = formattedBalance(web3.eth.getBalance(address), document.getElementById('value-unit').value)
+            else
+                document.getElementById('contract-balance').innerHTML = ''
         }, false)
 
         document.getElementById('gasprice-unit').addEventListener('change', function() {
@@ -460,12 +476,12 @@
                     document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
 
                     document.getElementById('contract-selector').disabled = false
-                        // document.getElementById('deploy-contract').disabled = false
+                    document.getElementById('deploy-contract').disabled = false
                     generatePage()
                 }
             })
 
-        }, false);
+        }, false)
 
         document.getElementById('contract-selector').addEventListener('change', function() {
             var select = document.getElementById('contract-selector')
@@ -484,7 +500,7 @@
                         var p = document.createElement('p')
                         if (result) {
                             p.innerHTML = 'Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>'
-                            makeNotification(p)
+                            makeNotification(p, 'warning')
                         } else {
                             p.innerHTML = 'Did not deploy contract'
                             makeNotification(p, 'error')
@@ -526,6 +542,7 @@
         setHandlers()
         if (document.getElementById('contract-abi').value) {
             generatePage()
+            updateToBalance()
         }
 
     }
@@ -572,8 +589,8 @@
                 <div>
                     <label for="contract-address">To:</label>
                     <input id="contract-address" type="text" class="in-address" value="0x63f33b08404987648ce2dde79715e14e8b69e4d8">
-                    <!-- <label for="contract-balance">Balance:</label> -->
-                    <!-- <span id="contract-balance"></span> -->
+                    <label for="contract-balance">Balance:</label>
+                    <span id="contract-balance"></span>
                 </div>
                 <div>
                     <label for="value-amount">Value</label>
