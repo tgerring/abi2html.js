@@ -55,23 +55,25 @@
             updateBalances()
 
             // update block info
-            updateBlocks(web3.eth.getBlock('latest'))
+            updateWithBlock(web3.eth.getBlock('latest'))
 
             renderTxCostTotal()
 
-            // unset()
-            var filter = web3.eth.filter('latest');
-            filter.watch(function(error, result) {
+            var filter = web3.eth.filter('latest')
+            filter.watch(function(err, result) {
                 console.log('Saw new block', result);
-                updateBlocks(result)
+                var block = web3.eth.getBlock(result)
+                updateWithBlock(block)
                 updateBalances()
             })
         }
     }
 
-    var updateBlocks = function(block) {
-        document.getElementById('block-height').innerHTML = block.number
-        document.getElementById('block-hash').innerHTML = block.hash
+    var updateWithBlock = function(block) {
+        if (block) {
+            document.getElementById('block-height').innerHTML = block.number
+            document.getElementById('block-hash').innerHTML = block.hash
+        }
     }
 
     var updateBalances = function() {
