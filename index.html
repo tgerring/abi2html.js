@@ -162,7 +162,7 @@
 
             var opts = getTransactionOptions()
             if (testConnection() && opts.to) {
-                document.getElementById('notifications').innerHTML = ''
+                // document.getElementById('notifications').innerHTML = ''
                 for (var name in abihtml.events) {
                     var ev = abihtml.events[name]
 
@@ -244,6 +244,63 @@
         }
 
         return div
+    }
+
+    var makeContract = function(result) {
+        // get transaction to see if it's been mined
+        var transaction = web3.eth.getTransaction(result.transactionHash)
+            // console.log(transaction)
+
+        // if no blockhash, set a timer and try later
+        if (!transaction.blockHash) {
+            setTimeout(function() {
+                makeContract(result)
+            }, 5000)
+            return
+        }
+
+        // if we have a blockhash, we should find a receipt
+        var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(error, receipt) {
+            // if no address found, inform the user
+            if (!receipt.contractAddress) {
+                console.log('This should have a contractAddress', receipt)
+                var p = document.createElement('p')
+                p.innerHTML = 'Contract mined but receipt has no creation address'
+                makeNotification(p, 'warning')
+                return
+            }
+
+            var dl = document.createElement('dl')
+            var dtHeight = document.createElement('dt')
+            var ddHeight = document.createElement('dd')
+
+            dtHeight.innerHTML = 'Block number:'
+            ddHeight.innerHTML = receipt.blockNumber
+
+            dl.appendChild(dtHeight)
+            dl.appendChild(ddHeight)
+
+            var dtAddress = document.createElement('dt')
+            var ddAddress = document.createElement('dd')
+
+            dtAddress.innerHTML = 'New address:'
+            dl.appendChild(dtAddress)
+
+            ddAddress.innerHTML = receipt.contractAddress
+            dl.appendChild(ddAddress)
+
+            var dtGas = document.createElement('dt')
+            var ddGas = document.createElement('dd')
+
+            dtGas.innerHTML = 'Gas used:'
+            dl.appendChild(dtGas)
+
+            ddGas.innerHTML = receipt.gasUsed
+            dl.appendChild(ddGas)
+
+            makeNotification(dl, 'success')
+            document.getElementById('contract-address').value = receipt.contractAddress
+        })
     }
 
 
@@ -414,29 +471,49 @@
             var select = document.getElementById('contract-selector')
             var userContract = JSON.parse(select.options[select.selectedIndex].value)
             document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
+            generatePage();
         })
 
         document.getElementById('deploy-contract').addEventListener('click', function() {
-            userContract = getSelectedContract('contract-selector')
-            contract = deployContract(userContract.code, function(error, result) {
+                var select = document.getElementById('contract-selector')
+                var userContract = JSON.parse(select.options[select.selectedIndex].value)
+
+                var createCallback = function(error, result) {
                     if (!error) {
-                        console.log('Contract mined:', result)
-                        renderTransactionHash(contract.transactionHash)
-                        document.getElementById('contract-address').value = result.address
+                        // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
+                        var p = document.createElement('p')
+                        if (result) {
+                            p.innerHTML = 'Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>'
+                            makeNotification(p)
+                        } else {
+                            p.innerHTML = 'Did not deploy contract'
+                            makeNotification(p, 'error')
+                            return
+                        }
+
+
+                        if (!result.address) {
+                            setTimeout(function() {
+                                makeContract(result)
+                            }, 5000)
+                        } else {
+                            makeContract(result)
+                        }
+
+
                     } else {
                         var p = document.createElement('p')
                         p.innerHTML = error.toString()
-                        makeNotification(p, 'success')
+                        makeNotification(p, 'error')
                     }
-                })
-                // run a few milliseconds later since transaction hash isn't available immediately
-            setTimeout(function() {
-                console.log(contract)
-                if (contract.transactionHash)
-                    renderTransactionHash(contract.transactionHash)
-            }, 100)
+                }
 
-        }, false)
+
+                var options = getTransactionOptions()
+                options.data = userContract.code
+                web3.eth.contract(userContract.info.abiDefinition).new(options, createCallback)
+            },
+            false)
 
 
 
@@ -487,10 +564,12 @@
                 </div>
             </div>
             <div id="controls">
+                <div>
                     <label for="sender-address">From:</label>
                     <select id="sender-address" class="in-address"></select>
                     <button type="button" id="copy-from">Copy To</button>
                 </div>
+                <div>
                     <label for="contract-address">To:</label>
                     <input id="contract-address" type="text" class="in-address" value="0x63f33b08404987648ce2dde79715e14e8b69e4d8">
                     <!-- <label for="contract-balance">Balance:</label> -->
@@ -498,7 +577,7 @@
                 </div>
                 <div>
                     <label for="value-amount">Value</label>
-                    <input id="value-amount" type="text" value="0.01">
+                    <input id="value-amount" type="text" value="0">
                     <select id="value-unit">
                         <option selected="">ether</option>
                         <option>finney</option>
@@ -509,6 +588,7 @@
                         <option>wei</option>
                     </select>
                 </div>
+                <div>
                     <label for="gas">Gas:</label>
                     <input id="gas" type="text" class="" value="3000000">
                 </div>
