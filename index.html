@@ -674,7 +674,10 @@
     window.onload = function() {
         var solGistId = getParameterByName('SOLIDITY_GIST')
         var abiGistId = getParameterByName('ABI_GIST')
-        document.getElementById('contract-address').value = getParameterByName('TO_ADDRESS')
+        var toAddress = getParameterByName('TO_ADDRESS')
+
+        if (toAddress)
+            document.getElementById('contract-address').value = toAddress
 
         setHandlers()
 
