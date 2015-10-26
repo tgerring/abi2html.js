@@ -243,7 +243,7 @@ fieldset.event {
 }
 
 #tab-container ul li a.call::after {
-    content: " \2190";
+    content: " \21c4";
 }
 
 #main-container {

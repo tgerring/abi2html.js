@@ -158,10 +158,32 @@
         if (abi) {
             abihtml = new AbiHtml(abi)
             document.getElementById('tab-container').children[0].innerHTML = ''
-            for (var name in abihtml.functions) {
-                var dom = makeFunction(abihtml.functions[name])
-                functionCallback(dom, abihtml.functions[name])
+
+            for (var i = 0; i < abihtml.functions.length; i++) {
+                abihtml.functions[i]
             }
+
+            var funcs = []
+            var i = 0
+            for (var name in abihtml.functions) {
+                i++
+                funcs.push(abihtml.functions[name])
+
+            }
+
+            funcs.sort(function(a, b) {
+                if (a.name < b.name) return -1
+                if (a.name > b.name) return 1
+                return 0
+            })
+
+            funcs.forEach(function(f) {
+                var dom = makeFunction(abihtml.functions[f.name])
+                functionCallback(dom, abihtml.functions[f.name])
+            })
+
+
+
             setSelectedTab()
 
             var opts = getTransactionOptions()
