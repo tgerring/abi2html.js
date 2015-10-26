@@ -59,6 +59,10 @@ div.function > h3 {
     width: 40%;
 }
 
+#events > h2 {
+    display: inline-block;
+}
+
 #header {
     position: fixed;
     top: 0px;

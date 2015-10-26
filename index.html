@@ -582,8 +582,13 @@
     }
 
 
+    var clearNotifications = function() {
+        document.getElementById('notifications').innerHTML = ''
+    }
+
 
     var setHandlers = function() {
+        document.getElementById('clear-notifications').addEventListener('click', clearNotifications, false)
         document.getElementById('generate-page').addEventListener('click', function() {
             generatePage()
         }, false)
@@ -820,6 +825,7 @@
         </div>
         <div id="events">
             <h2>Notifications</h2>
+            <button type="button" id="clear-notifications">Clear all</button>
             <div id="notifications"></div>
         </div>
     </div>
