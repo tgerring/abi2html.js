@@ -242,11 +242,36 @@
         document.getElementById('contract-selector').disabled = false
         document.getElementById('deploy-contract').disabled = false
 
-        generatePage(abihtml)
+        // generatePage(abihtml)
+        // makeEventList(abihtml)
     }
 
 
 
+    var makeEventList = function(abihtml) {
+        var select = document.getElementById('event-list')
+        select.options.length = 0
+
+        var first = document.createElement('option')
+        first.textContent = '<none>'
+        first.value = ''
+        select.options.add(first)
+
+        for (var name in abihtml.events) {
+            var el = document.createElement('option')
+            el.textContent = name
+            el.value = name
+            select.options.add(el)
+        }
+
+        var last = document.createElement('option')
+        last.textContent = '<all>'
+        last.value = '*'
+        select.options.add(last)
+
+        select.selectedIndex = 0
+
+    }
 
     var generatePage = function(abihtml) {
         if (!abihtml)
@@ -255,9 +280,9 @@
         if (abi) {
             document.getElementById('tab-container').children[0].innerHTML = ''
 
-            for (var i = 0; i < abihtml.functions.length; i++) {
-                abihtml.functions[i]
-            }
+            // for (var i = 0; i < abihtml.functions.length; i++) {
+            //     abihtml.functions[i]
+            // }
 
             var funcs = []
             var i = 0
@@ -591,6 +616,7 @@
         document.getElementById('clear-notifications').addEventListener('click', clearNotifications, false)
         document.getElementById('generate-page').addEventListener('click', function() {
             generatePage()
+            makeEventList(abihtml)
         }, false)
 
         document.getElementById('contract-address').addEventListener('keyup', updateToBalance, false)
@@ -665,10 +691,30 @@
             var select = document.getElementById('contract-selector')
             var userContract = JSON.parse(select.options[select.selectedIndex].value)
             document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
-            generatePage();
+            generatePage(abihtml)
+            makeEventList(abihtml)
         })
 
+        document.getElementById('event-list').addEventListener('change', function() {
+            var contractName = document.getElementById('event-list').value
+            var options = getTransactionOptions()
+            clearNotifications()
 
+            if (contractName === "*") {
+                abihtml.GetEvents({
+                    address: options.to
+                }, {}, function(htmlDom) {
+                    makeNotification(htmlDom)
+                })
+            } else if (contractName in abihtml.events)
+                abihtml.events[contractName].Get({
+                    address: options.to
+                }, {}, function(htmlDom) {
+                    makeNotification(htmlDom)
+                })
+
+
+        })
     }
 
     window.onload = function() {
@@ -680,8 +726,30 @@
             document.getElementById('contract-address').value = toAddress
 
         setHandlers()
+            //c835f38889b989e8488c
+        if (abiGistId) {
+            makeNotification('Loading ABI Gist')
+            callAjax('https://api.github.com/gists/' + abiGistId, function(result) {
+                loadAbiGist(result, function(result) {
+                    var abi = document.getElementById('contract-abi').value
+                    if (abi) {
+                        abihtml = new AbiHtml(abi)
+                    }
+                    generatePage(abihtml)
+                    makeEventList(abihtml)
+                    connectInstance()
+                    if (testConnection) {
+                        updateDashboard()
+                        watchBlocks()
+                        getEvents(true, function(results) {
+                            makeNotification(results)
+                        })
 
-        if (solGistId) {
+
+                    }
+                })
+            })
+        } else if (solGistId) {
             makeNotification('Loading Solidity Gist')
             connectInstance()
             callAjax('https://api.github.com/gists/' + solGistId, function(result) {
@@ -696,30 +764,13 @@
                         if (abi) {
                             abihtml = new AbiHtml(abi)
                             generatePage(abihtml)
+                            makeEventList(abihtml)
                             getEvents(true, makeNotification)
 
                         }
                     })
 
 
-                })
-            })
-        } else if (abiGistId) {
-            makeNotification('Loading ABI Gist')
-            callAjax('https://api.github.com/gists/' + abiGistId, function(result) {
-                loadAbiGist(result, function(result) {
-                    var abi = document.getElementById('contract-abi').value
-                    if (abi) {
-                        abihtml = new AbiHtml(abi)
-                    }
-                    generatePage(abihtml)
-                    connectInstance()
-                    if (testConnection) {
-                        updateDashboard()
-                        watchBlocks()
-                        getEvents(true, makeNotification)
-
-                    }
                 })
             })
         } else {
@@ -828,6 +879,7 @@
         </div>
         <div id="events">
             <h2>Notifications</h2>
+            <select id="event-list"></select>
             <button type="button" id="clear-notifications">Clear all</button>
             <div id="notifications"></div>
         </div>
