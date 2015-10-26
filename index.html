@@ -40,33 +40,60 @@
 
     var connectInstance = function() {
         if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
-            var p = document.createElement('p')
-            p.innerHTML = 'Could not connect to Ethereum client'
-            makeNotification(p, 'error')
+            makeNotification('Could not connect to Ethereum client', 'error')
         } else {
-            var p = document.createElement('p')
-            p.innerHTML = 'Connected'
-            makeNotification(p, 'success')
+            makeNotification('Connected', 'success')
+        }
+    }
 
-            // set network gas estimate
-            updateGasprice()
-
-            // set addresses select
-            updateBalances()
-
-            // update block info
-            updateWithBlock(web3.eth.getBlock('latest'))
-
-            renderTxCostTotal()
-
-            var filter = web3.eth.filter('latest')
+    var watchBlocks = function() {
+        makeNotification('Watching incoming blocks')
+        var filter = web3.eth.filter('latest')
+        if (!filter)
+            makeNotification('Problem creating filter', 'warning')
+        else
             filter.watch(function(err, result) {
                 console.log('Saw new block', result);
                 var block = web3.eth.getBlock(result)
                 updateWithBlock(block)
                 updateBalances()
             })
+    }
+
+    var getEvents = function(shouldWatch, callback) {
+        var opts = getTransactionOptions()
+        if (opts.to) {
+            for (var name in abihtml.events) {
+                var ev = abihtml.events[name]
+
+                if (shouldWatch)
+                    ev.Watch({
+                        address: opts.to
+                    }, {}, callback)
+                else
+                    ev.Get({
+                        address: opts.to
+                    }, {}, callback)
+
+            }
         }
+    }
+
+    var updateDashboard = function() {
+        // set network gas estimate
+        updateGasprice()
+
+        // set addresses select
+        updateBalances()
+
+        // update block info
+        updateWithBlock(web3.eth.getBlock('latest'))
+
+        // show maximum cost of transaction
+        renderTxCostTotal()
+
+        updateToBalance()
+
     }
 
     var updateWithBlock = function(block) {
@@ -93,6 +120,18 @@
         }
     }
 
+    var renderTxCostTotal = function() {
+        var gas = document.getElementById('gas').value
+        var gaspriceWei = web3.toWei(document.getElementById('gasprice-amount').value, document.getElementById('gasprice-unit').value)
+        var totalwei = gaspriceWei * gas
+        var text = formattedBalance(totalwei, document.getElementById('value-unit').value)
+        document.getElementById('txcost-total').innerHTML = text
+    }
+
+    var formattedBalance = function(weiAmount, unit) {
+        return web3.fromWei(weiAmount, unit) + ' ' + unit
+    }
+
     var getTransactionOptions = function() {
         return {
             from: document.getElementById('sender-address').value,
@@ -103,60 +142,117 @@
         }
     }
 
-    var renderTxCostTotal = function() {
-        var gasunit = document.getElementById('gasprice-unit').value
-        var valueunit = document.getElementById('value-unit').value
-        var gas = document.getElementById('gas').value
-        var gaswei = web3.toWei(document.getElementById('gasprice-amount').value, gasunit)
-        var totalwei = gaswei * gas
-        var text = formattedBalance(totalwei, valueunit)
-        document.getElementById('txcost-total').innerHTML = text
-    }
-
-    var formattedBalance = function(weiAmount, unit) {
-        return web3.fromWei(weiAmount, unit) + ' ' + unit
-    }
-
     /***
 
     Convenience functions for this DApp
 
     ***/
 
-    var generatePage = function() {
-        var abi = document.getElementById('contract-abi').value
-        var toAddress = document.getElementById('contract-address').value
+    var callAjax = function(url, callback) {
+        var xmlhttp;
+        // compatible with IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                callback(xmlhttp.responseText);
+            }
+        }
+        xmlhttp.open("GET", url, true);
+        xmlhttp.send();
+    }
 
-        var eventCallback = function(htmlDom) {
-            makeNotification(htmlDom)
+    var getParameterByName = function(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+
+
+    var loadSolidityGist = function(response, callback) {
+        result = JSON.parse(response)
+        if (result) {
+            for (var f in result.files) {
+                var content = result.files[f].content
+
+                document.getElementById('contract-code').value = content
+                document.getElementById('contract-code').style.display = 'block'
+
+                document.getElementById('contract-abi').value = ''
+                document.getElementById('contract-abi').style.display = 'none'
+
+                document.getElementById('tab-container').children[0].innerHTML = ''
+
+                compileSolidity(content, function(err, results) {
+
+                    if (err)
+                        makeNotification(err.toString(), 'error')
+                    else
+                    if (typeof callback === "function")
+                        callback(content)
+                })
+
+                break //only support first file
+            }
+        }
+    }
+
+
+    var loadAbiGist = function(result, callback) {
+        result = JSON.parse(response)
+        if (result) {
+            for (var f in result.files) {
+                var content = result.files[f].content
+
+
+                document.getElementById('contract-code').style.display = 'none'
+                document.getElementById('contract-code').value = ''
+
+                document.getElementById('contract-abi').style.display = 'block'
+                document.getElementById('contract-abi').value = content
+
+                document.getElementById('tab-container').children[0].innerHTML = ''
+
+                if (typeof callback === "function")
+                    callback(content)
+                break //only support first file
+            }
+        }
+    }
+
+
+    var updatePageWithContract = function(results) {
+        // update contract selector
+        select = document.getElementById('contract-selector');
+        select.options.length = 0;
+        for (var k in results) {
+            var obj = results[k];
+            var el = document.createElement('option');
+            el.textContent = k;
+            el.value = JSON.stringify(results[k]);
+            select.options.add(el);
         }
 
-        var functionCallback = function(htmlDom, evmFunction) {
-            var name = htmlDom.childNodes[0].innerHTML
-            var li = document.createElement('li')
-            var a = document.createElement('a')
-            if (evmFunction.outputs.length > 0)
-                a.className += ' call'
-            if (!evmFunction.constant)
-                a.className += ' transact'
-            a.href = '#' + name
-            a.innerHTML = name
-            a.addEventListener('click', function() {
-                window.location = a.href
-                setSelectedTab()
-            }, false)
-            li.appendChild(a)
-            var ul = document.getElementById('tab-container').children[0]
-            ul.appendChild(li)
+        // set index && display abi
+        select.selectedIndex = 0
+        var userContract = JSON.parse(select.options[0].value)
 
-            htmlDom.style.display = 'none'
-            var main = document.getElementById('main-container')
-            main.appendChild(htmlDom)
-            main.style.display = 'block'
-        }
+        document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
+        document.getElementById('contract-selector').disabled = false
+        document.getElementById('deploy-contract').disabled = false
+
+        generatePage(abihtml)
+    }
+
+
+
+
+    var generatePage = function(abihtml) {
+        if (!abihtml)
+            abihtml = new AbiHtml(document.getElementById('contract-abi').value)
 
         if (abi) {
-            abihtml = new AbiHtml(abi)
             document.getElementById('tab-container').children[0].innerHTML = ''
 
             for (var i = 0; i < abihtml.functions.length; i++) {
@@ -176,32 +272,37 @@
                 if (a.name > b.name) return 1
                 return 0
             })
-
             funcs.forEach(function(f) {
                 var dom = makeFunction(abihtml.functions[f.name])
-                functionCallback(dom, abihtml.functions[f.name])
+                makeNav(dom, abihtml.functions[f.name])
             })
-
-
-
             setSelectedTab()
-
-            var opts = getTransactionOptions()
-            if (testConnection() && opts.to) {
-                // document.getElementById('notifications').innerHTML = ''
-                for (var name in abihtml.events) {
-                    var ev = abihtml.events[name]
-
-                    // ev.Get({
-                    //     address: opts.to
-                    // }, {}, eventCallback)
-
-                    ev.Watch({
-                        address: opts.to
-                    }, {}, eventCallback)
-                }
-            }
         }
+    }
+
+    var makeNav = function(htmlDom, evmFunction) {
+        var name = htmlDom.childNodes[0].innerHTML
+        var li = document.createElement('li')
+        var a = document.createElement('a')
+        if (evmFunction.outputs.length > 0)
+            a.className += ' call'
+        if (!evmFunction.constant)
+            a.className += ' transact'
+        a.href = '#' + name
+        a.innerHTML = name
+        a.addEventListener('click', function() {
+            window.location = a.href
+            setSelectedTab()
+        }, false)
+        li.appendChild(a)
+
+        var ul = document.getElementById('tab-container').children[0]
+        ul.appendChild(li)
+
+        htmlDom.style.display = 'none'
+        var main = document.getElementById('main-container')
+        main.appendChild(htmlDom)
+        main.style.display = 'block'
     }
 
     var makeFunction = function(evmFunction) {
@@ -231,13 +332,10 @@
             tbtn.innerHTML = "Transact"
             tbtn.addEventListener('click', function(ev) {
                 evmFunction.Transact(getTransactionOptions(), function(err, txhash) {
-                    var p = document.createElement('p')
                     if (err) {
-                        p.innerHTML = err.toString()
-                        makeNotification(p, 'error')
+                        makeNotification(err.toString(), 'error')
                     } else {
-                        p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
-                        makeNotification(p, 'warning')
+                        makeNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
                     }
                 })
             })
@@ -295,9 +393,8 @@
             // if no address found, inform the user
             if (!receipt.contractAddress) {
                 console.log('This should have a contractAddress', receipt)
-                var p = document.createElement('p')
-                p.innerHTML = 'Contract in transaction <pre>' + result.transactionHash + '</pre> mined in block <pre>' + transaction.blockHash + '</pre>  (height ' + transaction.blockNumber + ') but receipt has no creation address'
-                makeNotification(p, 'warning')
+                var text = 'Contract in transaction <pre>' + result.transactionHash + '</pre> mined in block <pre>' + transaction.blockHash + '</pre>  (height ' + transaction.blockNumber + ') but receipt has no creation address'
+                makeNotification(text, 'warning')
                 return
             }
 
@@ -338,9 +435,7 @@
     var sendValue = function() {
         var cb = function(error, result) {
             if (error) {
-                var p = document.createElement('p')
-                p.innerHTML = error.toString()
-                makeNotification(p)
+                makeNotification(error.toString(), error)
             } else
                 renderTransactionHash(result)
 
@@ -348,20 +443,33 @@
         web3.eth.sendTransaction(getTransactionOptions(), cb)
     }
 
-    var makeNotification = function(htmlDom, className) {
-        var div = document.createElement('div')
+    var makeNotification = function(obj, className) {
+        var htmlDom
+        if (typeof obj === "object" && "nodeType" in obj) {
+            // looks like HTML Element
+            htmlDom = obj
+        } else if (typeof obj === "string") {
+            // looks like string
+            var htmlDom = document.createElement('p')
+            htmlDom.innerHTML = obj
+        }
+
+        var parElement = document.createElement('div')
         if (className)
-            div.className = className
+            parElement.className = className
         var btn = document.createElement('button')
         btn.innerHTML = 'Dismiss'
         btn.addEventListener("click", function() {
-            div.style.display = 'none'
+            parElement.style.display = 'none'
         })
-        div.appendChild(btn)
-        div.appendChild(htmlDom)
 
+        parElement.appendChild(btn)
+        parElement.appendChild(htmlDom)
+
+        // append the entry and the top
         var el = document.getElementById('notifications')
-        el.insertBefore(div, el.childNodes[0])
+        el.insertBefore(parElement, el.childNodes[0])
+
     }
 
     var displayTab = function(htmlId) {
@@ -391,6 +499,23 @@
 
     }
 
+    var compileContract = function(code, callback) {
+        if (!code)
+            code = document.getElementById('contract-code').value
+        if (!callback)
+            callback = updatePageWithContract
+
+        if (code)
+            compileSolidity(code, function(err, results) {
+                if (err) {
+                    makeNotification(err.toString(), 'error')
+                } else {
+                    if (typeof callback === "function")
+                        callback(results)
+                }
+            })
+    }
+
     var compileSolidity = function(sourceString, callback) {
         var c = web3.eth.getCompilers()
         var i = 0;
@@ -401,10 +526,44 @@
         if (i < c.length) {
             web3.eth.compile.solidity(sourceString, callback)
         } else {
-            var p = document.createElement('p')
-            p.innerHTML = 'Solidity compiler not available'
-            makeNotification(p, 'warning')
+            makeNotification('Solidity compiler not available', 'warning')
         }
+    }
+
+    var deployContract = function() {
+        var select = document.getElementById('contract-selector')
+        var userContract = JSON.parse(select.options[select.selectedIndex].value)
+
+        var createCallback = function(error, result) {
+            if (!error) {
+                // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
+                var p = document.createElement('p')
+                if (result) {
+                    makeNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
+                } else {
+                    makeNotification('Did not deploy contract', 'error')
+                    return
+                }
+
+
+                if (!result.address) {
+                    setTimeout(function() {
+                        makeContract(result)
+                    }, 5000)
+                } else {
+                    makeContract(result)
+                }
+
+
+            } else {
+                makeNotification(error.toString(), 'error')
+            }
+        }
+
+
+        var options = getTransactionOptions()
+        options.data = userContract.code
+        web3.eth.contract(userContract.info.abiDefinition).new(options, createCallback)
     }
 
     var updateToBalance = function() {
@@ -425,10 +584,29 @@
 
 
     var setHandlers = function() {
-        // set event handlers
+        document.getElementById('generate-page').addEventListener('click', function() {
+            generatePage()
+        }, false)
+
+        document.getElementById('contract-address').addEventListener('keyup', updateToBalance, false)
+        document.getElementById('contract-address').addEventListener('change', updateToBalance, false)
+        document.getElementById('compile-contract').addEventListener('click', function() {
+            if (testConnection)
+                compileContract(document.getElementById('contract-code').value, function(result) {
+                    updatePageWithContract(result)
+                    var abi = document.getElementById('contract-abi').value
+                    if (abi) {
+                        abihtml = new AbiHtml(abi)
+                        getEvents(true, makeNotification)
+                    }
+                })
+
+        }, false)
+        document.getElementById('deploy-contract').addEventListener('click', deployContract, false)
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
         document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
         document.getElementById('gasprice-amount').addEventListener('keyup', renderTxCostTotal, false)
+
         document.getElementById('gasprice-copy').addEventListener('click', function() {
             updateGasprice()
             renderTxCostTotal()
@@ -442,9 +620,7 @@
             //     console.log(err, txReceipt)
             // })
 
-            var p = document.createElement('p')
-            p.innerHTML = 'Sent transaction: <pre>' + txhash + '</pre>'
-            makeNotification(p)
+            makeNotification('Sent transaction: <pre>' + txhash + '</pre>')
         }, false)
 
         document.getElementById('sender-address').addEventListener('change', function() {
@@ -453,10 +629,8 @@
             var unit = document.getElementById('gasprice-unit').value
             var text = web3.fromWei(wei, unit).toString() + ' ' + unit
             document.getElementById('sender-balance').value = text
-        }, false);
+        }, false)
 
-        document.getElementById('contract-address').addEventListener('keyup', updateToBalance, false)
-        document.getElementById('contract-address').addEventListener('change', updateToBalance, false)
 
         document.getElementById('copy-from').addEventListener('click', function() {
             var address = document.getElementById('sender-address').value
@@ -481,38 +655,6 @@
             renderTxCostTotal()
         }, false)
 
-        document.getElementById('compile-contract').addEventListener('click', function() {
-            compileSolidity(document.getElementById('contract-code').value, function(err, results) {
-                if (err) {
-                    var p = document.createElement('p')
-                    p.innerHTML = err.toString()
-                    makeNotification(p, 'error')
-                } else {
-
-                    // update contract selector
-                    select = document.getElementById('contract-selector');
-                    select.options.length = 0;
-                    for (var k in results) {
-                        var obj = results[k];
-                        var el = document.createElement('option');
-                        el.textContent = k;
-                        el.value = JSON.stringify(results[k]);
-                        select.options.add(el);
-                    }
-
-                    // set index && display abi
-                    select.selectedIndex = 0
-
-                    var userContract = JSON.parse(select.options[0].value)
-                    document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
-
-                    document.getElementById('contract-selector').disabled = false
-                    document.getElementById('deploy-contract').disabled = false
-                    generatePage()
-                }
-            })
-
-        }, false)
 
         document.getElementById('contract-selector').addEventListener('change', function() {
             var select = document.getElementById('contract-selector')
@@ -521,61 +663,66 @@
             generatePage();
         })
 
-        document.getElementById('deploy-contract').addEventListener('click', function() {
-                var select = document.getElementById('contract-selector')
-                var userContract = JSON.parse(select.options[select.selectedIndex].value)
-
-                var createCallback = function(error, result) {
-                    if (!error) {
-                        // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
-                        var p = document.createElement('p')
-                        if (result) {
-                            p.innerHTML = 'Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>'
-                            makeNotification(p, 'warning')
-                        } else {
-                            p.innerHTML = 'Did not deploy contract'
-                            makeNotification(p, 'error')
-                            return
-                        }
-
-
-                        if (!result.address) {
-                            setTimeout(function() {
-                                makeContract(result)
-                            }, 5000)
-                        } else {
-                            makeContract(result)
-                        }
-
-
-                    } else {
-                        var p = document.createElement('p')
-                        p.innerHTML = error.toString()
-                        makeNotification(p, 'error')
-                    }
-                }
-
-
-                var options = getTransactionOptions()
-                options.data = userContract.code
-                web3.eth.contract(userContract.info.abiDefinition).new(options, createCallback)
-            },
-            false)
-
-
-
-        document.getElementById('generate-page').addEventListener('click', generatePage, false)
 
     }
 
     window.onload = function() {
-        connectInstance()
-        setHandlers()
-        if (document.getElementById('contract-abi').value) {
-            generatePage()
-            updateToBalance()
-        }
+        var solGistId = getParameterByName('SOLIDITY_GIST')
+        var abiGistId = getParameterByName('ABI_GIST')
+        document.getElementById('contract-address').value = getParameterByName('TO_ADDRESS')
 
+        setHandlers()
+
+        if (solGistId) {
+            makeNotification('Loading Solidity Gist')
+            connectInstance()
+            callAjax('https://api.github.com/gists/' + solGistId, function(result) {
+                if (testConnection) {
+                    updateDashboard()
+                    watchBlocks()
+                }
+                loadSolidityGist(result, function(result) {
+                    compileContract(result, function(result) {
+                        updatePageWithContract(result)
+                        var abi = document.getElementById('contract-abi').value
+                        if (abi) {
+                            abihtml = new AbiHtml(abi)
+                            generatePage(abihtml)
+                            getEvents(true, makeNotification)
+
+                        }
+                    })
+
+
+                })
+            })
+        } else if (abiGistId) {
+            makeNotification('Loading ABI Gist')
+            callAjax('https://api.github.com/gists/' + abiGistId, function(result) {
+                loadAbiGist(result, function(result) {
+                    var abi = document.getElementById('contract-abi').value
+                    if (abi) {
+                        abihtml = new AbiHtml(abi)
+                    }
+                    generatePage(abihtml)
+                    connectInstance()
+                    if (testConnection) {
+                        updateDashboard()
+                        watchBlocks()
+                        getEvents(true, makeNotification)
+
+                    }
+                })
+            })
+        } else {
+            connectInstance()
+            if (testConnection) {
+                document.getElementById('compile-contract').disabled = false
+                updateDashboard()
+                watchBlocks()
+            }
+
+        }
     }
     </script>
 </head>
@@ -597,7 +744,7 @@
             <div id="dashboard">
                 <div id="contract">
                     <label for="contract-code">Contract</label>
-                    <button type="button" id="compile-contract">Compile</button>
+                    <button type="button" id="compile-contract" disabled>Compile</button>
                     <label for="contract-selector">Deploy contract:</label>
                     <select id="contract-selector" disabled></select>
                     <button type="button" id="deploy-contract" disabled>Deploy</button>
