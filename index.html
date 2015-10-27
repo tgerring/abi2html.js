@@ -563,7 +563,6 @@
     var makeContract = function(result) {
         // get transaction to see if it's been mined
         var transaction = web3.eth.getTransaction(result.transactionHash)
-            // console.log(transaction)
 
         // if no blockhash, set a timer and try later
         if (!transaction.blockHash) {
@@ -579,7 +578,7 @@
             if (!receipt.contractAddress) {
                 console.log('This should have a contractAddress', receipt)
                 var text = 'Contract in transaction <pre>' + result.transactionHash + '</pre> mined in block <pre>' + transaction.blockHash + '</pre>  (height ' + transaction.blockNumber + ') but receipt has no creation address'
-                makeNotification(text, 'warning')
+                makeNotification(text, 'error')
                 return
             }
 
@@ -617,15 +616,11 @@
     }
 
     var createCallback = function(error, result) {
-        if (!error) {
-            // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
-            var p = document.createElement('p')
-            if (result) {
-                makeNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
-            } else {
-                makeNotification('Did not deploy contract', 'error')
-                return
-            }
+        if (error) {
+            makeNotification(makeNotification(error.toString()), 'error')
+                // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
+        } else {
+            makeNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
 
             if (!result.address) {
                 setTimeout(function() {
@@ -634,11 +629,8 @@
             } else {
                 makeContract(result)
             }
-
-
-        } else {
-            makeNotification(error.toString(), 'error')
         }
+
     }
 
 
