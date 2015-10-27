@@ -176,11 +176,11 @@
             for (var f in result.files) {
                 var content = result.files[f].content
 
+                document.getElementById('contract').style.display = 'block'
                 document.getElementById('contract-code').value = content
-                document.getElementById('contract-code').style.display = 'block'
 
+                document.getElementById('abi').style.display = 'none'
                 document.getElementById('contract-abi').value = ''
-                document.getElementById('contract-abi').style.display = 'none'
 
                 document.getElementById('tab-container').children[0].innerHTML = ''
 
@@ -199,17 +199,17 @@
     }
 
 
-    var loadAbiGist = function(result, callback) {
+    var loadAbiGist = function(response, callback) {
         result = JSON.parse(response)
         if (result) {
             for (var f in result.files) {
                 var content = result.files[f].content
 
 
-                document.getElementById('contract-code').style.display = 'none'
+                document.getElementById('contract').style.display = 'none'
                 document.getElementById('contract-code').value = ''
 
-                document.getElementById('contract-abi').style.display = 'block'
+                document.getElementById('abi').style.display = 'block'
                 document.getElementById('contract-abi').value = content
 
                 document.getElementById('tab-container').children[0].innerHTML = ''
@@ -611,10 +611,38 @@
         document.getElementById('notifications').innerHTML = ''
     }
 
+    var filterEvents = function(filterFields) {
+        if (!filterFields)
+            filterFields = {}
+
+        var contractName = document.getElementById('event-list').value
+        var options = getTransactionOptions()
+        clearNotifications()
+
+        if (contractName === "*") {
+            abihtml.GetEvents({
+                address: options.to
+            }, filterFields, function(htmlDom) {
+                makeNotification(htmlDom)
+            })
+        } else if (contractName in abihtml.events)
+            abihtml.events[contractName].Get({
+                address: options.to
+            }, filterFields, function(htmlDom) {
+                makeNotification(htmlDom)
+            })
+
+
+    }
+
 
     var setHandlers = function() {
         document.getElementById('clear-notifications').addEventListener('click', clearNotifications, false)
         document.getElementById('generate-page').addEventListener('click', function() {
+            var abi = document.getElementById('contract-abi').value
+            if (abi) {
+                abihtml = new AbiHtml(abi)
+            }
             generatePage()
             makeEventList(abihtml)
         }, false)
@@ -637,6 +665,7 @@
         document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
         document.getElementById('gas').addEventListener('keyup', renderTxCostTotal, false)
         document.getElementById('gasprice-amount').addEventListener('keyup', renderTxCostTotal, false)
+        document.getElementById('event-list').addEventListener('change', filterEvents)
 
         document.getElementById('gasprice-copy').addEventListener('click', function() {
             updateGasprice()
@@ -651,7 +680,7 @@
             //     console.log(err, txReceipt)
             // })
 
-            makeNotification('Sent transaction: <pre>' + txhash + '</pre>')
+            makeNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
         }, false)
 
         document.getElementById('sender-address').addEventListener('change', function() {
@@ -694,27 +723,6 @@
             generatePage(abihtml)
             makeEventList(abihtml)
         })
-
-        document.getElementById('event-list').addEventListener('change', function() {
-            var contractName = document.getElementById('event-list').value
-            var options = getTransactionOptions()
-            clearNotifications()
-
-            if (contractName === "*") {
-                abihtml.GetEvents({
-                    address: options.to
-                }, {}, function(htmlDom) {
-                    makeNotification(htmlDom)
-                })
-            } else if (contractName in abihtml.events)
-                abihtml.events[contractName].Get({
-                    address: options.to
-                }, {}, function(htmlDom) {
-                    makeNotification(htmlDom)
-                })
-
-
-        })
     }
 
     window.onload = function() {
@@ -722,11 +730,22 @@
         var abiGistId = getParameterByName('ABI_GIST')
         var toAddress = getParameterByName('TO_ADDRESS')
 
-        if (toAddress)
-            document.getElementById('contract-address').value = toAddress
+        // defaults
+        if (!solGistId && !abiGistId) {
+            if (window.location.protocol === "file:") {
+                // debug
+                solGistId = "c835f38889b989e8488c"
+                toAddress = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
+            } else if (window.location.host = 'tgerring.github.io') {
+                // public
+                abiGistId = "0e1b884de82d35053a34"
+                toAddress = "0x21a3a128968f7fd17eb0a16045a84769374aeae0"
+            }
+        }
 
+        if (toAddress) document.getElementById('contract-address').value = toAddress
         setHandlers()
-            //c835f38889b989e8488c
+
         if (abiGistId) {
             makeNotification('Loading ABI Gist')
             callAjax('https://api.github.com/gists/' + abiGistId, function(result) {
@@ -814,7 +833,7 @@
                     <label for="contract-abi">Contract ABI</label>
                     <button type="button" id="generate-page">Generate Form</button>
                     <br>
-                    <textarea id="contract-abi">[{"constant":false,"inputs":[{"name":"_owner","type":"address"}],"name":"removeOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isOwner","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":true,"inputs":[],"name":"m_numOwners","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"resetSpentToday","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_owner","type":"address"}],"name":"addOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"m_required","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"_h","type":"bytes32"}],"name":"confirm","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_newLimit","type":"uint256"}],"name":"setDailyLimit","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"},{"name":"_data","type":"bytes"}],"name":"execute","outputs":[{"name":"_r","type":"bytes32"}],"type":"function"},{"constant":false,"inputs":[{"name":"_operation","type":"bytes32"}],"name":"revoke","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_newRequired","type":"uint256"}],"name":"changeRequirement","outputs":[],"type":"function"},{"constant":true,"inputs":[{"name":"_operation","type":"bytes32"},{"name":"_owner","type":"address"}],"name":"hasConfirmed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"}],"name":"kill","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"}],"name":"changeOwner","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"m_dailyLimit","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"inputs":[{"name":"identifier","type":"bytes32"}],"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"name":"identifier","type":"bytes32"}],"name":"Created","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"}],"name":"Confirmation","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"}],"name":"Revoke","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"},{"indexed":false,"name":"newOwner","type":"address"}],"name":"OwnerChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"newOwner","type":"address"}],"name":"OwnerAdded","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"oldOwner","type":"address"}],"name":"OwnerRemoved","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"newRequirement","type":"uint256"}],"name":"RequirementChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"from","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Deposit","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"SingleTransact","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"owner","type":"address"},{"indexed":false,"name":"operation","type":"bytes32"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"MultiTransact","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"operation","type":"bytes32"},{"indexed":false,"name":"initiator","type":"address"},{"indexed":false,"name":"value","type":"uint256"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"data","type":"bytes"}],"name":"ConfirmationNeeded","type":"event"}]</textarea>
+                    <textarea id="contract-abi"></textarea>
                 </div>
             </div>
             <div id="controls">
@@ -825,13 +844,13 @@
                 </div>
                 <div>
                     <label for="contract-address">To:</label>
-                    <input id="contract-address" type="text" class="in-address" value="0x63f33b08404987648ce2dde79715e14e8b69e4d8">
+                    <input id="contract-address" type="text" class="in-address">
                     <label for="contract-balance">Balance:</label>
                     <span id="contract-balance"></span>
                 </div>
                 <div>
                     <label for="value-amount">Value</label>
-                    <input id="value-amount" type="text" value="0">
+                    <input id="value-amount" type="text">
                     <select id="value-unit">
                         <option selected="">ether</option>
                         <option>finney</option>
