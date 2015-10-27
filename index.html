@@ -65,27 +65,6 @@
             })
     }
 
-    var getEvents = function(shouldWatch, callback) {
-        var opts = getTransactionOptions()
-        if (opts.to) {
-            for (var name in abihtml.events) {
-                var ev = abihtml.events[name]
-
-                if (shouldWatch)
-                    ev.Watch({
-                        address: opts.to
-                    }, {}, callback)
-                else
-                    ev.Get({
-                        address: opts.to
-                    }, {}, callback)
-
-            }
-        }
-    }
-
-
-
     var getTransactionOptions = function() {
         return {
             from: document.getElementById('sender-address').value,
@@ -223,6 +202,24 @@
         web3.eth.contract(userContract.info.abiDefinition).new(options, callback)
     }
 
+    var getEvents = function(shouldWatch, callback) {
+        var opts = getTransactionOptions()
+        if (opts.to) {
+            for (var name in abihtml.events) {
+                var ev = abihtml.events[name]
+
+                if (shouldWatch)
+                    ev.Watch({
+                        address: opts.to
+                    }, {}, callback)
+                else
+                    ev.Get({
+                        address: opts.to
+                    }, {}, callback)
+
+            }
+        }
+    }
 
     var filterEvents = function(filterFields) {
         if (!filterFields)
@@ -724,84 +721,129 @@
 
 
     var setHandlers = function() {
-        document.getElementById('clear-notifications').addEventListener('click', clearNotifications, false)
-        document.getElementById('connect-instance').addEventListener('click', connectInstance, false)
-        document.getElementById('gas').addEventListener('keyup', updateMaxTxCost, false)
-        document.getElementById('gasprice-amount').addEventListener('keyup', updateMaxTxCost, false)
-        document.getElementById('event-list').addEventListener('change', filterEvents, false)
-        document.getElementById('contract-address').addEventListener('keyup', updateToBalance, false)
-        document.getElementById('contract-address').addEventListener('change', updateToBalance, false)
-
-        document.getElementById('deploy-contract').addEventListener('click', function() {
-            deployContract(createCallback)
-        }, false)
-
-        document.getElementById('generate-page').addEventListener('click', function() {
-            primeAbi()
-            makeFunctionForm()
-            makeEventList(abihtml)
-        }, false)
-
-        document.getElementById('compile-contract').addEventListener('click', function() {
-            if (testConnection())
-                compileContract(document.getElementById('contract-code').value, function(result) {
-                    updatePageWithContract(result)
-                    primeAbi()
-                    getEvents(true, makeNotification)
-                })
-
-        }, false)
-
-
-        document.getElementById('gasprice-copy').addEventListener('click', function() {
-            updateGasprice()
-            updateMaxTxCost()
-        }, false)
-
-        document.getElementById('send-value').addEventListener('click', function() {
-            txhash = web3.eth.sendTransaction(getTransactionOptions())
-
-            // // this doesn't work because it doens't wait for it to be mined
-            // // it needs a timer like contract creation
-            // web3.eth.getTransactionReceipt(txhash, function(err, txReceipt) {
-            //     console.log(err, txReceipt)
-            // })
-
-            makeNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
-        }, false)
-
-        document.getElementById('copy-from').addEventListener('click', function() {
-            document.getElementById('contract-address').value = document.getElementById('sender-address').value
-            updateToBalance()
-        }, false)
-
-        document.getElementById('value-unit').addEventListener('change', function() {
-            if (testConnection()) {
-                updateBalances()
-                updateMaxTxCost()
-                updateToBalance()
+        var handlers = [{
+            name: 'clear-notifications',
+            e: 'click',
+            f: clearNotifications
+        }, {
+            name: 'connect-instance',
+            e: 'click',
+            f: connectInstance
+        }, {
+            name: 'gas',
+            e: 'keyup',
+            f: updateMaxTxCost
+        }, {
+            name: 'gasprice-amount',
+            e: '',
+            f: updateMaxTxCost
+        }, {
+            name: 'event-list',
+            e: 'change',
+            f: filterEvents
+        }, {
+            name: 'contract-address',
+            e: 'keyup',
+            f: updateToBalance
+        }, {
+            name: 'contract-address',
+            e: 'change',
+            f: updateToBalance
+        }, {
+            name: 'deploy-contract',
+            e: 'click',
+            f: function() {
+                deployContract(createCallback)
             }
-        }, false)
-
-        document.getElementById('gasprice-unit').addEventListener('change', function() {
-            if (testConnection()) {
-                // below will override the number part, which is ugly
-                // this also requires us to update the maximum cost
-                // better would be to keep the value and convert it
-                // via option value
+        }, {
+            name: 'generate-page',
+            e: 'click',
+            f: function() {
+                primeAbi()
+                makeFunctionForm()
+                makeEventList(abihtml)
+            }
+        }, {
+            name: 'compile-contract',
+            e: 'click',
+            f: function() {
+                if (testConnection())
+                    compileContract(document.getElementById('contract-code').value, function(result) {
+                        updatePageWithContract(result)
+                        primeAbi()
+                        getEvents(true, makeNotification)
+                    })
+            }
+        }, {
+            name: 'gasprice-copy',
+            e: 'click',
+            f: function() {
                 updateGasprice()
                 updateMaxTxCost()
             }
-        }, false)
+        }, {
+            name: 'send-value',
+            e: 'click',
+            f: function() {
+                txhash = web3.eth.sendTransaction(getTransactionOptions())
+
+                // // this doesn't work because it doens't wait for it to be mined
+                // // it needs a timer like contract creation
+                // web3.eth.getTransactionReceipt(txhash, function(err, txReceipt) {
+                //     console.log(err, txReceipt)
+                // })
+
+                makeNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
+            }
+        }, {
+            name: 'copy-from',
+            e: 'click',
+            f: function() {
+                document.getElementById('contract-address').value = document.getElementById('sender-address').value
+                updateToBalance()
+            }
+        }, {
+            name: 'value-unit',
+            e: 'change',
+            f: function() {
+                if (testConnection()) {
+                    updateBalances()
+                    updateMaxTxCost()
+                    updateToBalance()
+                }
+            }
+        }, {
+            name: 'gasprice-unit',
+            e: 'change',
+            f: function() {
+                if (testConnection()) {
+                    // below will override the number part, which is ugly
+                    // this also requires us to update the maximum cost
+                    // better would be to keep the value and convert it
+                    // via option value
+                    updateGasprice()
+                    updateMaxTxCost()
+                }
+            }
+        }, {
+            name: 'contract-selector',
+            e: 'change',
+            f: function() {
+                var select = document.getElementById('contract-selector')
+                var userContract = JSON.parse(select.options[select.selectedIndex].value)
+                document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
+                makeFunctionForm(abihtml)
+                makeEventList(abihtml)
+            }
+        }]
+
+        for (k in handlers) {
+            var obj = handlers[k]
+            if (obj.name && obj.e && obj.f)
+                document.getElementById(obj.name).addEventListener(obj.e, obj.f, false)
+        }
 
 
-        document.getElementById('contract-selector').addEventListener('change', function() {
-            var select = document.getElementById('contract-selector')
-            var userContract = JSON.parse(select.options[select.selectedIndex].value)
-            document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
-            makeFunctionForm(abihtml)
-            makeEventList(abihtml)
-        })
     }
     </script>
 </head>
