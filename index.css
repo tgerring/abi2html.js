@@ -87,14 +87,19 @@ div.function > h3 {
 
 #abi {
     width: 50%;
-    float: right;
+    float: left;
     display: none;
 }
 
 #contract {
     width: 50%;
     float: left;
-    margin-right: 1em;
+    /*display: none;*/
+}
+
+#controls {
+    width: 40%;
+    float: right;
 }
 
 #contract-abi {
