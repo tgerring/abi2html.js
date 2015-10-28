@@ -100,6 +100,7 @@ div.function > h3 {
 #controls {
     width: 40%;
     float: right;
+    margin: 0 !important;
 }
 
 #contract-abi {
