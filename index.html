@@ -32,9 +32,9 @@
 
     var connectInstance = function() {
         if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
-            makeNotification('Could not connect to Ethereum client', 'error')
+            displayNotification('Could not connect to Ethereum client', 'error')
         } else {
-            makeNotification('Connected', 'success')
+            displayNotification('Connected', 'success')
             document.getElementById('compile-contract').disabled = false
             document.getElementById('deploy-contract').disabled = false
             document.getElementById('send-value').disabled = false
@@ -44,10 +44,10 @@
     }
 
     var watchBlocks = function() {
-        makeNotification('Watching incoming blocks')
+        displayNotification('Watching incoming blocks')
         var filter = web3.eth.filter('latest')
         if (!filter)
-            makeNotification('Problem creating filter', 'warning')
+            displayNotification('Problem creating filter', 'warning')
         else
             filter.watch(function(err, result) {
                 // console.log('Saw new block', result)
@@ -158,7 +158,7 @@
         if (code)
             compileSolidity(code, function(err, results) {
                 if (err) {
-                    makeNotification(err.toString(), 'error')
+                    displayNotification(err.toString(), 'error')
                 } else {
                     if (typeof callback === "function")
                         callback(results)
@@ -176,7 +176,7 @@
         if (i < c.length) {
             web3.eth.compile.solidity(sourceString, callback)
         } else {
-            makeNotification('Solidity compiler not available', 'warning')
+            displayNotification('Solidity compiler not available', 'warning')
         }
     }
 
@@ -204,9 +204,9 @@
             var abihtml = new AbiHtml(abiSource)
             if (abihtml) {
                 makeFunctionForm(abihtml)
-                makeEventList(abihtml)
+                updateEventList(abihtml)
                 abihtml.GetEventLogs(getEventOptions(), true, function(evmEvent) {
-                    makeEventNotification(evmEvent, makeNotification)
+                    makeEventNotification(evmEvent, displayNotification)
                 })
                 return abihtml
             }
@@ -287,29 +287,102 @@
         document.getElementById('txcost-total').innerHTML = text
     }
 
-    var filterEvents = function(evmEvent, filterFields, callback) {
+    var sortEvents = function(callback) {
+        // get sort values from DOM
+        var sortDom = document.getElementById('eventSorter')
+        var fs = sortDom.querySelector('fieldset')
+        var filterFields = {}
+        for (var i = 0; i < fs.children.length; i++) {
+            var child = fs.children[i]
+            if (child.tagName == 'DIV') {
+
+                var label = child.querySelector("label.name")
+                var select = child.querySelector("select.comparison")
+                var input = child.querySelector("input.value")
+                filterFields[label.innerHTML] = {
+                    name: label.innerHTML,
+                    value: input.value,
+                    operator: select.value
+                }
+            }
+        }
+
+        // get get log fields
+        var parent = document.getElementById('notifications')
+        for (var i = 0; i < parent.children.length; i++) {
+            var wrap = parent.children[i]
+
+            // build object from output for comparison
+            var fs = wrap.querySelector('fieldset.inputs')
+            var logFields = {}
+            for (var j = 0; j < fs.children.length; j++) {
+                var child = fs.children[j]
+                if (child.tagName == 'DIV') {
+                    var label = child.querySelector("label.name")
+                    var input = child.querySelector("input.value")
+                    logFields[label.innerHTML] = input.value
+                }
+            }
+
+
+
+            // check filterFields for corresponding logFields
+            var matches = true
+            for (k in filterFields) {
+                var obj = filterFields[k]
+                var name = obj.name
+                var compValue = obj.operator
+                if (name in logFields) {
+                    var fieldValue = obj.value
+                    var logValue = logFields[obj.name]
+
+                    // do comparison tests
+                    switch (obj.operator) {
+                        case '!=':
+                        case '<>':
+                            if (logValue == fieldValue) matches = false
+                            break
+                        case '=':
+                            if (logValue != fieldValue) matches = false
+                            break
+                        case '>':
+                            if (logValue <= fieldValue) matches = false
+                            break
+                        case '>=':
+                            if (logValue < fieldValue) matches = false
+                            break
+                        case '<':
+                            if (logValue >= fieldValue) matches = false
+                            break
+                        case '<=':
+                            if (logValue > fieldValue) matches = false
+                            break
+                        case '*':
+                        case '':
+                            // noop
+                            break
+                        default:
+                            console.log('Unknown comparison', argComp)
+                    }
+                }
+            }
+
+            if (matches) wrap.style.display = 'block'
+            else wrap.style.display = 'none'
+
+
+        }
+
+        if (typeof callback === "function") callback()
+    }
+
+
+    var filterEventTopics = function(evmEvent, filterFields, callback) {
         if (!filterFields) filterFields = {}
 
         var options = getTransactionOptions()
-        clearNotifications()
-        evmEvent.Get(getEventOptions(), filterFields, function(evmEvent) {
-            // result doesn't seem to filter as expected, so do it locally
-            if ('results' in evmEvent) {
-                var matches = true
-                for (k in filterFields) {
-                    var val = filterFields[k]
-                    if (evmEvent.results.args[k] != val) {
-                        matches = false
-                        break
-                    }
-
-                }
-
-                if (matches)
-                    callback(evmEvent)
-            }
-
-        })
+            // clearNotifications()
+        evmEvent.Get(getEventOptions(), filterFields, callback)
     }
 
     var updatePageWithContract = function(results) {
@@ -363,7 +436,7 @@
 
     var clearNotifications = function() {
         document.getElementById('notifications').innerHTML = ''
-
+        document.getElementById('eventFilter').innerHTML = ''
     }
 
     var resetEventList = function() {
@@ -371,15 +444,7 @@
     }
 
 
-
-    /***
-
-    Object factories
-
-    **/
-
-
-    var makeNotification = function(obj, className) {
+    var displayNotification = function(obj, className) {
         var htmlDom
         if (typeof obj === "object" && "nodeType" in obj) {
             // looks like HTML Element
@@ -408,8 +473,39 @@
 
     }
 
+    var displayEventFilter = function(obj, className) {
+        var htmlDom
+        if (typeof obj === "object" && "nodeType" in obj) {
+            // looks like HTML Element
+            htmlDom = obj
+        } else if (typeof obj === "string") {
+            // looks like string
+            var htmlDom = document.createElement('p')
+            htmlDom.innerHTML = obj
+        }
 
-    var makeEventList = function(abihtml) {
+        var existing = document.getElementById('eventFilter')
+        if (existing) {
+            existing.innerHTML = ''
+            existing.appendChild(htmlDom)
+        } else {
+            var parElement = document.createElement('div')
+            parElement.id = 'eventFilter'
+            if (className)
+                parElement.className = className
+            parElement.appendChild(htmlDom)
+                // append the entry and the top
+            var el = document.getElementById('events')
+            el.insertBefore(parElement, el.children[el.children.length - 1])
+
+        }
+
+
+
+    }
+
+
+    var updateEventList = function(abihtml) {
         var select = document.getElementById('event-list')
         select.options.length = 0
 
@@ -434,6 +530,16 @@
 
     }
 
+
+
+    /***
+
+    Object factories
+
+    **/
+
+
+
     var makeFunctionForm = function(abihtml) {
         if (!abihtml)
             abihtml = new AbiHtml(document.getElementById('contract-abi').value)
@@ -452,13 +558,13 @@
         }
     }
 
-    var makeEventFilterForm = function(evmEvent, cb) {
+    var makeEventTopicFilter = function(evmEvent, cb) {
         if (!evmEvent) return
 
         // containing div element
         var div = document.createElement('div')
         div.className = ['event'].join(' ')
-        div.id = 'eventFilter' + evmEvent.name
+        div.id = 'eventTopicFilter' + evmEvent.name
 
         var h3 = document.createElement('h3')
         h3.innerHTML = evmEvent.name
@@ -476,7 +582,12 @@
             // append the DOM for each field to the fieldset
             for (var i = 0; i < evmEvent.inputs.length; i++) {
                 var field = evmEvent.inputs[i]
-                fs.appendChild(field.renderDom(true))
+                field.setHtmlId(div.id + field.getHtmlId())
+
+                if (field.indexed)
+                    fs.appendChild(field.renderDom(true))
+                else
+                    fs.appendChild(field.renderDom(false))
             }
 
             // callback to get filter fields
@@ -489,9 +600,106 @@
                     var val = document.getElementById(field.getHtmlId()).value
                     if (val) filterFields[field.getName()] = val
                 }
-                filterEvents(evmEvent, filterFields, function(evmEvent) {
-                    makeEventLog(evmEvent, makeNotification)
+                clearNotifications()
+                makeLocalEventSorter(evmEvent, displayEventFilter)
+                filterEventTopics(evmEvent, filterFields, function(evmEvent) {
+                    makeEventLog(evmEvent, function(dom) {
+                        displayNotification(dom)
+                    })
+
                 })
+
+            })
+
+            div.appendChild(button)
+            div.appendChild(fs)
+
+        }
+
+        if (typeof cb === "function")
+            cb(div)
+
+        return div
+
+
+    }
+
+    var makeLocalEventSorter = function(evmEvent, cb) {
+        if (!evmEvent) return
+
+        // containing div element
+        var div = document.createElement('div')
+        div.className = ['event'].join(' ')
+        div.id = 'eventSorter'
+
+        var h3 = document.createElement('h3')
+        h3.innerHTML = evmEvent.name
+        div.appendChild(h3)
+
+        if (evmEvent.inputs.length > 0) {
+            var fs = document.createElement('fieldset')
+            fs.className = 'inputs'
+
+            var leg = document.createElement('legend')
+            leg.innerHTML = 'Fields'
+            fs.appendChild(leg)
+
+
+            // append the DOM for each field to the fieldset
+            for (var i = 0; i < evmEvent.inputs.length; i++) {
+                var field = evmEvent.inputs[i]
+                field.setHtmlId(div.id + field.getHtmlId())
+                var wrap = document.createElement('div')
+                wrap.className = 'solfield'
+                wrap.appendChild(field.RenderLabel())
+
+
+                // TODO this does not take into account types
+                // Numbers as strings sort wrong
+                var select = document.createElement('select')
+                select.className = 'comparison'
+                var option = document.createElement('option')
+                option.innerHTML = '(all)'
+                option.value = '*'
+                select.options.add(option)
+                var option = document.createElement('option')
+                option.innerHTML = '>'
+                option.value = '>'
+                select.options.add(option)
+                var option = document.createElement('option')
+                option.innerHTML = '>='
+                option.value = '>='
+                select.options.add(option)
+                var option = document.createElement('option')
+                option.innerHTML = '='
+                option.value = '='
+                select.options.add(option)
+                var option = document.createElement('option')
+                option.innerHTML = '<'
+                option.value = '<'
+                select.options.add(option)
+                var option = document.createElement('option')
+                option.innerHTML = '<='
+                option.value = '<='
+                select.options.add(option)
+                var option = document.createElement('option')
+                option.innerHTML = '<>'
+                option.value = '<>'
+                select.options.add(option)
+
+                select.selectedIndex = 0
+                wrap.appendChild(select)
+                wrap.appendChild(field.RenderField(true))
+
+                fs.appendChild(wrap)
+            }
+
+
+            // callback to get filter fields
+            var button = document.createElement('button')
+            button.innerHTML = 'Sorter'
+            button.addEventListener('click', function() {
+                sortEvents()
             })
 
             div.appendChild(button)
@@ -709,9 +917,9 @@
             tbtn.addEventListener('click', function(ev) {
                 evmFunction.Transact(getTransactionOptions(), function(err, txhash) {
                     if (err) {
-                        makeNotification(err.toString(), 'error')
+                        displayNotification(err.toString(), 'error')
                     } else {
-                        makeNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
+                        displayNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
                     }
                 })
             })
@@ -751,14 +959,14 @@
         return div
     }
 
-    var makeContract = function(result) {
+    var makeContractNotification = function(result) {
         // get transaction to see if it's been mined
         var transaction = web3.eth.getTransaction(result.transactionHash)
 
         // if no blockhash, set a timer and try later
         if (!transaction.blockHash) {
             setTimeout(function() {
-                makeContract(result)
+                makeContractNotification(result)
             }, 5000)
             return
         }
@@ -769,7 +977,7 @@
             if (!receipt.contractAddress) {
                 console.log('*** This should have a contractAddress', receipt)
                 var text = 'Contract in transaction <pre>' + result.transactionHash + '</pre> mined in block <pre>' + transaction.blockHash + '</pre>  (height ' + transaction.blockNumber + ') but receipt has no creation address'
-                makeNotification(text, 'error')
+                displayNotification(text, 'error')
                 return
             }
 
@@ -801,29 +1009,10 @@
             ddGas.innerHTML = receipt.gasUsed
             dl.appendChild(ddGas)
 
-            makeNotification(dl, 'success')
+            displayNotification(dl, 'success')
             document.getElementById('contract-address').value = receipt.contractAddress
         })
     }
-
-    var createCallback = function(error, result) {
-        if (error) {
-            makeNotification(makeNotification(error.toString()), 'error')
-                // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
-        } else {
-            makeNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
-
-            if (!result.address) {
-                setTimeout(function() {
-                    makeContract(result)
-                }, 5000)
-            } else {
-                makeContract(result)
-            }
-        }
-
-    }
-
 
     /***
 
@@ -853,7 +1042,7 @@
         setHandlers()
 
         if (abiGistId) {
-            makeNotification('Loading ABI Gist')
+            displayNotification('Loading ABI with Gist ID ' + abiGistId)
             callAjax('https://api.github.com/gists/' + abiGistId, function(response) {
                 loadAbiGist(response, function(abiSource) {
 
@@ -861,7 +1050,7 @@
                     if (abihtml) {
                         loadedAbihtml[0] = abihtml
                         makeFunctionForm(abihtml)
-                        makeEventList(abihtml)
+                        updateEventList(abihtml)
                     }
 
                     connectInstance()
@@ -869,13 +1058,13 @@
                         updateDashboard()
                         watchBlocks()
                         abihtml.GetEventLogs(getEventOptions(), true, function(evmEvent) {
-                            makeEventNotification(evmEvent, makeNotification)
+                            makeEventNotification(evmEvent, displayNotification)
                         })
                     }
                 })
             })
         } else if (solGistId) {
-            makeNotification('Loading Solidity Gist')
+            displayNotification('Loading Solidity with Gist ID ' + solGistId)
             connectInstance()
             callAjax('https://api.github.com/gists/' + solGistId, function(response) {
                 loadSolidityGist(response, function(solSource) {
@@ -889,9 +1078,9 @@
                             if (abihtml) {
                                 loadedAbihtml[0] = abihtml
                                 makeFunctionForm(abihtml)
-                                makeEventList(abihtml)
+                                updateEventList(abihtml)
                                 abihtml.GetEventLogs(getEventOptions(), true, function(evmEvent) {
-                                    makeEventNotification(evmEvent, makeNotification)
+                                    makeEventNotification(evmEvent, displayNotification)
                                 })
                             }
                         })
@@ -938,15 +1127,16 @@
                 var index = document.getElementById('event-list').selectedIndex
                 var abihtml = loadedAbihtml[0]
 
-
                 if (eventName in abihtml.events) {
-                    makeEventFilterForm(abihtml.events[eventName], makeNotification)
+                    var dom = makeEventTopicFilter(abihtml.events[eventName])
+                    displayEventFilter(dom)
                 } else if (eventName === "*") {
                     clearNotifications()
                     abihtml.GetAllEvents(getEventOptions(), {}, function(evmEvent) {
-                        makeEventNotification(evmEvent, makeNotification)
+                        makeEventNotification(evmEvent, displayNotification)
                     })
                 } else {
+                    console.log('event-list none')
                     clearNotifications()
                 }
             }
@@ -962,7 +1152,23 @@
             name: 'deploy-contract',
             e: 'click',
             f: function() {
-                deployContract(createCallback)
+                deployContract(function(error, result) {
+                    if (error) {
+                        displayNotification(displayNotification(error.toString()), 'error')
+                            // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
+                    } else {
+                        displayNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
+
+                        if (!result.address) {
+                            setTimeout(function() {
+                                makeContractNotification(result)
+                            }, 5000)
+                        } else {
+                            makeContractNotification(result)
+                        }
+                    }
+
+                })
             }
         }, {
             name: 'generate-page',
@@ -973,7 +1179,7 @@
                 if (abihtml) {
                     loadedAbihtml[0] = abihtml
                     makeFunctionForm(abihtml)
-                    makeEventList(abihtml)
+                    updateEventList(abihtml)
                 }
             }
         }, {
@@ -1004,7 +1210,7 @@
                 //     console.log(err, txReceipt)
                 // })
 
-                makeNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
+                displayNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
             }
         }, {
             name: 'copy-from',
