@@ -11,21 +11,20 @@
     var loadedAbihtml = []
         /***
 
-                                                                                                                        This is all stuff that Mist should handle, but is included for dev purposes
+        This is all stuff that Mist should handle, but is included for dev purposes
 
-                                                                                                                        ***/
+        ***/
 
     var testConnection = function(ip, port) {
         if (!ip) ip = '127.0.0.1'
         if (!port) port = '8545'
 
         if (!web3.currentProvider)
-            web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port));
-
+            web3.setProvider(new web3.providers.HttpProvider('http://' + ip + ':' + port))
         try {
             web3.eth.accounts
         } catch (e) {
-            console.log(e.toString())
+            // console.log(e.toString())
             return false
         }
         return true
@@ -51,7 +50,7 @@
             makeNotification('Problem creating filter', 'warning')
         else
             filter.watch(function(err, result) {
-                console.log('Saw new block', result);
+                // console.log('Saw new block', result)
                 var block = web3.eth.getBlock(result)
                 updateWithBlock(block)
                 updateBalances()
@@ -82,23 +81,23 @@
     ***/
 
     var callAjax = function(url, callback) {
-        var xmlhttp;
-        // compatible with IE7+, Firefox, Chrome, Opera, Safari
-        xmlhttp = new XMLHttpRequest();
+        var xmlhttp
+            // compatible with IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest()
         xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                callback(xmlhttp.responseText);
+                callback(xmlhttp.responseText)
             }
         }
-        xmlhttp.open("GET", url, true);
-        xmlhttp.send();
+        xmlhttp.open("GET", url, true)
+        xmlhttp.send()
     }
 
     var getParameterByName = function(name) {
-        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-            results = regex.exec(location.search);
-        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            results = regex.exec(location.search)
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "))
     }
 
     var formattedBalance = function(weiAmount, unit) {
@@ -169,10 +168,10 @@
 
     var compileSolidity = function(sourceString, callback) {
         var c = web3.eth.getCompilers()
-        var i = 0;
+        var i = 0
         for (; i < c.length; i++) {
             if (c[i] == 'Solidity')
-                break;
+                break
         }
         if (i < c.length) {
             web3.eth.compile.solidity(sourceString, callback)
@@ -249,7 +248,7 @@
 
     var updateBalances = function() {
         var select = document.getElementById('sender-address')
-        select.options.length = 0;
+        select.options.length = 0
         var accounts = web3.eth.accounts
             // accounts.forEach(function(address) {
 
@@ -315,14 +314,14 @@
 
     var updatePageWithContract = function(results) {
         // update contract selector
-        select = document.getElementById('contract-selector');
-        select.options.length = 0;
+        select = document.getElementById('contract-selector')
+        select.options.length = 0
         for (var k in results) {
-            var obj = results[k];
-            var el = document.createElement('option');
-            el.textContent = k;
-            el.value = JSON.stringify(results[k]);
-            select.options.add(el);
+            var obj = results[k]
+            var el = document.createElement('option')
+            el.textContent = k
+            el.value = JSON.stringify(results[k])
+            select.options.add(el)
         }
 
         // set index && display abi
@@ -364,6 +363,11 @@
 
     var clearNotifications = function() {
         document.getElementById('notifications').innerHTML = ''
+
+    }
+
+    var resetEventList = function() {
+        document.getElementById('event-list').selectedIndex = 0
     }
 
 
@@ -763,7 +767,7 @@
         var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(error, receipt) {
             // if no address found, inform the user
             if (!receipt.contractAddress) {
-                console.log('This should have a contractAddress', receipt)
+                console.log('*** This should have a contractAddress', receipt)
                 var text = 'Contract in transaction <pre>' + result.transactionHash + '</pre> mined in block <pre>' + transaction.blockHash + '</pre>  (height ' + transaction.blockNumber + ') but receipt has no creation address'
                 makeNotification(text, 'error')
                 return
@@ -910,7 +914,10 @@
         var handlers = [{
             name: 'clear-notifications',
             e: 'click',
-            f: clearNotifications
+            f: function() {
+                clearNotifications()
+                resetEventList()
+            }
         }, {
             name: 'connect-instance',
             e: 'click',
@@ -931,15 +938,16 @@
                 var index = document.getElementById('event-list').selectedIndex
                 var abihtml = loadedAbihtml[0]
 
-                clearNotifications()
+
                 if (eventName in abihtml.events) {
                     makeEventFilterForm(abihtml.events[eventName], makeNotification)
                 } else if (eventName === "*") {
-                    abihtml.GetEventsRendered(getEventOptions(), {}, function(dom) {
-                        makeNotification(dom)
+                    clearNotifications()
+                    abihtml.GetAllEvents(getEventOptions(), {}, function(evmEvent) {
+                        makeEventNotification(evmEvent, makeNotification)
                     })
                 } else {
-
+                    clearNotifications()
                 }
             }
         }, {
