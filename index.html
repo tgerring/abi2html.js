@@ -24,7 +24,7 @@
         try {
             web3.eth.accounts
         } catch (e) {
-            // console.log(e.toString())
+            console.log(e.toString())
             return false
         }
         return true
@@ -82,7 +82,6 @@
 
     var callAjax = function(url, callback) {
         var xmlhttp
-            // compatible with IE7+, Firefox, Chrome, Opera, Safari
         xmlhttp = new XMLHttpRequest()
         xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
@@ -250,7 +249,6 @@
         var select = document.getElementById('sender-address')
         select.options.length = 0
         var accounts = web3.eth.accounts
-            // accounts.forEach(function(address) {
 
         for (var i = 0; i < accounts.length; i++) {
             var address = accounts[i]
@@ -271,7 +269,9 @@
                 if (balance)
                     document.getElementById('contract-balance').innerHTML = formattedBalance(balance, document.getElementById('value-unit').value)
             } catch (e) {
+                displayNotification(e.toString(), 'error')
                 document.getElementById('contract-balance').innerHTML = ''
+
             }
         } else {
             document.getElementById('contract-balance').innerHTML = ''
@@ -298,7 +298,7 @@
 
                 var label = child.querySelector("label.name")
                 var select = child.querySelector("select.comparison")
-                var input = child.querySelector("input.value")
+                var input = child.querySelector("input.value,textarea.value")
                 filterFields[label.innerHTML] = {
                     name: label.innerHTML,
                     value: input.value,
@@ -307,6 +307,8 @@
             }
         }
 
+        // TODO if we store this on the EvmEvent, it can give us back a list
+        //      instead of grabbing from DOM here
         // get get log fields
         var parent = document.getElementById('notifications')
         for (var i = 0; i < parent.children.length; i++) {
@@ -319,13 +321,14 @@
                 var child = fs.children[j]
                 if (child.tagName == 'DIV') {
                     var label = child.querySelector("label.name")
-                    var input = child.querySelector("input.value")
+                    var input = child.querySelector("input.value,textarea.value")
                     logFields[label.innerHTML] = input.value
                 }
             }
 
 
-
+            // TODO this should be moved to SolField so each type is 
+            //      aware of how to compare itself
             // check filterFields for corresponding logFields
             var matches = true
             for (k in filterFields) {
@@ -367,22 +370,13 @@
                 }
             }
 
+
+
             if (matches) wrap.style.display = 'block'
             else wrap.style.display = 'none'
-
-
         }
 
         if (typeof callback === "function") callback()
-    }
-
-
-    var filterEventTopics = function(evmEvent, filterFields, callback) {
-        if (!filterFields) filterFields = {}
-
-        var options = getTransactionOptions()
-            // clearNotifications()
-        evmEvent.Get(getEventOptions(), filterFields, callback)
     }
 
     var updatePageWithContract = function(results) {
@@ -575,7 +569,7 @@
             fs.className = 'inputs'
 
             var leg = document.createElement('legend')
-            leg.innerHTML = 'Fields'
+            leg.innerHTML = 'Event topics'
             fs.appendChild(leg)
 
 
@@ -583,6 +577,7 @@
             for (var i = 0; i < evmEvent.inputs.length; i++) {
                 var field = evmEvent.inputs[i]
                 field.setHtmlId(div.id + field.getHtmlId())
+                field.setValue('')
 
                 if (field.indexed)
                     fs.appendChild(field.renderDom(true))
@@ -592,7 +587,7 @@
 
             // callback to get filter fields
             var button = document.createElement('button')
-            button.innerHTML = 'Filter'
+            button.innerHTML = 'Get logs'
             button.addEventListener('click', function() {
                 var filterFields = {}
                 for (k in evmEvent.inputs) {
@@ -602,11 +597,10 @@
                 }
                 clearNotifications()
                 makeLocalEventSorter(evmEvent, displayEventFilter)
-                filterEventTopics(evmEvent, filterFields, function(evmEvent) {
+                evmEvent.Get(getEventOptions(), filterFields, function(evmEvent) {
                     makeEventLog(evmEvent, function(dom) {
                         displayNotification(dom)
                     })
-
                 })
 
             })
@@ -655,6 +649,7 @@
 
 
                 // TODO this does not take into account types
+                //      so should be moved to EvmEvent
                 // Numbers as strings sort wrong
                 var select = document.createElement('select')
                 select.className = 'comparison'
@@ -697,7 +692,7 @@
 
             // callback to get filter fields
             var button = document.createElement('button')
-            button.innerHTML = 'Sorter'
+            button.innerHTML = 'Filter results'
             button.addEventListener('click', function() {
                 sortEvents()
             })
@@ -766,7 +761,7 @@
                 fs.className = 'inputs'
 
                 var leg = document.createElement('legend')
-                leg.innerHTML = 'Fields'
+                leg.innerHTML = 'Logs'
                 fs.appendChild(leg)
 
 
@@ -1155,7 +1150,6 @@
                 deployContract(function(error, result) {
                     if (error) {
                         displayNotification(displayNotification(error.toString()), 'error')
-                            // var receipt = web3.eth.getTransactionReceipt(result.transactionHash, function(receipt) {
                     } else {
                         displayNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
 
@@ -1358,7 +1352,7 @@
             </div>
         </div>
         <div id="events">
-            <h2>Notifications</h2>
+            <h2>Logs</h2>
             <select id="event-list"></select>
             <button type="button" id="clear-notifications">Clear all</button>
             <div id="notifications"></div>

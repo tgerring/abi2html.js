@@ -128,6 +128,11 @@ fieldset.event {
     clear: both;
 }
 
+.event > h3 {
+    display: inline-block;
+    margin-right: 1em;
+}
+
 .pull-left {
     float: left;
     width: 50%;
@@ -277,4 +282,8 @@ div.solfield > label {
     display: inline-block;
     min-width: 5em;
     margin-right: 1em;
+}
+
+#eventFilter {
+    margin: 1em;
 }
