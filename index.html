@@ -1079,6 +1079,13 @@
                     loadedAbihtml[0] = abihtml
                     makeFunctionForm(abihtml)
                     updateEventList(abihtml)
+                    abihtml.WatchAllEvents({
+                        fromBlock: 'latest',
+                        toBlock: 'latest',
+                        address: document.getElementById('contract-address').value
+                    }, {}, function(evmEvent) {
+                        makeEventNotification(evmEvent, displayNotification)
+                    })
 
                     // BUG this doesn't clear the filter form
                     clearLogs()
