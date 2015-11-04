@@ -3,6 +3,7 @@
 
 <head>
     <title>abi2html</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="index.css">
     <script type="text/javascript" src="./dist/bignumber.min.js"></script>
     <script type="text/javascript" src="./dist/web3-light.min.js"></script>
@@ -1207,63 +1208,67 @@
                 </div>
                 <div id="controls">
                     <h2>Transactions</h2>
-                    <div>
-                        <label for="sender-address">From:</label>
-                        <select id="sender-address" class="in-address"></select>
-                        <button type="button" id="copy-from" disabled>Copy To</button>
-                    </div>
-                    <div>
-                        <label for="contract-address">To:</label>
-                        <input id="contract-address" type="text" class="in-address">
-                        <label for="contract-balance">Balance:</label>
-                        <span id="contract-balance"></span>
-                    </div>
-                    <div>
-                        <label for="value-amount">Value</label>
-                        <input id="value-amount" type="text">
-                        <select id="value-unit">
-                            <option selected="">ether</option>
-                            <option>finney</option>
-                            <option>szabo</option>
-                            <option>shannon</option>
-                            <option>babbage</option>
-                            <option>ada</option>
-                            <option>wei</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="gas">Gas:</label>
-                        <input id="gas" type="text" class="" value="3000000">
-                    </div>
-                    <div>
-                        <label for="gas-price">Gas price:</label>
-                        <input id="gasprice-amount" type="text" class="" value="10">
-                        <select id="gasprice-unit">
-                            <option>ether</option>
-                            <option>finney</option>
-                            <option selected>szabo</option>
-                            <option>shannon</option>
-                            <option>babbage</option>
-                            <option>ada</option>
-                            <option>wei</option>
-                        </select>
-                        <button id="gasprice-copy" disabled>Sync estimate</button>
-                    </div>
-                    <div>
-                        <span>Max cost: <span id="txcost-total">?</span></span>
-                        <button id="send-value" type="button" disabled>Send</button>
-                    </div>
-                    <div>
-                        <label for="contract-selector">Deploy contract:</label>
-                        <select id="contract-selector" disabled></select>
-                        <button type="button" id="deploy-contract" disabled>Deploy</button>
-                    </div>
+                    <fieldset>
+                        <div>
+                            <label for="sender-address">From:</label>
+                            <select id="sender-address" class="in-address"></select>
+                            <button type="button" id="copy-from" disabled>Copy To</button>
+                        </div>
+                        <div>
+                            <label for="contract-address">To:</label>
+                            <input id="contract-address" type="text" class="in-address">
+                            <label for="contract-balance">Balance:</label>
+                            <span id="contract-balance"></span>
+                        </div>
+                        <div>
+                            <label for="value-amount">Value</label>
+                            <input id="value-amount" type="text">
+                            <select id="value-unit">
+                                <option selected="">ether</option>
+                                <option>finney</option>
+                                <option>szabo</option>
+                                <option>shannon</option>
+                                <option>babbage</option>
+                                <option>ada</option>
+                                <option>wei</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="gas">Gas:</label>
+                            <input id="gas" type="text" class="" value="3000000">
+                        </div>
+                        <div>
+                            <label for="gas-price">Gas price:</label>
+                            <input id="gasprice-amount" type="text" class="" value="10">
+                            <select id="gasprice-unit">
+                                <option>ether</option>
+                                <option>finney</option>
+                                <option selected>szabo</option>
+                                <option>shannon</option>
+                                <option>babbage</option>
+                                <option>ada</option>
+                                <option>wei</option>
+                            </select>
+                            <button id="gasprice-copy" disabled>Sync estimate</button>
+                        </div>
+                        <hr>
+                        <div>
+                            <span>Max cost: <span id="txcost-total">?</span></span>
+                            <button id="send-value" type="button" disabled>Send</button>
+                        </div>
+                        <div>
+                            <label for="contract-selector">Deploy contract:</label>
+                            <select id="contract-selector" disabled></select>
+                            <button type="button" id="deploy-contract" disabled>Deploy</button>
+                        </div>
+                    </fieldset>
                 </div>
             </div>
         </div>
     </div>
     <div id="main">
         <div id="dashboard">
+            <h2>Sources</h2>
             <div id="contract">
                 <label for="contract-code">Contract</label>
                 <button type="button" id="compile-contract" disabled>Compile</button>
