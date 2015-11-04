@@ -225,7 +225,7 @@
         var userContract = JSON.parse(select.options[select.selectedIndex].value)
 
         var options = getTransactionOptions()
-        delete options.to // contract deployment has no "to" address
+        delete options.to // contract deployment has no "to" address (etheruem/web3.js#343)
         options.data = userContract.code
         web3.eth.contract(userContract.info.abiDefinition).new(options, callback)
     }
@@ -358,10 +358,11 @@
         var parent = document.getElementById('main-container')
         for (var i = 0; i < parent.childNodes.length; i++) {
             var child = parent.childNodes[i]
-            if (child.tagName == 'DIV')
+            if (child.tagName === 'DIV')
                 child.style.display = 'none'
         }
-        target.style.display = 'block'
+        if (target)
+            target.style.display = 'block'
     }
 
     var setSelectedTab = function() {
@@ -520,6 +521,7 @@
 
     var makeFunctionForm = function(abihtml) {
         document.getElementById('tab-container').children[0].innerHTML = ''
+        document.getElementById('main-container').innerHTML = ''
 
         var funcs = abihtml.GetFunctionsSorted()
 
@@ -823,7 +825,16 @@
             dl.appendChild(ddGas)
 
             displayNotification(dl, 'success')
+
             document.getElementById('contract-address').value = receipt.contractAddress
+            var abihtml = loadedAbihtml[0]
+            abihtml.WatchAllEvents({
+                fromBlock: 'latest',
+                toBlock: 'latest',
+                address: receipt.contractAddress
+            }, {}, function(evmEvent) {
+                makeEventNotification(evmEvent, displayNotification)
+            })
         })
     }
 
@@ -1027,6 +1038,13 @@
                 var source = document.getElementById('contract-code').value
                 var abihtml = updatePageWithSource(source)
                 if (abihtml) loadedAbihtml[0] = abihtml
+                abihtml.WatchAllEvents({
+                    fromBlock: 'latest',
+                    toBlock: 'latest',
+                    address: document.getElementById('contract-address').value
+                }, {}, function(evmEvent) {
+                    makeEventNotification(evmEvent, displayNotification)
+                })
             }
 
         }, {
@@ -1201,7 +1219,7 @@
         <div>
             <div class="mainleft">
                 <div id="functions">
-                    <h2>Actions</h2>
+                    <h2>Functions</h2>
                     <div>
                         <div id="tab-container">
                             <ul>
