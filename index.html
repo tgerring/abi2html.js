@@ -1014,6 +1014,9 @@
                     loadedAbihtml[0] = abihtml
                     makeFunctionForm(abihtml)
                     updateEventList(abihtml)
+
+                    // BUG this doesn't clear the filter form
+                    clearLogs()
                 }
             }
         }, {
