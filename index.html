@@ -34,7 +34,7 @@
         if (!testConnection(document.getElementById('instance-hostname').value, document.getElementById('instance-port').value)) {
             displayNotification('Could not connect to Ethereum client', 'error')
         } else {
-            displayNotification('Connected', 'success')
+            displayNotification('Connected to ' + web3.version.client, 'success')
             document.getElementById('compile-contract').disabled = false
             document.getElementById('deploy-contract').disabled = false
             document.getElementById('send-value').disabled = false
