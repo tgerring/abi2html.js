@@ -225,7 +225,7 @@
         var userContract = JSON.parse(select.options[select.selectedIndex].value)
 
         var options = getTransactionOptions()
-        delete options.to // contract deployment has no "to" address
+        delete options.to // contract deployment has no "to" address (etheruem/web3.js#343)
         options.data = userContract.code
         web3.eth.contract(userContract.info.abiDefinition).new(options, callback)
     }
@@ -520,6 +520,7 @@
 
     var makeFunctionForm = function(abihtml) {
         document.getElementById('tab-container').children[0].innerHTML = ''
+        document.getElementById('main-container').innerHTML = ''
 
         var funcs = abihtml.GetFunctionsSorted()
 
@@ -1200,7 +1201,7 @@
         <div>
             <div class="mainleft">
                 <div id="functions">
-                    <h2>Actions</h2>
+                    <h2>Functions</h2>
                     <div>
                         <div id="tab-container">
                             <ul>
