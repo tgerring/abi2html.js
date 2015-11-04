@@ -13,34 +13,10 @@ body {
     font-size: 11pt;
 }
 
-
-/*#wrapper {
-    height: 100vh;
-}*/
-
-
-/*#head,
-#top,
-#bottom,
-#foot {
-    width: 100%;
-    clear: both;
-    margin: 1ex;
-}*/
-
-.clearboth {
-    display: inline-block;
-    clear: both;
-}
-
 .readonly {
     font-family: monospace;
     color: #000000;
     background-color: #E6E6E6
-}
-
-div.function {
-    padding: 1ex;
 }
 
 div.function > h3 {
@@ -49,18 +25,50 @@ div.function > h3 {
 }
 
 #functions {
-    float: left;
-    width: 60%;
-    overflow: auto;
+    /*float: left;*/
+    margin: 0;
+    /*width: 35%;*/
+    /*overflow: auto;*/
+    /*display: inline-block;*/
+}
+
+#functions > div {
+    display: inline-block;
 }
 
 #events {
-    float: right;
-    width: 40%;
+    /*float: right;*/
+    margin: 0;
+    width: 100%;
+    display: inline-block;
 }
 
-#events > h2 {
+#messages {
+    margin: 0;
+    /*width: 20%;*/
+    /*display: inline-block;*/
+    height: 10em;
+    overflow-y: scroll;
     display: inline-block;
+    width: 50%;
+}
+
+#main > div {
+    display: inline-block;
+    width: 45%;
+}
+
+#messages > h2 {
+    display: inline-block;
+}
+
+#functions>h2 {
+    margin-left: 220px;
+}
+
+#message-container div.solfield input,
+#message-container div.solfield textarea {
+    border: none;
 }
 
 #header {
@@ -78,17 +86,25 @@ div.function > h3 {
 }
 
 #header-wrapper > div {
-    margin: 0.5em 1em;
+    /*margin: 0.5em 1em;*/
+    width: 100%;
+    vertical-align: top;
+}
+
+#header-wrapper > div > div {
+    /*margin: 0.5em 1em;*/
+    display: inline-block;
+    /*    width: 100%;*/
 }
 
 #main {
-    margin: 200px 1em 0 1em;
+    margin: 200px 0 0 0;
 }
 
 #abi {
     width: 50%;
     float: left;
-    display: none;
+    /*display: none;*/
 }
 
 #contract {
@@ -98,9 +114,9 @@ div.function > h3 {
 }
 
 #controls {
-    width: 40%;
-    float: right;
-    margin: 0 !important;
+    width: 45%;
+    /*float: right;*/
+    /*margin: 0 !important;*/
 }
 
 #contract-abi {
@@ -146,8 +162,12 @@ fieldset.event {
 
 .address,
 .string {
-    /*    width: 40ex;*/
+    width: 60ex;
     height: 1.8em;
+}
+
+.bytes {
+    width: 100%;
 }
 
 .int,
@@ -155,57 +175,103 @@ fieldset.event {
     height: 1.8em;
 }
 
-#notifications > div {
-    margin: 2em 0 1em 0;
+.log {
+    margin: 1em 1em;
     border: 1px solid gray;
-    padding: 10px 5px;
+    padding: 1em 1em;
     -moz-border-radius: 8px;
     border-radius: 8px;
 }
 
-#notifications > div > button {
-    position: absolute;
-    right: 20;
+.notification {
+    margin: 0 0 1em 0;
+    border: 1px solid gray;
+    padding: 10px 5px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    line-height: 1.4;
+}
+
+.notification > button {
+    /*position: absolute;*/
+    /*right: 20;*/
+    float: right;
     margin-top: -0.5em;
 }
 
-#notifications pre {
+.notification pre {
     background-color: silver;
     border: 1px solid black;
     padding: 5px;
-    line-height: .8;
-    /*margin-top: 1ex;*/
+    font-size: 80%;
 }
 
-#notifications samp {
+.notification samp {
     background-color: silver;
     border: 1px solid black;
-    padding: 2px;
-    line-height: .8;
+    padding: 1px;
+    font-size: 80%;
 }
 
-#notifications .success {
+.success {
     background-color: #BCF5A9
 }
 
-#notifications .warning {
+.warning {
     background-color: #F3F781
 }
 
-#notifications .error {
+.error {
     background-color: #F5A9A9
 }
 
-#notifications > div dt {
-    float: left;
-    margin-right: 1ex;
-    font-weight: bold;
+.notifications > div {
+    margin: 1em 1ex;
 }
+
+.notification > div dl dt,
+.log > div dl dt {
+    display: inline-block;
+    min-width: 150px;
+    margin-bottom: 1ex;
+}
+
+.notification > div dl dd,
+.log > div dl dd {
+    display: inline;
+    margin: 0;
+    font-family: monospace;
+    font-size: 80%;
+}
+
+.notification > div dl dd:after,
+.log > div dl dd:after {
+    display: block;
+    content: '';
+}
+
+
+/*.notification > div dl dd,
+.log > div dt {
+    display: inline-block;
+    margin-right: 1em;
+}
+
+.notification > div dd,
+.log > div dd {
+    background-color: silver;
+    border: 1px solid black;
+    padding: 1px;
+    font-size: 80%;
+    display: inline-block;
+    font-family: monospace;
+}*/
 
 #tab-container {
     float: left;
-    margin: 25px 0 0 0;
-    width: 15em;
+    display: inline-block;
+    /*margin: 25px 0 0 0;*/
+    /*width: 13em;*/
 }
 
 #tab-container ul {
@@ -263,22 +329,18 @@ fieldset.event {
 
 #main-container {
     min-height: 400px;
-    margin: 1em 1em 0 15em;
+    /*margin: 1em 1em 0 15em;*/
     padding: 20px;
     background-color: #fff;
     border: 1px solid #888;
-    display: none;
-}
-
-#functions>h2 {
-    margin-left: 220px;
+    display: inline-block;
 }
 
 div.solfield {
     margin: 1ex 0;
 }
 
-div.solfield > label {
+#events div.solfield > label {
     display: inline-block;
     min-width: 5em;
     margin-right: 1em;
@@ -286,4 +348,58 @@ div.solfield > label {
 
 #eventFilter {
     margin: 1em;
+}
+
+#main > div {
+    /*border: 1px solid black;*/
+    vertical-align: top;
+}
+
+fieldset#inputs {
+    clear: both;
+}
+
+dfn {
+    font-style: normal;
+    border-bottom: 1px dashed black;
+    cursor: help;
+}
+
+.comparison {
+    width: 8em;
+    display: inline-block;
+    margin-right: 1em;
+}
+
+.indexed {
+    margin-left: 1em;
+    font-weight: bold;
+}
+
+#controls > div {
+    /*display: inline-block;*/
+}
+
+#main > div {
+    width: 100%;
+}
+
+#main > div > div {
+    display: inline-block;
+    width: 45%;
+    /*text-align: top;*/
+    /*border: 1px solid black;*/
+}
+
+.mainleft {
+    padding: 1em;
+}
+
+.mainright {
+    float: right;
+    padding: 1em;
+}
+
+#dashboard > div {
+    padding: 1em;
 }

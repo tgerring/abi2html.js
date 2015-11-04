@@ -67,12 +67,52 @@
         }
     }
 
-    var getEventOptions = function() {
-        var txopts = getTransactionOptions()
+    var getFilterOptions = function() {
         return {
-            address: txopts.to
+            address: document.getElementById('contract-address').value,
+            fromBlock: document.getElementById('eventFilterFromBlock').value,
+            toBlock: document.getElementById('eventFilterToBlock').value
         }
     }
+
+
+    var getFilterFields = function() {
+        // this should instead get from DOM like getSortFields and the latter
+        // should be squashed so that fetching with topic filter can be fed
+        // into local sort automagically
+
+        // var filterFields = {}
+        // for (k in evmEvent.inputs) {
+        //     var field = evmEvent.inputs[k]
+        //     var val = document.getElementById(field.name).value
+        //     if (val) filterFields[field.name] = val
+        // }
+    }
+
+    var getSortFields = function() {
+        // get sort options from user
+        var sortDom = document.getElementById('eventSorter')
+        var sortDom = document.getElementById('eventFilter')
+        var fs = sortDom.querySelector('fieldset')
+        var filterFields = {}
+        for (var i = 0; i < fs.children.length; i++) {
+            var child = fs.children[i]
+            if (child.tagName == 'DIV') {
+
+                var label = child.querySelector("label.name")
+                var select = child.querySelector("select.comparison")
+                var input = child.querySelector("input.value,textarea.value")
+                filterFields[label.innerHTML] = {
+                    name: label.innerHTML,
+                    value: input.value,
+                    operator: select.value
+                }
+            }
+        }
+        return filterFields
+    }
+
+
 
     /***
 
@@ -110,10 +150,10 @@
             for (var f in result.files) {
                 var content = result.files[f].content
 
-                document.getElementById('contract').style.display = 'block'
+                // document.getElementById('contract').style.display = 'block'
                 document.getElementById('contract-code').value = content
 
-                document.getElementById('abi').style.display = 'none'
+                // document.getElementById('abi').style.display = 'none'
                 document.getElementById('contract-abi').value = ''
 
                 document.getElementById('tab-container').children[0].innerHTML = ''
@@ -133,10 +173,10 @@
                 var content = result.files[f].content
 
 
-                document.getElementById('contract').style.display = 'none'
+                // document.getElementById('contract').style.display = 'none'
                 document.getElementById('contract-code').value = ''
 
-                document.getElementById('abi').style.display = 'block'
+                // document.getElementById('abi').style.display = 'block'
                 document.getElementById('contract-abi').value = content
 
                 document.getElementById('tab-container').children[0].innerHTML = ''
@@ -202,11 +242,12 @@
             var abiSource = document.getElementById('contract-abi').value
             var abihtml = new AbiHtml(abiSource)
             if (abihtml) {
+                loadedAbihtml[0] = abihtml
                 makeFunctionForm(abihtml)
                 updateEventList(abihtml)
-                abihtml.GetEventLogs(getEventOptions(), true, function(evmEvent) {
-                    makeEventNotification(evmEvent, displayNotification)
-                })
+                    // abihtml.GetEventLogs(getFilterOptions(), true, function(evmEvent) {
+                    //     makeEventNotification(evmEvent, displayLog)
+                    // })
                 return abihtml
             }
         })
@@ -287,97 +328,6 @@
         document.getElementById('txcost-total').innerHTML = text
     }
 
-    var sortEvents = function(callback) {
-        // get sort values from DOM
-        var sortDom = document.getElementById('eventSorter')
-        var fs = sortDom.querySelector('fieldset')
-        var filterFields = {}
-        for (var i = 0; i < fs.children.length; i++) {
-            var child = fs.children[i]
-            if (child.tagName == 'DIV') {
-
-                var label = child.querySelector("label.name")
-                var select = child.querySelector("select.comparison")
-                var input = child.querySelector("input.value,textarea.value")
-                filterFields[label.innerHTML] = {
-                    name: label.innerHTML,
-                    value: input.value,
-                    operator: select.value
-                }
-            }
-        }
-
-        // TODO if we store this on the EvmEvent, it can give us back a list
-        //      instead of grabbing from DOM here
-        // get get log fields
-        var parent = document.getElementById('notifications')
-        for (var i = 0; i < parent.children.length; i++) {
-            var wrap = parent.children[i]
-
-            // build object from output for comparison
-            var fs = wrap.querySelector('fieldset.inputs')
-            var logFields = {}
-            for (var j = 0; j < fs.children.length; j++) {
-                var child = fs.children[j]
-                if (child.tagName == 'DIV') {
-                    var label = child.querySelector("label.name")
-                    var input = child.querySelector("input.value,textarea.value")
-                    logFields[label.innerHTML] = input.value
-                }
-            }
-
-
-            // TODO this should be moved to SolField so each type is 
-            //      aware of how to compare itself
-            // check filterFields for corresponding logFields
-            var matches = true
-            for (k in filterFields) {
-                var obj = filterFields[k]
-                var name = obj.name
-                var compValue = obj.operator
-                if (name in logFields) {
-                    var fieldValue = obj.value
-                    var logValue = logFields[obj.name]
-
-                    // do comparison tests
-                    switch (obj.operator) {
-                        case '!=':
-                        case '<>':
-                            if (logValue == fieldValue) matches = false
-                            break
-                        case '=':
-                            if (logValue != fieldValue) matches = false
-                            break
-                        case '>':
-                            if (logValue <= fieldValue) matches = false
-                            break
-                        case '>=':
-                            if (logValue < fieldValue) matches = false
-                            break
-                        case '<':
-                            if (logValue >= fieldValue) matches = false
-                            break
-                        case '<=':
-                            if (logValue > fieldValue) matches = false
-                            break
-                        case '*':
-                        case '':
-                            // noop
-                            break
-                        default:
-                            console.log('Unknown comparison', argComp)
-                    }
-                }
-            }
-
-
-
-            if (matches) wrap.style.display = 'block'
-            else wrap.style.display = 'none'
-        }
-
-        if (typeof callback === "function") callback()
-    }
 
     var updatePageWithContract = function(results) {
         // update contract selector
@@ -398,6 +348,7 @@
         document.getElementById('contract-abi').value = JSON.stringify(userContract.info.abiDefinition)
         document.getElementById('contract-selector').disabled = false
         document.getElementById('deploy-contract').disabled = false
+        clearLogs(true)
     }
 
 
@@ -430,7 +381,15 @@
 
     var clearNotifications = function() {
         document.getElementById('notifications').innerHTML = ''
-        document.getElementById('eventFilter').innerHTML = ''
+    }
+
+    var clearLogs = function(hideFilter) {
+        if (hideFilter) {
+            var el = document.getElementById('eventFilter')
+            if (el)
+                el.innerHTML = ''
+        }
+        document.getElementById('message-container').innerHTML = ''
     }
 
     var resetEventList = function() {
@@ -450,8 +409,9 @@
         }
 
         var parElement = document.createElement('div')
+        parElement.className = 'notification'
         if (className)
-            parElement.className = className
+            parElement.className += ' ' + className
         var btn = document.createElement('button')
         btn.innerHTML = 'Dismiss'
         btn.addEventListener("click", function() {
@@ -463,7 +423,31 @@
 
         // append the entry and the top
         var el = document.getElementById('notifications')
-        el.insertBefore(parElement, el.childNodes[0])
+        el.insertBefore(parElement, el.children[0])
+
+    }
+
+    var displayLog = function(obj, className) {
+        var htmlDom
+        if (typeof obj === "object" && "nodeType" in obj) {
+            // looks like HTML Element
+            htmlDom = obj
+        } else if (typeof obj === "string") {
+            // looks like string
+            var htmlDom = document.createElement('p')
+            htmlDom.innerHTML = obj
+        }
+
+        var parElement = document.createElement('div')
+        parElement.className = 'log'
+        if (className)
+            parElement.className += ' ' + className
+
+        parElement.appendChild(htmlDom)
+
+        // append the entry and the top
+        var el = document.getElementById('message-container')
+        el.insertBefore(parElement, el.children[0])
 
     }
 
@@ -478,6 +462,7 @@
             htmlDom.innerHTML = obj
         }
 
+        // this is hacky and should be improved
         var existing = document.getElementById('eventFilter')
         if (existing) {
             existing.innerHTML = ''
@@ -488,14 +473,11 @@
             if (className)
                 parElement.className = className
             parElement.appendChild(htmlDom)
-                // append the entry and the top
+
+            // append the entry and the top
             var el = document.getElementById('events')
             el.insertBefore(parElement, el.children[el.children.length - 1])
-
         }
-
-
-
     }
 
 
@@ -521,6 +503,9 @@
         select.options.add(last)
 
         select.selectedIndex = 0
+        select.addEventListener('change', function() {
+
+        })
 
     }
 
@@ -532,230 +517,208 @@
 
     **/
 
-
-
     var makeFunctionForm = function(abihtml) {
-        if (!abihtml)
-            abihtml = new AbiHtml(document.getElementById('contract-abi').value)
+        document.getElementById('tab-container').children[0].innerHTML = ''
 
-        if (abi) {
-            document.getElementById('tab-container').children[0].innerHTML = ''
+        var funcs = abihtml.GetFunctionsSorted()
 
-            var funcs = abihtml.GetFunctionsSorted()
+        funcs.forEach(function(f) {
+            var dom = makeFunction(f)
+            makeNav(dom, f.func)
+        })
 
-            funcs.forEach(function(f) {
-                var dom = makeFunction(abihtml.functions[f.name])
-                makeNav(dom, abihtml.functions[f.name])
-            })
-
-            setSelectedTab()
-        }
+        setSelectedTab()
     }
 
-    var makeEventTopicFilter = function(evmEvent, cb) {
-        if (!evmEvent) return
 
-        // containing div element
+    var makeFunction = function(web3Function) {
+        var item = web3Function.func
         var div = document.createElement('div')
-        div.className = ['event'].join(' ')
-        div.id = 'eventTopicFilter' + evmEvent.name
+        div.className = ['function'].join(' ')
+        div.id = 'function' + item.name
 
         var h3 = document.createElement('h3')
-        h3.innerHTML = evmEvent.name
+        h3.innerHTML = item.name
         div.appendChild(h3)
 
-        if (evmEvent.inputs.length > 0) {
-            var fs = document.createElement('fieldset')
-            fs.className = 'inputs'
+
+        // generate inputs with html id
+        if (item.inputs.length > 0) {
+            var fsi = document.createElement('fieldset')
+            fsi.className = 'inputs'
 
             var leg = document.createElement('legend')
-            leg.innerHTML = 'Event topics'
-            fs.appendChild(leg)
+            leg.innerHTML = 'Inputs'
+            fsi.appendChild(leg)
 
+            item.inputs.forEach(function(field) {
+                field.setHtmlId(['function', item.name, 'input'].join('-'))
+                fsi.appendChild(field.DefaultRenderer(true))
+            })
 
-            // append the DOM for each field to the fieldset
-            for (var i = 0; i < evmEvent.inputs.length; i++) {
-                var field = evmEvent.inputs[i]
-                field.setHtmlId(div.id + field.getHtmlId())
-                field.setValue('')
+        }
 
-                if (field.indexed)
-                    fs.appendChild(field.renderDom(true))
-                else
-                    fs.appendChild(field.renderDom(false))
-            }
+        // generate outputs with htmlid
+        if (item.outputs.length > 0) {
+            var fso = document.createElement('fieldset')
+            fso.className = 'outputs'
 
-            // callback to get filter fields
-            var button = document.createElement('button')
-            button.innerHTML = 'Get logs'
-            button.addEventListener('click', function() {
-                var filterFields = {}
-                for (k in evmEvent.inputs) {
-                    var field = evmEvent.inputs[k]
-                    var val = document.getElementById(field.getHtmlId()).value
-                    if (val) filterFields[field.getName()] = val
-                }
-                clearNotifications()
-                makeLocalEventSorter(evmEvent, displayEventFilter)
-                evmEvent.Get(getEventOptions(), filterFields, function(evmEvent) {
-                    makeEventLog(evmEvent, function(dom) {
-                        displayNotification(dom)
+            var leg = document.createElement('legend')
+            leg.innerHTML = 'Outputs'
+            fso.appendChild(leg)
+
+            item.outputs.forEach(function(field) {
+                field.setHtmlId(['function', item.name, 'output'].join('-'))
+                fso.appendChild(field.DefaultRenderer(false))
+            })
+
+        }
+
+        // display call button when we the function has output fields
+        if (item.outputs.length > 0) {
+            var btn = document.createElement('button')
+            btn.type = 'button'
+            btn.innerHTML = 'Call'
+            btn.addEventListener('click', function() {
+                try {
+                    web3Function.Call(getTransactionOptions(), function(evmFunction) {
+                        if (evmFunction.error) {
+                            displayNotification(evmFunction.error.toString())
+                        } else {
+                            for (var i = 0; i < evmFunction.outputs.length; i++) {
+                                var field = evmFunction.outputs[i]
+                                var el = document.getElementById(field.htmlId)
+                                var val = field.value.toString()
+                                if (el) el.value = val
+                            }
+                        }
                     })
-                })
+                } catch (e) {
+                    displayNotification(e.toString(), 'error')
+                }
 
             })
-
-            div.appendChild(button)
-            div.appendChild(fs)
-
+            div.appendChild(btn)
         }
 
-        if (typeof cb === "function")
-            cb(div)
-
-        return div
-
-
-    }
-
-    var makeLocalEventSorter = function(evmEvent, cb) {
-        if (!evmEvent) return
-
-        // containing div element
-        var div = document.createElement('div')
-        div.className = ['event'].join(' ')
-        div.id = 'eventSorter'
-
-        var h3 = document.createElement('h3')
-        h3.innerHTML = evmEvent.name
-        div.appendChild(h3)
-
-        if (evmEvent.inputs.length > 0) {
-            var fs = document.createElement('fieldset')
-            fs.className = 'inputs'
-
-            var leg = document.createElement('legend')
-            leg.innerHTML = 'Fields'
-            fs.appendChild(leg)
-
-
-            // append the DOM for each field to the fieldset
-            for (var i = 0; i < evmEvent.inputs.length; i++) {
-                var field = evmEvent.inputs[i]
-                field.setHtmlId(div.id + field.getHtmlId())
-                var wrap = document.createElement('div')
-                wrap.className = 'solfield'
-                wrap.appendChild(field.RenderLabel())
-
-
-                // TODO this does not take into account types
-                //      so should be moved to EvmEvent
-                // Numbers as strings sort wrong
-                var select = document.createElement('select')
-                select.className = 'comparison'
-                var option = document.createElement('option')
-                option.innerHTML = '(all)'
-                option.value = '*'
-                select.options.add(option)
-                var option = document.createElement('option')
-                option.innerHTML = '>'
-                option.value = '>'
-                select.options.add(option)
-                var option = document.createElement('option')
-                option.innerHTML = '>='
-                option.value = '>='
-                select.options.add(option)
-                var option = document.createElement('option')
-                option.innerHTML = '='
-                option.value = '='
-                select.options.add(option)
-                var option = document.createElement('option')
-                option.innerHTML = '<'
-                option.value = '<'
-                select.options.add(option)
-                var option = document.createElement('option')
-                option.innerHTML = '<='
-                option.value = '<='
-                select.options.add(option)
-                var option = document.createElement('option')
-                option.innerHTML = '<>'
-                option.value = '<>'
-                select.options.add(option)
-
-                select.selectedIndex = 0
-                wrap.appendChild(select)
-                wrap.appendChild(field.RenderField(true))
-
-                fs.appendChild(wrap)
-            }
-
-
-            // callback to get filter fields
-            var button = document.createElement('button')
-            button.innerHTML = 'Filter results'
-            button.addEventListener('click', function() {
-                sortEvents()
+        if (!item.constant) {
+            var tbtn = document.createElement('button')
+            tbtn.type = 'button'
+            tbtn.innerHTML = 'Transact'
+            tbtn.addEventListener('click', function() {
+                try {
+                    web3Function.Transact(getTransactionOptions(), function(evmFunction) {
+                        if (evmFunction.error) {
+                            displayNotification(evmFunction.error.toString(), 'error')
+                        } else {
+                            displayNotification('Sent transaction: <pre>' + evmFunction.transactionHash + '</pre>', 'warning')
+                        }
+                    })
+                } catch (e) {
+                    displayNotification(e.toString(), 'error')
+                }
             })
-
-            div.appendChild(button)
-            div.appendChild(fs)
-
+            div.appendChild(tbtn)
         }
 
-        if (typeof cb === "function")
-            cb(div)
+
+        if (item.inputs.length > 0)
+            div.appendChild(fsi)
+        if (item.outputs.length > 0)
+            div.appendChild(fso)
 
         return div
-
-
     }
 
-    var makeEventLog = function(evmEvent, cb) {
+    var makeEventNotification = function(evmEvent, cb) {
         var div = document.createElement('div')
         div.className = ['event'].join(' ')
         div.id = 'event' + evmEvent.name
 
-        var h3 = document.createElement('h3')
-        h3.innerHTML = evmEvent.name
-        div.appendChild(h3)
+        var h4 = document.createElement('h4')
+        h4.innerHTML = evmEvent.name
+        div.appendChild(h4)
 
         if (evmEvent.err) {
             var p = document.createElement('p')
             p.innerHTML = evmEvent.err.toString()
             div.appendChild(p)
         } else {
-            var receipt = web3.eth.getTransactionReceipt(evmEvent.results.transactionHash)
+            if (evmEvent.inputs.length > 0) {
+                var wrap = document.createElement('div')
+
+                // append the DOM for each field to the fieldset
+                for (var i = 0; i < evmEvent.inputs.length; i++) {
+                    var field = evmEvent.inputs[i]
+
+                    // if we have a value for a given field, render it
+                    if (evmEvent.result && "args" in evmEvent.result && field.name in evmEvent.result.args)
+                        field.setValue(evmEvent.result.args[field.name])
+
+                    var d = document.createElement('div')
+                    var s1 = document.createElement('span')
+                    s1.innerHTML = field.name + ': '
+                    var s2 = document.createElement('span')
+                    s2.innerHTML = '<samp>' + field.value + '</samp>'
+                    d.appendChild(s1)
+                    d.appendChild(s2)
+                    wrap.appendChild(d)
+                }
+                div.appendChild(wrap)
+            }
+
+        }
+
+        if (typeof cb === "function") cb(div)
+        return div
+    }
+
+
+    var makeEventLog = function(evmEvent, cb) {
+        // containing div element
+        var div = document.createElement('div')
+        div.className = ['event'].join(' ')
+            // div.id = 'eventLog' + evmEvent.name
+
+        if (evmEvent.err) {
+            var p = document.createElement('p')
+            p.innerHTML = evmEvent.err.toString()
+            div.appendChild(p)
+        } else {
+            var h3 = document.createElement('h3')
+            h3.innerHTML = evmEvent.result.event
+            div.appendChild(h3)
+
+            var receipt = web3.eth.getTransactionReceipt(evmEvent.result.transactionHash)
             var dl = document.createElement('dl')
 
-            var dtAddress = document.createElement('dt')
-            var ddAddress = document.createElement('dd')
+            var displayFields = [{
+                dt: 'Contract:',
+                dd: evmEvent.result.address
+            }, {
+                dt: 'Transaction:',
+                dd: evmEvent.result.transactionHash
+            }, {
+                dt: 'Chain height:',
+                dd: '<dfn title="Block number">' + receipt.blockNumber + '</dfn> . <dfn title="Transaction index">' + evmEvent.result.transactionIndex + '</dfn> . <dfn title="Log index">' + evmEvent.result.logIndex + '</dfn>'
+            }, {
+                dt: 'Gas used:',
+                dd: '<dfn title="Gas used">' + receipt.gasUsed + '</dfn> / <dfn title="Cumulative gas used">' + receipt.cumulativeGasUsed + '</dfn>'
+            }]
 
-            dtAddress.innerHTML = 'Contract:'
-            ddAddress.innerHTML = evmEvent.results.address
-            dl.appendChild(dtAddress)
-            dl.appendChild(ddAddress)
+            for (var i = 0; i < displayFields.length; i++) {
+                var field = displayFields[i]
+                var dt = document.createElement('dt')
+                var dd = document.createElement('dd')
+                dt.innerHTML = field.dt
+                dd.innerHTML = field.dd
+                dl.appendChild(dt)
+                dl.appendChild(dd)
 
-
-            var dtHash = document.createElement('dt')
-            var ddHash = document.createElement('dd')
-
-            dtHash.innerHTML = 'Transaction hash:'
-            dl.appendChild(dtHash)
-
-            ddHash.innerHTML = evmEvent.results.transactionHash
-            dl.appendChild(ddHash)
-
-            var dtGas = document.createElement('dt')
-            var ddGas = document.createElement('dd')
-
-            dtGas.innerHTML = 'Gas used:'
-            dl.appendChild(dtGas)
-
-            ddGas.innerHTML = receipt.gasUsed
-            dl.appendChild(ddGas)
-
+            }
             div.appendChild(dl)
 
+            // evmEvent.results.args.length > 0
             if (evmEvent.inputs.length > 0) {
                 var fs = document.createElement('fieldset')
                 fs.className = 'inputs'
@@ -768,84 +731,7 @@
                 // append the DOM for each field to the fieldset
                 for (var i = 0; i < evmEvent.inputs.length; i++) {
                     var field = evmEvent.inputs[i]
-
-                    // if we have a value for a given field, render it
-                    if (evmEvent.results && "args" in evmEvent.results && field.getName() in evmEvent.results.args)
-                        fs.appendChild(field.renderDom(false, evmEvent.results.args[field.getName()]))
-                    else
-                        fs.appendChild(field.renderDom(false))
-                }
-                div.appendChild(fs)
-            }
-
-        }
-
-        if (typeof cb === "function") cb(div)
-        return div
-    }
-
-
-    var makeEventNotification = function(evmEvent, cb) {
-        // containing div element
-        var div = document.createElement('div')
-        div.className = ['event'].join(' ')
-        div.id = 'eventLog' + evmEvent.name
-
-        if (evmEvent.err) {
-            var p = document.createElement('p')
-            p.innerHTML = evmEvent.err.toString()
-            div.appendChild(p)
-        } else {
-
-            var h3 = document.createElement('h3')
-            h3.innerHTML = evmEvent.name
-            div.appendChild(h3)
-
-            var receipt = web3.eth.getTransactionReceipt(evmEvent.results.transactionHash)
-            var dl = document.createElement('dl')
-
-            var dtAddress = document.createElement('dt')
-            var ddAddress = document.createElement('dd')
-
-            dtAddress.innerHTML = 'Contract:'
-            ddAddress.innerHTML = evmEvent.results.address
-            dl.appendChild(dtAddress)
-            dl.appendChild(ddAddress)
-
-
-            var dtHash = document.createElement('dt')
-            var ddHash = document.createElement('dd')
-
-            dtHash.innerHTML = 'Transaction hash:'
-            dl.appendChild(dtHash)
-
-            ddHash.innerHTML = evmEvent.results.transactionHash
-            dl.appendChild(ddHash)
-
-            var dtGas = document.createElement('dt')
-            var ddGas = document.createElement('dd')
-
-            dtGas.innerHTML = 'Gas used:'
-            dl.appendChild(dtGas)
-
-            ddGas.innerHTML = receipt.gasUsed
-            dl.appendChild(ddGas)
-
-            div.appendChild(dl)
-
-            if (evmEvent.inputs.length > 0) {
-                var fs = document.createElement('fieldset')
-                fs.className = 'inputs'
-
-                var leg = document.createElement('legend')
-                leg.innerHTML = 'Fields'
-                fs.appendChild(leg)
-
-
-                // append the DOM for each field to the fieldset
-                for (var i = 0; i < evmEvent.inputs.length; i++) {
-                    var field = evmEvent.inputs[i]
-                    fs.appendChild(field.renderDom(false))
+                    fs.appendChild(field.DefaultRenderer(false))
                 }
                 div.appendChild(fs)
             }
@@ -878,81 +764,12 @@
         var ul = document.getElementById('tab-container').children[0]
         ul.appendChild(li)
 
-        htmlDom.style.display = 'none'
+        // htmlDom.style.display = 'none'
         var main = document.getElementById('main-container')
         main.appendChild(htmlDom)
-        main.style.display = 'block'
+            // main.style.display = 'block'
     }
 
-    var makeFunction = function(evmFunction) {
-        var div = document.createElement('div')
-        div.className = ['function'].join(' ')
-        div.id = 'function' + evmFunction.name
-
-        var h3 = document.createElement('h3')
-        h3.innerHTML = evmFunction.name
-        div.appendChild(h3)
-
-        if (evmFunction.outputs.length > 0) {
-            var btn = document.createElement('button')
-            btn.type = 'button'
-            btn.id = [evmFunction.name, "call"].join(evmFunction.config.idJoinString)
-            btn.innerHTML = "Call"
-            btn.addEventListener('click', function(ev) {
-                evmFunction.Call(getTransactionOptions())
-            })
-            div.appendChild(btn)
-        }
-
-        if (!evmFunction.constant) {
-            var tbtn = document.createElement('button')
-            tbtn.type = 'button'
-            tbtn.id = [evmFunction.name, "transact"].join(evmFunction.config.idJoinString)
-            tbtn.innerHTML = "Transact"
-            tbtn.addEventListener('click', function(ev) {
-                evmFunction.Transact(getTransactionOptions(), function(err, txhash) {
-                    if (err) {
-                        displayNotification(err.toString(), 'error')
-                    } else {
-                        displayNotification('Sent transaction: <pre>' + txhash + '</pre>', 'warning')
-                    }
-                })
-            })
-            div.appendChild(tbtn)
-        }
-
-
-
-        if (evmFunction.inputs.length > 0) {
-            var fs = document.createElement('fieldset')
-            fs.className = 'inputs'
-
-            var leg = document.createElement('legend')
-            leg.innerHTML = 'Inputs'
-            fs.appendChild(leg)
-
-            evmFunction.inputs.forEach(function(field) {
-                fs.appendChild(field.renderDom(true))
-            })
-            div.appendChild(fs)
-        }
-
-        if (evmFunction.outputs.length > 0) {
-            var fso = document.createElement('fieldset')
-            fso.className = 'outputs'
-
-            var leg = document.createElement('legend')
-            leg.innerHTML = 'Outputs'
-            fso.appendChild(leg)
-
-            evmFunction.outputs.forEach(function(field) {
-                fso.appendChild(field.renderDom(false))
-            })
-            div.appendChild(fso)
-        }
-
-        return div
-    }
 
     var makeContractNotification = function(result) {
         // get transaction to see if it's been mined
@@ -1029,7 +846,7 @@
             } else if (window.location.host === 'tgerring.github.io') {
                 // public
                 abiGistId = "0e1b884de82d35053a34"
-                toAddress = "0x21a3a128968f7fd17eb0a16045a84769374aeae0"
+                toAddress = "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
             }
         }
 
@@ -1037,7 +854,7 @@
         setHandlers()
 
         if (abiGistId) {
-            displayNotification('Loading ABI with Gist ID ' + abiGistId)
+            displayNotification('Loading ABI with Gist ID <samp>' + abiGistId + '</samp>')
             callAjax('https://api.github.com/gists/' + abiGistId, function(response) {
                 loadAbiGist(response, function(abiSource) {
 
@@ -1052,14 +869,19 @@
                     if (testConnection()) {
                         updateDashboard()
                         watchBlocks()
-                        abihtml.GetEventLogs(getEventOptions(), true, function(evmEvent) {
+                        abihtml.WatchAllEvents({
+                            fromBlock: 'latest',
+                            toBlock: 'latest',
+                            address: document.getElementById('contract-address').value
+                        }, {}, function(evmEvent) {
                             makeEventNotification(evmEvent, displayNotification)
                         })
+
                     }
                 })
             })
         } else if (solGistId) {
-            displayNotification('Loading Solidity with Gist ID ' + solGistId)
+            displayNotification('Loading Solidity with Gist ID <samp>' + solGistId + '</samp>')
             connectInstance()
             callAjax('https://api.github.com/gists/' + solGistId, function(response) {
                 loadSolidityGist(response, function(solSource) {
@@ -1074,7 +896,11 @@
                                 loadedAbihtml[0] = abihtml
                                 makeFunctionForm(abihtml)
                                 updateEventList(abihtml)
-                                abihtml.GetEventLogs(getEventOptions(), true, function(evmEvent) {
+                                abihtml.WatchAllEvents({
+                                    fromBlock: 'latest',
+                                    toBlock: 'latest',
+                                    address: document.getElementById('contract-address').value
+                                }, {}, function(evmEvent) {
                                     makeEventNotification(evmEvent, displayNotification)
                                 })
                             }
@@ -1098,10 +924,7 @@
         var handlers = [{
             name: 'clear-notifications',
             e: 'click',
-            f: function() {
-                clearNotifications()
-                resetEventList()
-            }
+            f: clearNotifications
         }, {
             name: 'connect-instance',
             e: 'click',
@@ -1119,20 +942,36 @@
             e: 'change',
             f: function() {
                 var eventName = document.getElementById('event-list').value
-                var index = document.getElementById('event-list').selectedIndex
                 var abihtml = loadedAbihtml[0]
 
                 if (eventName in abihtml.events) {
-                    var dom = makeEventTopicFilter(abihtml.events[eventName])
+                    var item = abihtml.events[eventName]
+                        // clearLogs()
+
+                    var buttonCallback = function(evmEvent) {
+                        var options = getFilterOptions()
+                        var filterFields = item.getFieldFilterValues()
+                        clearLogs()
+                        item.FetchLogs(options, filterFields, function(evmEvent) {
+                            // item.GetLogsFiltered(getSortFields())
+                            makeEventLog(evmEvent, displayLog)
+                        })
+                    }
+
+                    // document.getElementById('retrieve-logs').addEventListener('click', function() {
+                    //     buttonCallback(item)
+                    // })
+
+                    var dom = item.makeFieldFilter(buttonCallback)
                     displayEventFilter(dom)
                 } else if (eventName === "*") {
-                    clearNotifications()
-                    abihtml.GetAllEvents(getEventOptions(), {}, function(evmEvent) {
-                        makeEventNotification(evmEvent, displayNotification)
+                    clearLogs()
+                    abihtml.GetAllEvents(getFilterOptions(), {}, function(evmEvent) {
+                        makeEventLog(evmEvent, displayLog)
                     })
                 } else {
                     console.log('event-list none')
-                    clearNotifications()
+                    clearLogs(true)
                 }
             }
         }, {
@@ -1149,7 +988,7 @@
             f: function() {
                 deployContract(function(error, result) {
                     if (error) {
-                        displayNotification(displayNotification(error.toString()), 'error')
+                        displayNotification(error.toString(), 'error')
                     } else {
                         displayNotification('Deployed contract in transaction: <pre>' + result.transactionHash + '</pre>', 'warning')
 
@@ -1241,6 +1080,7 @@
             e: 'change',
             f: function() {
                 var select = document.getElementById('contract-selector')
+                    // would be better to store/retrieve this from variable an not DOM
                 var userContract = JSON.parse(select.options[select.selectedIndex].value)
                 var abiSource = JSON.stringify(userContract.info.abiDefinition)
                 document.getElementById('contract-abi').value = abiSource
@@ -1274,88 +1114,106 @@
                     Block height: <span id="block-height">?</span> Best hash: <span id="block-hash">?</span> Estimated gas price: <span id="network-gasprice">?</span>
                 </p>
             </div>
-            <div id="dashboard">
-                <div id="contract">
-                    <label for="contract-code">Contract</label>
-                    <button type="button" id="compile-contract" disabled>Compile</button>
-                    <label for="contract-selector">Deploy contract:</label>
-                    <select id="contract-selector" disabled></select>
-                    <button type="button" id="deploy-contract" disabled>Deploy</button>
-                    <br>
-                    <textarea id="contract-code"></textarea>
+            <div>
+                <div id="messages">
+                    <h2>Notifications</h2>
+                    <button type="button" id="clear-notifications">Clear all</button>
+                    <div id="notifications">
+                    </div>
                 </div>
-                <div id="abi">
-                    <label for="contract-abi">Contract ABI</label>
-                    <button type="button" id="generate-page">Generate Form</button>
-                    <br>
-                    <textarea id="contract-abi"></textarea>
-                </div>
-            </div>
-            <div id="controls">
-                <div>
-                    <label for="sender-address">From:</label>
-                    <select id="sender-address" class="in-address"></select>
-                    <button type="button" id="copy-from" disabled>Copy To</button>
-                </div>
-                <div>
-                    <label for="contract-address">To:</label>
-                    <input id="contract-address" type="text" class="in-address">
-                    <label for="contract-balance">Balance:</label>
-                    <span id="contract-balance"></span>
-                </div>
-                <div>
-                    <label for="value-amount">Value</label>
-                    <input id="value-amount" type="text">
-                    <select id="value-unit">
-                        <option selected="">ether</option>
-                        <option>finney</option>
-                        <option>szabo</option>
-                        <option>shannon</option>
-                        <option>babbage</option>
-                        <option>ada</option>
-                        <option>wei</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="gas">Gas:</label>
-                    <input id="gas" type="text" class="" value="3000000">
-                </div>
-                <div>
-                    <label for="gas-price">Gas price:</label>
-                    <input id="gasprice-amount" type="text" class="" value="10">
-                    <select id="gasprice-unit">
-                        <option>ether</option>
-                        <option>finney</option>
-                        <option selected>szabo</option>
-                        <option>shannon</option>
-                        <option>babbage</option>
-                        <option>ada</option>
-                        <option>wei</option>
-                    </select>
-                    <button id="gasprice-copy" disabled>Sync estimate</button>
-                </div>
-                <div>
-                    <span>Max cost: <span id="txcost-total">?</span></span>
-                    <button id="send-value" type="button" disabled>Send</button>
+                <div id="controls">
+                    <h2>Transactions</h2>
+                    <div>
+                        <label for="sender-address">From:</label>
+                        <select id="sender-address" class="in-address"></select>
+                        <button type="button" id="copy-from" disabled>Copy To</button>
+                    </div>
+                    <div>
+                        <label for="contract-address">To:</label>
+                        <input id="contract-address" type="text" class="in-address">
+                        <label for="contract-balance">Balance:</label>
+                        <span id="contract-balance"></span>
+                    </div>
+                    <div>
+                        <label for="value-amount">Value</label>
+                        <input id="value-amount" type="text">
+                        <select id="value-unit">
+                            <option selected="">ether</option>
+                            <option>finney</option>
+                            <option>szabo</option>
+                            <option>shannon</option>
+                            <option>babbage</option>
+                            <option>ada</option>
+                            <option>wei</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="gas">Gas:</label>
+                        <input id="gas" type="text" class="" value="3000000">
+                    </div>
+                    <div>
+                        <label for="gas-price">Gas price:</label>
+                        <input id="gasprice-amount" type="text" class="" value="10">
+                        <select id="gasprice-unit">
+                            <option>ether</option>
+                            <option>finney</option>
+                            <option selected>szabo</option>
+                            <option>shannon</option>
+                            <option>babbage</option>
+                            <option>ada</option>
+                            <option>wei</option>
+                        </select>
+                        <button id="gasprice-copy" disabled>Sync estimate</button>
+                    </div>
+                    <div>
+                        <span>Max cost: <span id="txcost-total">?</span></span>
+                        <button id="send-value" type="button" disabled>Send</button>
+                    </div>
+                    <div>
+                        <label for="contract-selector">Deploy contract:</label>
+                        <select id="contract-selector" disabled></select>
+                        <button type="button" id="deploy-contract" disabled>Deploy</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <div id="main">
-        <div id="functions">
-            <h2>Actions</h2>
-            <div id="tab-container">
-                <ul>
-                </ul>
+        <div id="dashboard">
+            <div id="contract">
+                <label for="contract-code">Contract</label>
+                <button type="button" id="compile-contract" disabled>Compile</button>
+                <br>
+                <textarea id="contract-code"></textarea>
             </div>
-            <div id="main-container">
+            <div id="abi">
+                <label for="contract-abi">Contract ABI</label>
+                <button type="button" id="generate-page">Generate Form</button>
+                <br>
+                <textarea id="contract-abi"></textarea>
             </div>
         </div>
-        <div id="events">
-            <h2>Logs</h2>
-            <select id="event-list"></select>
-            <button type="button" id="clear-notifications">Clear all</button>
-            <div id="notifications"></div>
+        <div>
+            <div class="mainleft">
+                <div id="functions">
+                    <h2>Actions</h2>
+                    <div>
+                        <div id="tab-container">
+                            <ul>
+                            </ul>
+                        </div>
+                        <div id="main-container">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mainright">
+                <div id="events">
+                    <h2>Logs</h2>
+                    <select id="event-list"></select>
+                    <div id="message-container"></div>
+                </div>
+            </div>
         </div>
     </div>
     <div id="footer">
