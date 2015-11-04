@@ -827,6 +827,7 @@
             displayNotification(dl, 'success')
 
             document.getElementById('contract-address').value = receipt.contractAddress
+            updateToBalance()
             var abihtml = loadedAbihtml[0]
             abihtml.WatchAllEvents({
                 fromBlock: 'latest',
