@@ -684,6 +684,9 @@
         } else {
             if (evmEvent.inputs.length > 0) {
                 var wrap = document.createElement('div')
+                var block = document.createElement('div')
+                block.innerHTML = 'Block: ' + evmEvent.result.blockNumber
+                wrap.appendChild(block)
 
                 // append the DOM for each field to the fieldset
                 for (var i = 0; i < evmEvent.inputs.length; i++) {

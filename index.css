@@ -274,7 +274,7 @@ dfn {
         display: inline-block;
     }
     #tab-container {
-        float: left;
+        vertical-align: top;
         display: inline-block;
     }
     #tab-container ul {
@@ -321,7 +321,7 @@ dfn {
     }
     #main-container {
         min-height: 400px;
-        /*margin: 1em 1em 0 15em;*/
+        margin-left: -5px;
         padding: 20px;
         background-color: #fff;
         border: 1px solid #888;
