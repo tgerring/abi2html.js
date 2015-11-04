@@ -225,6 +225,7 @@
         var userContract = JSON.parse(select.options[select.selectedIndex].value)
 
         var options = getTransactionOptions()
+        delete options.to // contract deployment has no "to" address
         options.data = userContract.code
         web3.eth.contract(userContract.info.abiDefinition).new(options, callback)
     }
