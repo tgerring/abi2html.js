@@ -353,34 +353,6 @@
     }
 
 
-    var displayTab = function(htmlId) {
-        var target = document.getElementById('function' + htmlId)
-        var parent = document.getElementById('main-container')
-        for (var i = 0; i < parent.childNodes.length; i++) {
-            var child = parent.childNodes[i]
-            if (child.tagName === 'DIV')
-                child.style.display = 'none'
-        }
-        if (target)
-            target.style.display = 'block'
-    }
-
-    var setSelectedTab = function() {
-        var el = document.getElementById('tab-container')
-        var x = el.querySelectorAll("ul>li>a")
-        for (var i = 0; i < x.length; i++) {
-            var item = x[i]
-            if (item.href == window.location.href) {
-                item.parentNode.className = 'selected'
-                var htmlId = item.getAttribute('href').substring(1, item.href.length)
-                displayTab(htmlId)
-            } else {
-                item.parentNode.className = item.parentNode.className.replace('selected', '')
-            }
-        }
-
-    }
-
     var clearNotifications = function() {
         document.getElementById('notifications').innerHTML = ''
     }
@@ -526,6 +498,7 @@
         var funcs = abihtml.GetFunctionsSorted()
 
         funcs.forEach(function(f) {
+            // TODO this is awkward and should be improved
             var dom = makeFunction(f)
             makeNav(dom, f.func)
         })
@@ -633,6 +606,67 @@
         return div
     }
 
+    // make function navigation element
+    // TODO this should be improved to not need a DOM element
+    var makeNav = function(htmlDom, evmFunction) {
+        var name = htmlDom.childNodes[0].innerHTML
+        var li = document.createElement('li')
+        var a = document.createElement('a')
+        if (evmFunction.outputs.length > 0)
+            a.className += ' call'
+        if (!evmFunction.constant)
+            a.className += ' transact'
+        a.href = '#' + name
+        a.innerHTML = name
+        a.addEventListener('click', function() {
+            window.location = a.href
+            setSelectedTab()
+        }, false)
+        li.appendChild(a)
+
+        var ul = document.getElementById('tab-container').children[0]
+        ul.appendChild(li)
+
+        // htmlDom.style.display = 'none'
+        var main = document.getElementById('main-container')
+        main.appendChild(htmlDom)
+            // main.style.display = 'block'
+    }
+
+    // set tab class based on url
+    var setSelectedTab = function() {
+        var el = document.getElementById('tab-container')
+        var x = el.querySelectorAll("ul>li>a")
+        for (var i = 0; i < x.length; i++) {
+            var item = x[i]
+            if (item.href == window.location.href) {
+                item.parentNode.className = 'selected'
+                var htmlId = item.getAttribute('href').substring(1, item.href.length)
+                displayTab(htmlId)
+            } else {
+                item.parentNode.className = item.parentNode.className.replace('selected', '')
+            }
+        }
+
+    }
+
+    // display the tab with given htmlid
+    var displayTab = function(htmlId) {
+        var target = document.getElementById('function' + htmlId)
+        var parent = document.getElementById('main-container')
+        for (var i = 0; i < parent.childNodes.length; i++) {
+            var child = parent.childNodes[i]
+            if (child.tagName === 'DIV')
+                child.style.display = 'none'
+        }
+        if (target)
+            target.style.display = 'block'
+    }
+
+
+
+
+    // compact object for notification
     var makeEventNotification = function(evmEvent, cb) {
         var div = document.createElement('div')
         div.className = ['event'].join(' ')
@@ -677,11 +711,10 @@
     }
 
 
+    // detailed object for log seearch
     var makeEventLog = function(evmEvent, cb) {
-        // containing div element
         var div = document.createElement('div')
         div.className = ['event'].join(' ')
-            // div.id = 'eventLog' + evmEvent.name
 
         if (evmEvent.err) {
             var p = document.createElement('p')
@@ -748,32 +781,9 @@
 
     }
 
-    var makeNav = function(htmlDom, evmFunction) {
-        var name = htmlDom.childNodes[0].innerHTML
-        var li = document.createElement('li')
-        var a = document.createElement('a')
-        if (evmFunction.outputs.length > 0)
-            a.className += ' call'
-        if (!evmFunction.constant)
-            a.className += ' transact'
-        a.href = '#' + name
-        a.innerHTML = name
-        a.addEventListener('click', function() {
-            window.location = a.href
-            setSelectedTab()
-        }, false)
-        li.appendChild(a)
-
-        var ul = document.getElementById('tab-container').children[0]
-        ul.appendChild(li)
-
-        // htmlDom.style.display = 'none'
-        var main = document.getElementById('main-container')
-        main.appendChild(htmlDom)
-            // main.style.display = 'block'
-    }
 
 
+    // when a contract is created
     var makeContractNotification = function(result) {
         // get transaction to see if it's been mined
         var transaction = web3.eth.getTransaction(result.transactionHash)
@@ -827,6 +837,7 @@
             displayNotification(dl, 'success')
 
             document.getElementById('contract-address').value = receipt.contractAddress
+            updateToBalance()
             var abihtml = loadedAbihtml[0]
             abihtml.WatchAllEvents({
                 fromBlock: 'latest',
@@ -836,6 +847,49 @@
                 makeEventNotification(evmEvent, displayNotification)
             })
         })
+    }
+
+    // create inputs for limiting search to block range
+    var makeEventFilterOptions = function(callback) {
+        var eventOptions = document.createElement('div')
+
+        var labFrom = document.createElement('label')
+        labFrom.htmlFor = 'eventFilterFromBlock'
+        labFrom.innerHTML = 'From block:'
+        eventOptions.appendChild(labFrom)
+
+        var inFromBlock = document.createElement('input')
+        inFromBlock.type = 'input'
+        inFromBlock.value = '0'
+        inFromBlock.id = 'eventFilterFromBlock'
+        eventOptions.appendChild(inFromBlock)
+
+        var labTo = document.createElement('label')
+        labTo.htmlFor = 'eventFilterToBlock'
+        labTo.innerHTML = 'To block:'
+        eventOptions.appendChild(labTo)
+
+        var inToBlock = document.createElement('input')
+        inToBlock.type = 'input'
+        inToBlock.value = 'latest'
+        inToBlock.id = 'eventFilterToBlock'
+        eventOptions.appendChild(inToBlock)
+
+
+        // callback to get filter fields
+        var button = document.createElement('button')
+        button.innerHTML = 'Get logs'
+
+        if (typeof callback === 'function') {
+            var that = this
+            button.addEventListener('click', function() {
+                clearLogs()
+                callback(that)
+            })
+        }
+        eventOptions.appendChild(button)
+
+        return eventOptions
     }
 
     /***
@@ -959,9 +1013,8 @@
 
                 if (eventName in abihtml.events) {
                     var item = abihtml.events[eventName]
-                        // clearLogs()
 
-                    var buttonCallback = function(evmEvent) {
+                    var filt = makeEventFilterOptions(function(evmEvent) {
                         var options = getFilterOptions()
                         var filterFields = item.getFieldFilterValues()
                         clearLogs()
@@ -969,14 +1022,15 @@
                             // item.GetLogsFiltered(getSortFields())
                             makeEventLog(evmEvent, displayLog)
                         })
+                    })
+                    var el = document.getElementById('log-filter')
+                    if (el) {
+                        el.innerHTML = ''
+                        el.appendChild(filt)
                     }
 
-                    // document.getElementById('retrieve-logs').addEventListener('click', function() {
-                    //     buttonCallback(item)
-                    // })
-
-                    var dom = item.makeFieldFilter(buttonCallback)
-                    displayEventFilter(dom)
+                    // var dom = item.makeFieldFilter()
+                    // displayEventFilter(dom)
                 } else if (eventName === "*") {
                     clearLogs()
                     abihtml.GetAllEvents(getFilterOptions(), {}, function(evmEvent) {
@@ -1026,6 +1080,13 @@
                     loadedAbihtml[0] = abihtml
                     makeFunctionForm(abihtml)
                     updateEventList(abihtml)
+                    abihtml.WatchAllEvents({
+                        fromBlock: 'latest',
+                        toBlock: 'latest',
+                        address: document.getElementById('contract-address').value
+                    }, {}, function(evmEvent) {
+                        makeEventNotification(evmEvent, displayNotification)
+                    })
 
                     // BUG this doesn't clear the filter form
                     clearLogs()
@@ -1234,6 +1295,7 @@
                 <div id="events">
                     <h2>Logs</h2>
                     <select id="event-list"></select>
+                    <div id="log-filter"></div>
                     <div id="message-container"></div>
                 </div>
             </div>

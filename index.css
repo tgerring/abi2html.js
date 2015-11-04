@@ -58,7 +58,8 @@ div.function > h3 {
     width: 45%;
 }
 
-#messages > h2 {
+#messages > h2,
+#events > h2 {
     display: inline-block;
 }
 
