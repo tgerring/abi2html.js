@@ -839,6 +839,59 @@
         })
     }
 
+    var makeEventFilterOptions = function(callback) {
+        // callback to get filter fields
+        var button = document.createElement('button')
+        button.innerHTML = 'Get logs'
+
+        if (typeof callback === 'function') {
+            var that = this
+            button.addEventListener('click', function() {
+                clearLogs()
+                callback(that)
+            })
+        }
+
+        var eventOptions = document.createElement('div')
+
+        var labFrom = document.createElement('label')
+        labFrom.htmlFor = 'eventFilterFromBlock'
+        labFrom.innerHTML = 'From block:'
+        eventOptions.appendChild(labFrom)
+
+        var inFromBlock = document.createElement('input')
+        inFromBlock.type = 'input'
+        inFromBlock.value = '0'
+        inFromBlock.id = 'eventFilterFromBlock'
+        eventOptions.appendChild(inFromBlock)
+
+        var labTo = document.createElement('label')
+        labTo.htmlFor = 'eventFilterToBlock'
+        labTo.innerHTML = 'To block:'
+        eventOptions.appendChild(labTo)
+
+        var inToBlock = document.createElement('input')
+        inToBlock.type = 'input'
+        inToBlock.value = 'latest'
+        inToBlock.id = 'eventFilterToBlock'
+        eventOptions.appendChild(inToBlock)
+
+        // var labAddress = document.createElement('label')
+        // labAddress.htmlFor = 'eventFilterAddress'
+        // labAddress.innerHTML = 'Address:'
+        // eventOptions.appendChild(labAddress)
+
+        // var inAddress = document.createElement('input')
+        // inAddress.type = 'input'
+        // inAddress.value = ''
+        // inAddress.id = 'eventFilterAddress'
+        // eventOptions.appendChild(inAddress)
+
+        eventOptions.appendChild(button)
+
+        return eventOptions
+    }
+
     /***
 
     Loading
@@ -959,9 +1012,8 @@
 
                 if (eventName in abihtml.events) {
                     var item = abihtml.events[eventName]
-                        // clearLogs()
 
-                    var buttonCallback = function(evmEvent) {
+                    var filt = makeEventFilterOptions(function(evmEvent) {
                         var options = getFilterOptions()
                         var filterFields = item.getFieldFilterValues()
                         clearLogs()
@@ -969,14 +1021,15 @@
                             // item.GetLogsFiltered(getSortFields())
                             makeEventLog(evmEvent, displayLog)
                         })
+                    })
+                    var el = document.getElementById('log-filter')
+                    if (el) {
+                        el.innerHTML = ''
+                        el.appendChild(filt)
                     }
 
-                    // document.getElementById('retrieve-logs').addEventListener('click', function() {
-                    //     buttonCallback(item)
-                    // })
-
-                    var dom = item.makeFieldFilter(buttonCallback)
-                    displayEventFilter(dom)
+                    // var dom = item.makeFieldFilter()
+                    // displayEventFilter(dom)
                 } else if (eventName === "*") {
                     clearLogs()
                     abihtml.GetAllEvents(getFilterOptions(), {}, function(evmEvent) {
@@ -1234,6 +1287,7 @@
                 <div id="events">
                     <h2>Logs</h2>
                     <select id="event-list"></select>
+                    <div id="log-filter"></div>
                     <div id="message-container"></div>
                 </div>
             </div>
