@@ -684,6 +684,9 @@
         } else {
             if (evmEvent.inputs.length > 0) {
                 var wrap = document.createElement('div')
+                var block = document.createElement('div')
+                block.innerHTML = 'Block: ' + evmEvent.result.blockNumber
+                wrap.appendChild(block)
 
                 // append the DOM for each field to the fieldset
                 for (var i = 0; i < evmEvent.inputs.length; i++) {
@@ -1195,7 +1198,7 @@
                 <samp>" --rpcport "
                     <input type="text" id="instance-port" value="8545">" --rpccorsdomain "*" --unlock "&lt;ACCOUNT1&gt; &lt;ACCOUNT2&gt; &lt;ACCOUNT3&gt;"
                 </samp>
-                <p>
+                <p class="wordwrap">
                     Block height: <span id="block-height">?</span> Best hash: <span id="block-hash">?</span> Estimated gas price: <span id="network-gasprice">?</span>
                 </p>
             </div>
