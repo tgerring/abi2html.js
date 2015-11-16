@@ -129,6 +129,9 @@
                 callback(xmlhttp.responseText)
             }
         }
+        xmlhttp.onerror = function() {
+            displayNotification('Error loading remote files', 'error')
+        }
         xmlhttp.open("GET", url, true)
         xmlhttp.send()
     }
@@ -951,8 +954,8 @@
                 })
             })
         } else if (solGistId) {
-            displayNotification('Loading Solidity with Gist ID <samp>' + solGistId + '</samp>')
             connectInstance()
+            displayNotification('Loading Solidity with Gist ID <samp>' + solGistId + '</samp>')
             callAjax('https://api.github.com/gists/' + solGistId, function(response) {
                 loadSolidityGist(response, function(solSource) {
                     if (testConnection()) {
