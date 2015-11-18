@@ -149,21 +149,16 @@
 
 
     var loadSolidityGist = function(response, callback) {
-        result = JSON.parse(response)
+        var result = JSON.parse(response)
         if (result) {
             for (var f in result.files) {
                 var content = result.files[f].content
 
-                // document.getElementById('contract').style.display = 'block'
                 document.getElementById('contract-code').value = content
-
-                // document.getElementById('abi').style.display = 'none'
                 document.getElementById('contract-abi').value = ''
-
                 document.getElementById('tab-container').children[0].innerHTML = ''
 
-                if (typeof callback === "function")
-                    callback(content)
+                if (typeof callback === "function") callback(content)
 
                 break //only support first file
             }
@@ -171,26 +166,116 @@
     }
 
     var loadAbiGist = function(response, callback) {
-        result = JSON.parse(response)
+        var result = JSON.parse(response)
         if (result) {
             for (var f in result.files) {
                 var content = result.files[f].content
 
-
-                // document.getElementById('contract').style.display = 'none'
                 document.getElementById('contract-code').value = ''
-
-                // document.getElementById('abi').style.display = 'block'
                 document.getElementById('contract-abi').value = content
-
                 document.getElementById('tab-container').children[0].innerHTML = ''
 
-                if (typeof callback === "function")
-                    callback(content)
+                if (typeof callback === "function") callback(content)
 
                 break //only support first file
             }
         }
+    }
+
+    var loadSignatureGist = function(response, callback) {
+        var result = JSON.parse(response)
+        var re = /(?:(function|event) )?(\w+)\((|(?:(?:, )?\w+(?:\[\])? \w+)+)\)((?: (?!returns)\w+)*)(?: returns \((|(?:(?:, )?(?:\w+(?:\[\])? )?\w+)+)\))?/g
+        if (result) {
+            for (var f in result.files) {
+                var content = result.files[f].content
+                var abi = makeSignatureAbi(re, content)
+
+                document.getElementById('contract-code').value = ''
+                document.getElementById('contract-abi').value = JSON.stringify(abi, null, "\t")
+                document.getElementById('tab-container').children[0].innerHTML = ''
+
+                if (typeof callback === "function") callback(abi)
+
+                break //only support first file
+            }
+        }
+    }
+
+    var makeSignatureAbi = function(re, str) {
+        var abi = []
+        var match
+        while (match = re.exec(str)) {
+            // TODO set modifiers on abi
+            var modifiers = match[4]
+
+            abiItem = {
+                type: match[1],
+                name: match[2]
+            }
+            abiItem.inputs = makeInputs(match[3])
+            abiItem.outputs = makeOutputs(match[5])
+
+            abi.push(abiItem)
+        }
+
+        return abi
+    }
+
+
+    var makeInputs = function(inputSig) {
+        if (!inputSig || typeof inputSig !== 'string' || inputSig.trim().length === 0) return []
+
+        var result = []
+        var inputs = inputSig.split(',')
+        inputs.forEach(function(v) {
+            var words = v.trim().split(' ')
+            var field = {
+                type: null,
+                name: null
+            }
+            switch (words.length) {
+                case 1:
+                    field.type = words[0]
+                    field.name = ''
+                    break
+                case 2:
+                    field.type = words[0]
+                    field.name = words[1]
+                    break
+                case 3:
+                    field.type = words[0]
+                    field.name = words[2]
+                    if (words[1] === 'indexed')
+                        field.indexed = true
+            }
+            result.push(field)
+        })
+        return result
+    }
+
+    var makeOutputs = function(outputSig) {
+        if (!outputSig || typeof outputSig !== 'string' || outputSig.trim().length === 0) return []
+
+        var result = []
+        var outputs = outputSig.split(',')
+        outputs.forEach(function(v) {
+            var words = v.trim().split(' ')
+            var field = {
+                type: null,
+                name: null
+            }
+            switch (words.length) {
+                case 1:
+                    field.type = words[0]
+                    field.name = ''
+                    break
+                case 2:
+                    field.type = words[0]
+                    field.name = words[1]
+            }
+            result.push(field)
+        })
+        return result
     }
 
     var compileContract = function(code, callback) {
@@ -908,10 +993,11 @@
     window.onload = function() {
         var solGistId = getParameterByName('SOLIDITY_GIST')
         var abiGistId = getParameterByName('ABI_GIST')
+        var sigGistId = getParameterByName('SIGNATURE_GIST')
         var toAddress = getParameterByName('TO_ADDRESS')
 
         // defaults
-        if (!solGistId && !abiGistId) {
+        if (!solGistId && !abiGistId && !sigGistId) {
             if (window.location.protocol === "file:") {
                 // debug
                 solGistId = "c835f38889b989e8488c"
@@ -978,6 +1064,33 @@
                                 })
                             }
                         })
+                    }
+                })
+            })
+        } else if (sigGistId) {
+            displayNotification('Loading signature with Gist ID <samp>' + sigGistId + '</samp>')
+            callAjax('https://api.github.com/gists/' + sigGistId, function(response) {
+                loadSignatureGist(response, function(abiSource) {
+
+                    var abihtml = new AbiHtml(abiSource)
+                    if (abihtml) {
+                        loadedAbihtml[0] = abihtml
+                        makeFunctionForm(abihtml)
+                        updateEventList(abihtml)
+                    }
+
+                    connectInstance()
+                    if (testConnection()) {
+                        updateDashboard()
+                        watchBlocks()
+                        abihtml.WatchAllEvents({
+                            fromBlock: 'latest',
+                            toBlock: 'latest',
+                            address: document.getElementById('contract-address').value
+                        }, {}, function(evmEvent) {
+                            makeEventNotification(evmEvent, displayNotification)
+                        })
+
                     }
                 })
             })
