@@ -184,7 +184,7 @@
 
     var loadSignatureGist = function(response, callback) {
         var result = JSON.parse(response)
-        var re = /(?:(function|event) )?(\w+)\((|(?:(?:, )?\w+(?:\[\])? \w+)+)\)((?: (?!returns)\w+)*)(?: returns \((|(?:(?:, )?(?:\w+(?:\[\])? )?\w+)+)\))?/g
+        var re = /(?:(function|event) )(\w+)\((|(?:(?:, )?\w+(?:\[\])? \w+)+)\)((?: (?!returns)(?:\w+(?:\(.+\))?))*)(?: returns \((|(?:(?:, )?(?:\w+(?:\[\])? )?\w+)+)\))?/g
         if (result) {
             for (var f in result.files) {
                 var content = result.files[f].content
@@ -205,13 +205,15 @@
         var abi = []
         var match
         while (match = re.exec(str)) {
-            // TODO set modifiers on abi
-            var modifiers = match[4]
-
             abiItem = {
                 type: match[1],
                 name: match[2]
             }
+
+            var modifiers = match[4].split(' ')
+            if (abiItem.type === 'event' && 'anonymous' in modifiers) abiItem.anonymous = modifiers.indexed
+            if (abiItem.type === 'function' && 'constant' in modifiers) abiItem.constant = modifiers.constant
+
             abiItem.inputs = makeInputs(match[3])
             abiItem.outputs = makeOutputs(match[5])
 
@@ -245,8 +247,8 @@
                 case 3:
                     field.type = words[0]
                     field.name = words[2]
-                    if (words[1] === 'indexed')
-                        field.indexed = true
+                    if (words[1] === 'indexed') field.indexed = true
+                    else field.indexed = false
             }
             result.push(field)
         })
