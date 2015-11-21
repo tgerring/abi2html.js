@@ -28,37 +28,6 @@ general layout
 
 */
 
-.full-size {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    overflow: hidden;
-}
-
-.pull-left {
-    float: left;
-}
-
-.pull-right {
-    float: right;
-}
-
-.nowrap {
-    white-space: nowrap;
-}
-
-.inline {
-    display: inline-block;
-}
-
-.stack {
-    display: block;
-    clear: both;
-    margin-bottom: 1ex;
-}
-
 #contract {
     width: 66%;
     display: inline-block;
@@ -89,7 +58,7 @@ general layout
     margin-right: 75px;
 }
 
-.front-header {
+#codeview > .header {
     position: absolute;
     top: 0;
     right: 0;
@@ -99,7 +68,7 @@ general layout
     margin: 1em 0 1em 0;
 }
 
-.back-header {
+#uiview > .header {
     position: absolute;
     top: 0;
     left: 0;
@@ -111,17 +80,17 @@ general layout
     overflow-y: hidden;
 }
 
-.back-header-wrapper {
+#uiview > .header > .wrapper {
     margin: 15px;
 }
 
-.back-header > div > div {
+#uiview > .header > div > div {
     display: inline-block;
     vertical-align: top;
 }
 
-.back-header .notifications > div,
-.back-header .notification {
+#uiview > .header .notifications > div,
+#uiview > .header .notification {
     min-width: 100px;
     height: 100px;
     border: 1px solid gray;
@@ -134,15 +103,17 @@ general layout
     background-color: #CECEF6;
 }
 
-.front-header button,
-.back-header button {
+.header input[type=button],
+.header button {
+    border: 1px solid gray;
+    background-color: #C0C0C0;
     width: 50px;
     height: 50px;
     text-align: center;
     margin-bottom: 1ex;
 }
 
-.back-main {
+.back > .main {
     overflow-y: scroll;
 }
 
@@ -311,6 +282,52 @@ flipbook
     background-color: #fff;
     border: 1px solid #888;
 }
+
+
+/*
+
+
+
+*/
+
+.full-size {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+.pull-left {
+    float: left;
+}
+
+.pull-right {
+    float: right;
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
+.inline {
+    display: inline-block;
+}
+
+.stack {
+    display: block;
+    clear: both;
+    margin-bottom: 1ex;
+}
+
+
+/*
+
+
+
+
+*/
 
 .solfield > * {
     display: inline-block;

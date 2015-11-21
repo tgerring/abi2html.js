@@ -47,6 +47,8 @@
                 displayUi(0)
 
             })
+        } else {
+            document.getElementById('main').classList.add('flip')
         }
     }
 
@@ -130,44 +132,15 @@
         main.appendChild(htmlDom)
             // main.style.display = 'block'
     }
-
-    var viewButton = function() {
-        updateDoc(0)
-        displayUi(0)
-        document.getElementById('main').classList.toggle('flip')
-    }
     </script>
 </head>
 
 <body>
-    <div id="main" class="flip-container full-size flip">
+    <div id="main" class="flip-container full-size">
         <div class="flipper">
-            <div class="front">
-                <div class="front-wrapper">
-                    <div class="front-header">
-                        <div>
-                            <button type="button" onclick="document.getElementById('main').classList.toggle('flip')">View</button>
-                            <button>save</button>
-                            <button>deploy</button>
-                        </div>
-                    </div>
-                    <div class="front-main">
-                        <div id="contract">
-                            <div>
-                                <textarea placeholder="contract" id="source-code"></textarea>
-                            </div>
-                        </div>
-                        <div id="abi">
-                            <div>
-                                <textarea placeholder="abi" id="abi-code">abi</textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="back">
-                <div class="back-header">
-                    <div class="back-header-wrapper nowrap">
+            <div id="uiview" class="front">
+                <div class="header">
+                    <div class="wrapper nowrap">
                         <div>
                             <div class="notifications nowrap">
                                 <div>MultiTransact</div>
@@ -179,14 +152,14 @@
                         <div>
                             <div class="notification">Block #1234</div>
                             <div class="inline">
-                                <button class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');">Edit</button>
+                                <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Edit">
                                 <button class="stack">Watch</button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="back-main">
-                    <div class="back-main-wrapper">
+                <div class="main">
+                    <div class="wrapper">
                         <div id="functions">
                             <div>
                                 <h2>Functions</h2>
@@ -205,6 +178,31 @@
                                 <h2>Logs</h2>
                                 <div id="log-search"></div>
                                 <div id="message-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="codeview" class="back">
+                <div class="header">
+                    <div class="wrapper">
+                        <div>
+                            <input type="button" onclick="document.getElementById('main').classList.toggle('flip')" value="View">
+                            <button>save</button>
+                            <button>deploy</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="main">
+                    <div class="wrapper">
+                        <div id="contract">
+                            <div>
+                                <textarea placeholder="contract" id="source-code"></textarea>
+                            </div>
+                        </div>
+                        <div id="abi">
+                            <div>
+                                <textarea placeholder="abi" id="abi-code">abi</textarea>
                             </div>
                         </div>
                     </div>
