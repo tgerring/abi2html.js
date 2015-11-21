@@ -1,0 +1,217 @@
+<!doctype>
+<html>
+
+<head>
+    <title>abi2html</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="index2.css">
+    <script type="text/javascript" src="./dist/bignumber.min.js"></script>
+    <script type="text/javascript" src="./dist/web3-light.min.js"></script>
+    <script type="text/javascript" src="./lib/abi2html.js"></script>
+    <script type="text/javascript">
+    var loadedAbiHtml = []
+    window.onload = function() {
+        var solGistId = getParameterByName('SOLIDITY_GIST')
+        var abiGistId = getParameterByName('ABI_GIST')
+        var sigGistId = getParameterByName('SIGNATURE_GIST')
+        var toAddress = getParameterByName('TO_ADDRESS')
+
+        // set defaults for friendliness
+        if (!solGistId && !abiGistId && !sigGistId) {
+            if (window.location.protocol === "file:") {
+                // debug
+                sigGistId = "090ae32041bcfe120824"
+                toAddress = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
+            } else if (window.location.host === 'tgerring.github.io') {
+                // public
+                abiGistId = "0e1b884de82d35053a34"
+                toAddress = "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
+            }
+        }
+
+        // preload resources
+        if (solGistId) {} else if (abiGistId) {} else if (sigGistId) {
+            callAjax('https://api.github.com/gists/' + sigGistId, function(response) {
+                if (response === null) return
+
+                var result = JSON.parse(response)
+                if (result) {
+                    for (var f in result.files) {
+                        var ah = new AbiHtml(result.files[f].content)
+                        loadedAbiHtml[0] = ah
+                    }
+                }
+
+                // render code
+                displayCode(0)
+                displayUi(0)
+
+            })
+        }
+    }
+
+    var displayCode = function(index) {
+        var ah = loadedAbiHtml[index]
+        if (ah.abi) document.getElementById('abi-code').innerHTML = JSON.stringify(ah.abi, null, "  ")
+        if (ah.source) document.getElementById('source-code').innerHTML = ah.source
+    }
+
+    var getParameterByName = function(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search)
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "))
+    }
+
+    var callAjax = function(url, callback) {
+        var xmlhttp
+        xmlhttp = new XMLHttpRequest()
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                callback(xmlhttp.responseText)
+            }
+        }
+        xmlhttp.onerror = function() {
+            callback(null)
+        }
+        xmlhttp.open("GET", url, true)
+        xmlhttp.send()
+    }
+
+    var displayUi = function(index) {
+        var ah = loadedAbiHtml[index]
+        document.getElementById('tab-container').children[0].innerHTML = ''
+        document.getElementById('main-container').innerHTML = ''
+        ah.GetFunctionsSorted().forEach(function(f) {
+            var dom = f.makeFieldForm()
+            document.getElementById('main-container').appendChild(dom)
+        })
+
+        ah.GetEventsSorted().forEach(function(e) {
+            var dom = e.makeFieldFilter()
+            document.getElementById('log-search').appendChild(dom)
+        })
+    }
+
+    var updateDoc = function(index) {
+        var source = document.getElementById('source-code').innerHTML
+        var abi = document.getElementById('abi-code').innerHTML
+
+        var ah
+        if (source) ah = new AbiHtml(source)
+        else if (abi) ah = new AbiHtml(abi)
+
+        if (ah) loadedAbiHtml[index] = ah
+    }
+
+    // make function navigation element
+    // TODO this should be improved to not need a DOM element
+    var makeNav = function(htmlDom, evmFunction) {
+        var name = htmlDom.childNodes[0].innerHTML
+        var li = document.createElement('li')
+        var a = document.createElement('a')
+        if (evmFunction.outputs.length > 0)
+            a.className += ' call'
+        if (!evmFunction.constant)
+            a.className += ' transact'
+        a.href = '#' + name
+        a.innerHTML = name
+        a.addEventListener('click', function() {
+            window.location = a.href
+            setSelectedTab()
+        }, false)
+        li.appendChild(a)
+
+        var ul = document.getElementById('tab-container').children[0]
+        ul.appendChild(li)
+
+        // htmlDom.style.display = 'none'
+        var main = document.getElementById('main-container')
+        main.appendChild(htmlDom)
+            // main.style.display = 'block'
+    }
+
+    var viewButton = function() {
+        updateDoc(0)
+        displayUi(0)
+        document.getElementById('main').classList.toggle('flip')
+    }
+    </script>
+</head>
+
+<body>
+    <div id="main" class="flip-container full-size flip">
+        <div class="flipper">
+            <div class="front">
+                <div class="front-wrapper">
+                    <div class="front-header">
+                        <div>
+                            <button type="button" onclick="document.getElementById('main').classList.toggle('flip')">View</button>
+                            <button>save</button>
+                            <button>deploy</button>
+                        </div>
+                    </div>
+                    <div class="front-main">
+                        <div id="contract">
+                            <div>
+                                <textarea placeholder="contract" id="source-code"></textarea>
+                            </div>
+                        </div>
+                        <div id="abi">
+                            <div>
+                                <textarea placeholder="abi" id="abi-code">abi</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="back">
+                <div class="back-header">
+                    <div class="back-header-wrapper nowrap">
+                        <div>
+                            <div class="notifications nowrap">
+                                <div>MultiTransact</div>
+                                <div>Confirmation</div>
+                                <div>Confirmation</div>
+                                <div>ConfirmationNeeded</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="notification">Block #1234</div>
+                            <div class="inline">
+                                <button class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');">Edit</button>
+                                <button class="stack">Watch</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="back-main">
+                    <div class="back-main-wrapper">
+                        <div id="functions">
+                            <div>
+                                <h2>Functions</h2>
+                                <div>
+                                    <div id="tab-container">
+                                        <ul>
+                                        </ul>
+                                    </div>
+                                    <div id="main-container">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="logs">
+                            <div>
+                                <h2>Logs</h2>
+                                <div id="log-search"></div>
+                                <div id="message-container"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

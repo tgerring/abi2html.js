@@ -1,0 +1,334 @@
+* {
+    margin: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+html,
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+}
+
+dfn {
+    font-style: normal;
+    border-bottom: 1px dashed black;
+    cursor: help;
+}
+
+
+/*
+
+
+general layout
+
+
+*/
+
+.full-size {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+.pull-left {
+    float: left;
+}
+
+.pull-right {
+    float: right;
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
+.inline {
+    display: inline-block;
+}
+
+.stack {
+    display: block;
+    clear: both;
+    margin-bottom: 1ex;
+}
+
+#contract {
+    width: 66%;
+    display: inline-block;
+    /*margin-left: 0.3%;*/
+    margin-bottom: -25px;
+}
+
+#contract textarea,
+#abi textarea {
+    display: block;
+    height: auto;
+    width: 100%;
+    height: 100%;
+    background-color: #dddddd;
+    font-family: monospace;
+    font-size: 140%;
+    /*padding-left: 1em;*/
+}
+
+#abi {
+    width: 34%;
+    display: inline-block;
+    float: right;
+    /*margin-left: 0.3%;*/
+}
+
+#abi > div {
+    margin-right: 75px;
+}
+
+.front-header {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 75px;
+    height: 100%;
+    text-align: center;
+    margin: 1em 0 1em 0;
+}
+
+.back-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 150px;
+    width: 100%;
+    text-align: right;
+    /*border-bottom: 1px solid black;*/
+    overflow-x: scroll;
+    overflow-y: hidden;
+}
+
+.back-header-wrapper {
+    margin: 15px;
+}
+
+.back-header > div > div {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.back-header .notifications > div,
+.back-header .notification {
+    min-width: 100px;
+    height: 100px;
+    border: 1px solid gray;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+    padding: 1ex;
+    display: inline-block;
+    text-align: left;
+    vertical-align: top;
+    background-color: #CECEF6;
+}
+
+.front-header button,
+.back-header button {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    margin-bottom: 1ex;
+}
+
+.back-main {
+    overflow-y: scroll;
+}
+
+
+/*.back .notification {
+    border: 1px solid black;
+    display: inline-block;
+    background-color: silver;
+    height: 100%;
+}*/
+
+#functions,
+#logs {
+    vertical-align: top;
+    display: inline-block;
+    width: 49%;
+    margin-top: 150px;
+}
+
+#functions > div,
+#logs > div {
+    padding: 1em;
+    /*border: 1px solid black;*/
+    /*background-color: orange;*/
+}
+
+
+/*
+
+
+flipbook
+
+
+*/
+
+
+/* entire `ainer, keeps perspective */
+
+.flip-container {
+    perspective: 1000;
+}
+
+
+/* flip the pane when hovered */
+
+.flip-container.hover .flipper,
+.flip-container.flip .flipper {
+    transform: rotateY(180deg);
+}
+
+.flip-container,
+.front,
+.back {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* flip speed goes here */
+
+.flipper {
+    transition: 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
+    height: 100%;
+}
+
+
+/* hide back of pane during swap */
+
+.front,
+.back {
+    backface-visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+
+/* front pane, placed above back */
+
+.front {
+    z-index: 2;
+    /* for firefox 31 */
+    transform: rotateY(0deg);
+}
+
+
+/* back, initially hidden pane */
+
+.back {
+    transform: rotateY(180deg);
+}
+
+
+/*
+
+
+    function tab ui
+
+
+*/
+
+#tab-container {
+    vertical-align: top;
+    display: inline-block;
+}
+
+#tab-container ul {
+    list-style: none;
+    text-align: right;
+    padding: 0;
+}
+
+#tab-container ul li {
+    border-top: 1px solid #666;
+    border-left: 1px solid #666;
+    border-bottom: 1px solid #666;
+    border-right: 8px solid #666;
+    background-color: #ddd;
+    margin: 4px 0;
+    padding-right: 1em;
+}
+
+#tab-container ul li a,
+#tab-container ul li a:visited {
+    text-decoration: none;
+    color: #666;
+    display: block;
+    padding: 8px 5px;
+}
+
+#tab-container ul li:hover {
+    border-right: 8px solid #333;
+}
+
+#tab-container ul li a:hover {
+    color: #000;
+}
+
+#tab-container ul li.selected {
+    border-right: none;
+    background-color: #fff;
+    border-right: 8px solid #006699;
+}
+
+#tab-container ul li.call {
+    border-left: 8px solid green;
+}
+
+
+/* transact must be before call because anything can be transacted to */
+
+#tab-container ul li a.transact::after {
+    content: " \2192";
+}
+
+#tab-container ul li a.call::after {
+    content: " \21c4";
+}
+
+#main-container {
+    margin-left: -5px;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #888;
+}
+
+.solfield > * {
+    display: inline-block;
+    margin-top: 1ex;
+}
+
+.solfield .name {
+    width: 10em;
+    text-align: right;
+    margin-right: 1em;
+}
+
+.solfield .comparison {
+    width: 8em;
+    /*margin: 0 1em 0 1em;*/
+}
+
+.solfield .value {
+    width: 15em;
+    margin-left: 1em;
+}
