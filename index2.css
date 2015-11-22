@@ -13,6 +13,11 @@ body {
     font-size: 11pt;
 }
 
+input[type=button],
+button {
+    font-family: Helvetica, Arial, sans-serif;
+}
+
 dfn {
     font-style: normal;
     border-bottom: 1px dashed black;
@@ -28,10 +33,16 @@ general layout
 
 */
 
+.header input[type=button],
+.header button {
+    border: 1px solid gray;
+    background-color: #C6C6C6;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
 #contract {
     width: 66%;
     display: inline-block;
-    /*margin-left: 0.3%;*/
     margin-bottom: -25px;
 }
 
@@ -69,14 +80,14 @@ general layout
     right: 0;
 }
 
-#uiview > .header {
+#uiview .header {
     position: absolute;
     top: 0;
     left: 0;
     height: 150px;
     width: 100%;
     text-align: right;
-    /*border-bottom: 1px solid black;*/
+    border-bottom: 1px solid gray;
     overflow-x: scroll;
     overflow-y: hidden;
 }
@@ -86,13 +97,13 @@ general layout
     margin: 15px;
 }
 
-#uiview > .header > div > div {
+#uiview .header > div > div {
     display: inline-block;
     vertical-align: top;
 }
 
-#uiview > .header .notifications > div,
-#uiview > .header .notification {
+#uiview .header .notifications > div,
+#uiview .header .notification {
     min-width: 100px;
     height: 100px;
     border: 1px solid gray;
@@ -114,12 +125,18 @@ general layout
     overflow-y: scroll;
 }
 
-.header input[type=button],
-.header button {
-    border: 1px solid gray;
-    background-color: #C0C0C0;
+#uiview .header input[type=button],
+#uiview .header button {
     width: 50px;
     height: 50px;
+    text-align: center;
+    margin-bottom: 1ex;
+}
+
+#codeview .header input[type=button],
+#codeview .header button {
+    width: 75px;
+    height: 75px;
     text-align: center;
     margin-bottom: 1ex;
 }
@@ -209,74 +226,84 @@ flipbook
 /*
 
 
-    function tab ui
+    ui accordian
 
 
 */
 
-#tab-container {
-    vertical-align: top;
-    display: inline-block;
+.ac-container {
+    width: 100%;
+    margin: 1em auto 1em auto;
 }
 
-#tab-container ul {
-    list-style: none;
-    text-align: right;
-    padding: 0;
-}
-
-#tab-container ul li {
-    border-top: 1px solid #666;
-    border-left: 1px solid #666;
-    border-bottom: 1px solid #666;
-    border-right: 8px solid #666;
-    background-color: #ddd;
-    margin: 4px 0;
-    padding-right: 1em;
-}
-
-#tab-container ul li a,
-#tab-container ul li a:visited {
-    text-decoration: none;
-    color: #666;
+.ac-container > div > label {
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
     display: block;
-    padding: 8px 5px;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.8);
+    line-height: 33px;
+    font-size: 19px;
+    background: linear-gradient(top, #ffffff 1%, #eaeaea 100%);
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
 }
 
-#tab-container ul li:hover {
-    border-right: 8px solid #333;
+.ac-container label:hover {
+    background: #fff;
 }
 
-#tab-container ul li a:hover {
-    color: #000;
+.ac-container input:checked + label,
+.ac-container input:checked + label:hover {
+    background: #c6e1ec;
+    color: #3d7489;
+    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.6);
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 0px 2px 2px rgba(0, 0, 0, 0.1);
 }
 
-#tab-container ul li.selected {
-    border-right: none;
-    background-color: #fff;
-    border-right: 8px solid #006699;
+.ac-container > div > input {
+    display: none;
 }
 
-#tab-container ul li.call {
-    border-left: 8px solid green;
+.ac-container article {
+    background: rgba(255, 255, 255, 0.5);
+    margin-top: -1px;
+    overflow: hidden;
+    height: 0px;
+    position: relative;
+    z-index: 10;
+    transition: height 0.3s ease-in-out, box-shadow 0.6s linear;
+}
+
+.ac-container input:checked ~ article {
+    transition: height 0.5s ease-in-out, box-shadow 0.1s linear;
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3);
+}
+
+.ac-container input:checked ~ article.ac-small {
+    height: 140px;
+}
+
+.ac-container input:checked ~ article.ac-medium {
+    height: 180px;
+}
+
+.ac-container input:checked ~ article.ac-large {
+    height: 230px;
+}
+
+.ac-container article > div {
+    margin: 1ex;
 }
 
 
-/* transact must be before call because anything can be transacted to */
+/* hide redundant */
 
-#tab-container ul li a.transact::after {
-    content: " \2192";
-}
-
-#tab-container ul li a.call::after {
-    content: " \21c4";
-}
-
-#main-container {
-    margin-left: -5px;
-    padding: 20px;
-    background-color: #fff;
-    border: 1px solid #888;
+.function > h3,
+.event > h3 {
+    display: none;
 }
 
 
@@ -345,7 +372,7 @@ flipbook
 }
 
 .solfield .name {
-    width: 10em;
+    width: 8em;
     text-align: right;
     margin-right: 1em;
 }

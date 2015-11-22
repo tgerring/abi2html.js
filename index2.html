@@ -52,12 +52,6 @@
         }
     }
 
-    var displayCode = function(index) {
-        var ah = loadedAbiHtml[index]
-        if (ah.abi) document.getElementById('abi-code').innerHTML = JSON.stringify(ah.abi, null, "  ")
-        if (ah.source) document.getElementById('source-code').innerHTML = ah.source
-    }
-
     var getParameterByName = function(name) {
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
         var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
@@ -80,18 +74,58 @@
         xmlhttp.send()
     }
 
+    var displayCode = function(index) {
+        var ah = loadedAbiHtml[index]
+        if (ah.abi) document.getElementById('abi-code').innerHTML = JSON.stringify(ah.abi, null, "  ")
+        if (ah.source) document.getElementById('source-code').innerHTML = ah.source
+    }
+
     var displayUi = function(index) {
         var ah = loadedAbiHtml[index]
         document.getElementById('tab-container').children[0].innerHTML = ''
         document.getElementById('main-container').innerHTML = ''
         ah.GetFunctionsSorted().forEach(function(f) {
-            var dom = f.makeFieldForm()
-            document.getElementById('main-container').appendChild(dom)
+            var section = document.createElement('section')
+            section.classList.add('ac-container')
+            var div = document.createElement('div')
+            var input = document.createElement('input')
+            input.type = 'checkbox'
+            input.id = 'acc-' + f.name
+            input.name = 'acc-functions'
+            var label = document.createElement('label')
+            label.htmlFor = input.id
+            label.innerHTML = f.name
+            var article = document.createElement('article')
+            article.appendChild(f.makeFieldForm())
+            article.classList.add('ac-large')
+            div.appendChild(input)
+            div.appendChild(label)
+            div.appendChild(article)
+            section.appendChild(div)
+
+            document.getElementById('main-container').appendChild(section)
         })
 
         ah.GetEventsSorted().forEach(function(e) {
-            var dom = e.makeFieldFilter()
-            document.getElementById('log-search').appendChild(dom)
+            var section = document.createElement('section')
+            section.classList.add('ac-container')
+            var div = document.createElement('div')
+            var input = document.createElement('input')
+            input.type = 'checkbox'
+            input.id = 'acc-' + e.name
+            input.name = 'acc-events'
+            var label = document.createElement('label')
+            label.htmlFor = input.id
+            label.innerHTML = e.name
+            var article = document.createElement('article')
+            article.appendChild(e.makeFieldFilter())
+            article.classList.add('ac-medium')
+            div.appendChild(input)
+            div.appendChild(label)
+            div.appendChild(article)
+            section.appendChild(div)
+
+            document.getElementById('log-search').appendChild(section)
         })
     }
 
@@ -104,33 +138,6 @@
         else if (abi) ah = new AbiHtml(abi)
 
         if (ah) loadedAbiHtml[index] = ah
-    }
-
-    // make function navigation element
-    // TODO this should be improved to not need a DOM element
-    var makeNav = function(htmlDom, evmFunction) {
-        var name = htmlDom.childNodes[0].innerHTML
-        var li = document.createElement('li')
-        var a = document.createElement('a')
-        if (evmFunction.outputs.length > 0)
-            a.className += ' call'
-        if (!evmFunction.constant)
-            a.className += ' transact'
-        a.href = '#' + name
-        a.innerHTML = name
-        a.addEventListener('click', function() {
-            window.location = a.href
-            setSelectedTab()
-        }, false)
-        li.appendChild(a)
-
-        var ul = document.getElementById('tab-container').children[0]
-        ul.appendChild(li)
-
-        // htmlDom.style.display = 'none'
-        var main = document.getElementById('main-container')
-        main.appendChild(htmlDom)
-            // main.style.display = 'block'
     }
     </script>
 </head>
