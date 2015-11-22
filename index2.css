@@ -44,28 +44,29 @@ general layout
     background-color: #dddddd;
     font-family: monospace;
     font-size: 140%;
-    /*padding-left: 1em;*/
 }
 
 #abi {
     width: 34%;
     display: inline-block;
     float: right;
-    /*margin-left: 0.3%;*/
-}
-
-#abi > div {
-    margin-right: 75px;
 }
 
 #codeview > .header {
     position: absolute;
     top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    text-align: right;
+}
+
+#codeview > .main {
+    position: absolute;
+    top: 100px;
+    bottom: 0;
+    left: 0;
     right: 0;
-    width: 75px;
-    height: 100%;
-    text-align: center;
-    margin: 1em 0 1em 0;
 }
 
 #uiview > .header {
@@ -80,7 +81,8 @@ general layout
     overflow-y: hidden;
 }
 
-#uiview > .header > .wrapper {
+#codeview .header .wrapper,
+#uiview .header .wrapper {
     margin: 15px;
 }
 
@@ -103,6 +105,15 @@ general layout
     background-color: #CECEF6;
 }
 
+#uiview .main {
+    position: absolute;
+    top: 150px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: scroll;
+}
+
 .header input[type=button],
 .header button {
     border: 1px solid gray;
@@ -113,31 +124,16 @@ general layout
     margin-bottom: 1ex;
 }
 
-.back > .main {
-    overflow-y: scroll;
-}
-
-
-/*.back .notification {
-    border: 1px solid black;
-    display: inline-block;
-    background-color: silver;
-    height: 100%;
-}*/
-
 #functions,
 #logs {
     vertical-align: top;
     display: inline-block;
     width: 49%;
-    margin-top: 150px;
 }
 
 #functions > div,
 #logs > div {
     padding: 1em;
-    /*border: 1px solid black;*/
-    /*background-color: orange;*/
 }
 
 
