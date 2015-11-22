@@ -325,6 +325,20 @@ flipbook
 
 */
 
+.solfield input,
+.solfield textarea {
+    font-family: monospace;
+    color: black;
+    border: 1px solid gray;
+}
+
+.solfield input[readonly],
+.solfield textarea[readonly],
+.solfield .readonly {
+    cursor: not-allowed;
+    background-color: #C0C0C0;
+}
+
 .solfield > * {
     display: inline-block;
     margin-top: 1ex;
