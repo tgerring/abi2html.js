@@ -10,46 +10,62 @@
     <script type="text/javascript" src="./lib/abi2html.js"></script>
     <script type="text/javascript">
     var loadedAbiHtml = []
+    var selectedDocIndex
+
     window.onload = function() {
-        var solGistId = getParameterByName('SOLIDITY_GIST')
-        var abiGistId = getParameterByName('ABI_GIST')
-        var sigGistId = getParameterByName('SIGNATURE_GIST')
-        var toAddress = getParameterByName('TO_ADDRESS')
+        var gistId = getParameterByName('GIST_ID')
+        var toAddress = getParameterByName('ADDRESS')
 
         // set defaults for friendliness
-        if (!solGistId && !abiGistId && !sigGistId) {
+        if (!gistId) {
             if (window.location.protocol === "file:") {
                 // debug
-                sigGistId = "090ae32041bcfe120824"
+                gistId = "505534d5a37ffa3a0625"
                 toAddress = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
             } else if (window.location.host === 'tgerring.github.io') {
                 // public
-                abiGistId = "0e1b884de82d35053a34"
+                gistId = "0e1b884de82d35053a34"
                 toAddress = "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
             }
         }
 
         // preload resources
-        if (solGistId) {} else if (abiGistId) {} else if (sigGistId) {
-            callAjax('https://api.github.com/gists/' + sigGistId, function(response) {
+        if (gistId) {
+            callAjax('https://api.github.com/gists/' + gistId, function(response) {
                 if (response === null) return
 
                 var result = JSON.parse(response)
                 if (result) {
-                    for (var f in result.files) {
-                        var ah = new AbiHtml(result.files[f].content)
-                        loadedAbiHtml[0] = ah
+                    var i = 0
+                    for (var filename in result.files) {
+                        var ah = new AbiHtml(result.files[filename].content)
+                        ah.name = filename
+                        loadedAbiHtml[i] = ah
+                        i++
                     }
                 }
 
                 // render code
-                displayCode(0)
-                displayUi(0)
-
+                selectedDocIndex = 0
+                displayCode(selectedDocIndex)
+                displayUi(selectedDocIndex)
             })
         } else {
             document.getElementById('main').classList.add('flip')
         }
+
+        setHandlers()
+    }
+
+    var setHandlers = function() {
+        document.getElementById('btnSave').addEventListener('click', function(ev) {
+            updateDoc(ev.srcElement.loadDoc)
+        }, false)
+        document.getElementById('btnViewInterface').addEventListener('click', function(ev) {
+            // updateDoc(selectedDocIndex) // this can be slow
+            displayUi(selectedDocIndex)
+            document.getElementById('main').classList.toggle('flip')
+        }, false)
     }
 
     var getParameterByName = function(name) {
@@ -74,6 +90,10 @@
         xmlhttp.send()
     }
 
+    var displayModal = function() {
+
+    }
+
     var displayNotification = function(obj, className) {
         var htmlDom
         if (typeof obj === "object" && "nodeType" in obj) {
@@ -96,15 +116,40 @@
 
     }
 
+
     var displayCode = function(index) {
+        if (!(index in loadedAbiHtml)) return
+
+        // draw all docs
+        var ul = document.createElement('ul')
+        for (var i = 0; i < loadedAbiHtml.length; i++) {
+            var ah = loadedAbiHtml[i]
+            var li = document.createElement('li')
+            var a = document.createElement('a')
+            a.loadDoc = i
+            a.addEventListener('click', function(ev) {
+                selectedDocIndex = ev.srcElement.loadDoc
+                displayCode(selectedDocIndex)
+            }, false)
+            if ('name' in ah) a.innerHTML = ah.name
+            else a.innerHTML = 'Untitled' + i.toString()
+            if (selectedDocIndex === i) li.classList.add('selected')
+            li.appendChild(a)
+            ul.appendChild(li)
+        }
+        var target = document.getElementById('docnav')
+        target.innerHTML = ''
+        target.appendChild(ul)
+
+        // disply loaded doc
         var ah = loadedAbiHtml[index]
-        if (ah.abi) document.getElementById('abi-code').innerHTML = JSON.stringify(ah.abi, null, "  ")
-        if (ah.source) document.getElementById('source-code').innerHTML = ah.source
+        document.getElementById('abi-code').innerHTML = (ah.abi ? JSON.stringify(ah.abi, null, "  ") : '')
+        document.getElementById('source-code').innerHTML = (ah.source ? ah.source : '')
     }
 
     var displayUi = function(index) {
         var ah = loadedAbiHtml[index]
-        document.getElementById('tab-container').children[0].innerHTML = ''
+
         document.getElementById('main-container').innerHTML = ''
         ah.GetFunctionsSorted().forEach(function(f) {
             var section = document.createElement('section')
@@ -128,6 +173,7 @@
             document.getElementById('main-container').appendChild(section)
         })
 
+        document.getElementById('log-search').innerHTML = ''
         ah.GetEventsSorted().forEach(function(e) {
             var section = document.createElement('section')
             section.classList.add('ac-container')
@@ -158,6 +204,7 @@
         var ah
         if (source) ah = new AbiHtml(source)
         else if (abi) ah = new AbiHtml(abi)
+        ah.name = loadedAbiHtml[index].name
 
         if (ah) loadedAbiHtml[index] = ah
     }
@@ -165,7 +212,7 @@
 </head>
 
 <body>
-    <div id="main" class="flip-container full-size">
+    <div id="main" class="flip-container full-size flip">
         <div class="flipper">
             <div id="uiview" class="front">
                 <div class="header">
@@ -188,8 +235,8 @@
                         <div>
                             <div class="notification">Block #1234</div>
                             <div class="inline">
-                                <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Edit">
-                                <input type="button" value="Watch">
+                                <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
+                                <input type="button" value="Watch" disabled>
                             </div>
                         </div>
                     </div>
@@ -211,7 +258,7 @@
                         </div>
                         <div id="logs">
                             <div>
-                                <h2>Logs</h2>
+                                <h2>Events</h2>
                                 <div id="log-search"></div>
                                 <div id="message-container"></div>
                             </div>
@@ -222,10 +269,12 @@
             <div id="codeview" class="back">
                 <div class="header">
                     <div class="wrapper">
+                        <nav id="docnav">
+                        </nav>
                         <div>
-                            <input type="button" value="Deploy">
-                            <input type="button" value="Save">
-                            <input type="button" onclick="document.getElementById('main').classList.toggle('flip')" value="View">
+                            <input type="button" value="Deploy" disabled>
+                            <input type="button" id="btnSave" value="Save">
+                            <input type="button" id="btnViewInterface" value="UI">
                         </div>
                     </div>
                 </div>
@@ -238,7 +287,7 @@
                         </div>
                         <div id="abi">
                             <div>
-                                <textarea placeholder="abi" id="abi-code">abi</textarea>
+                                <textarea placeholder="abi" id="abi-code"></textarea>
                             </div>
                         </div>
                     </div>
