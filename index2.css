@@ -13,15 +13,21 @@ body {
     font-size: 11pt;
 }
 
-input[type=button],
-button {
-    font-family: Helvetica, Arial, sans-serif;
-}
-
 dfn {
     font-style: normal;
     border-bottom: 1px dashed black;
     cursor: help;
+}
+
+input[type=button],
+button {
+    border: 1px solid gray;
+    background-color: #ffff66;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    font-family: Helvetica, Arial, sans-serif;
+    width: 50px;
+    height: 50px;
 }
 
 
@@ -32,13 +38,6 @@ general layout
 
 
 */
-
-.header input[type=button],
-.header button {
-    border: 1px solid gray;
-    background-color: #C6C6C6;
-    font-family: Helvetica, Arial, sans-serif;
-}
 
 #contract {
     width: 66%;
@@ -90,6 +89,7 @@ general layout
     border-bottom: 1px solid gray;
     overflow-x: scroll;
     overflow-y: hidden;
+    background-color: #f6f6f6;
 }
 
 #codeview .header .wrapper,
@@ -107,13 +107,17 @@ general layout
     min-width: 100px;
     height: 100px;
     border: 1px solid gray;
-    -moz-border-radius: 8px;
-    border-radius: 8px;
     padding: 1ex;
     display: inline-block;
     text-align: left;
     vertical-align: top;
-    background-color: #CECEF6;
+    background-color: white;
+}
+
+#uiview .main button {
+    margin: 1ex;
+    height: 25px;
+    width: 75px;
 }
 
 #uiview .main {
@@ -247,12 +251,11 @@ flipbook
     text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.8);
     line-height: 33px;
     font-size: 19px;
-    background: linear-gradient(top, #ffffff 1%, #eaeaea 100%);
     box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
 }
 
-.ac-container label:hover {
-    background: #fff;
+.ac-container > div > label:hover {
+    background: #c6e1ec;
 }
 
 .ac-container input:checked + label,
@@ -270,32 +273,21 @@ flipbook
 .ac-container article {
     background: rgba(255, 255, 255, 0.5);
     margin-top: -1px;
-    overflow: hidden;
-    height: 0px;
-    position: relative;
+    display: none;
     z-index: 10;
-    transition: height 0.3s ease-in-out, box-shadow 0.6s linear;
 }
 
 .ac-container input:checked ~ article {
-    transition: height 0.5s ease-in-out, box-shadow 0.1s linear;
     box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3);
 }
 
-.ac-container input:checked ~ article.ac-small {
-    height: 140px;
-}
-
-.ac-container input:checked ~ article.ac-medium {
-    height: 180px;
-}
-
-.ac-container input:checked ~ article.ac-large {
-    height: 230px;
+.ac-container input:checked ~ article {
+    display: block;
 }
 
 .ac-container article > div {
     margin: 1ex;
+    padding: 1ex;
 }
 
 
@@ -352,6 +344,14 @@ flipbook
 
 */
 
+.event legend {
+    display: none;
+}
+
+.event fieldset {
+    border: none;
+}
+
 .solfield input,
 .solfield textarea {
     font-family: monospace;
@@ -363,7 +363,7 @@ flipbook
 .solfield textarea[readonly],
 .solfield .readonly {
     cursor: not-allowed;
-    background-color: #C0C0C0;
+    background-color: #E3E3E3;
 }
 
 .solfield > * {
@@ -385,4 +385,16 @@ flipbook
 .solfield .value {
     width: 15em;
     margin-left: 1em;
+}
+
+.notifications .success {
+    background-color: #BCF5A9 !important;
+}
+
+.notifications .warning {
+    background-color: #F3F781 !important;
+}
+
+.notifications .error {
+    background-color: #F5A9A9 !important;
 }

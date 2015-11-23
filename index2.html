@@ -74,6 +74,28 @@
         xmlhttp.send()
     }
 
+    var displayNotification = function(obj, className) {
+        var htmlDom
+        if (typeof obj === "object" && "nodeType" in obj) {
+            // looks like HTML Element
+            htmlDom = obj
+        } else if (typeof obj === "string") {
+            // looks like string
+            var htmlDom = document.createElement('p')
+            htmlDom.innerHTML = obj
+        }
+
+        var parElement = document.createElement('div')
+        parElement.className = 'notification'
+        if (className) parElement.classList.add(className)
+        parElement.appendChild(htmlDom)
+
+        // append the entry and the top
+        var el = document.getElementById('notifications')
+        el.appendChild(parElement)
+
+    }
+
     var displayCode = function(index) {
         var ah = loadedAbiHtml[index]
         if (ah.abi) document.getElementById('abi-code').innerHTML = JSON.stringify(ah.abi, null, "  ")
@@ -149,18 +171,25 @@
                 <div class="header">
                     <div class="wrapper nowrap">
                         <div>
-                            <div class="notifications nowrap">
-                                <div>MultiTransact</div>
-                                <div>Confirmation</div>
-                                <div>Confirmation</div>
-                                <div>ConfirmationNeeded</div>
+                            <div id="notifications" class="notifications nowrap">
+                                <div>Block #1000
+                                    <hr>ConfirmationNeeded
+                                </div>
+                                <div>Block #1001
+                                    <hr>Confirmation</div>
+                                <div>Block #1050
+                                    <hr>Confirmation</div>
+                                <div>Block #1100
+                                    <hr>Confirmation
+                                    <br>MultiTransact
+                                </div>
                             </div>
                         </div>
                         <div>
                             <div class="notification">Block #1234</div>
                             <div class="inline">
                                 <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Edit">
-                                <!-- <button class="stack">Watch</button> -->
+                                <input type="button" value="Watch">
                             </div>
                         </div>
                     </div>
@@ -194,9 +223,9 @@
                 <div class="header">
                     <div class="wrapper">
                         <div>
+                            <input type="button" value="Deploy">
+                            <input type="button" value="Save">
                             <input type="button" onclick="document.getElementById('main').classList.toggle('flip')" value="View">
-                            <!--                             <button>save</button>
-                            <button>deploy</button> -->
                         </div>
                     </div>
                 </div>
