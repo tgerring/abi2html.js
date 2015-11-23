@@ -87,7 +87,7 @@ general layout
     width: 100%;
     text-align: right;
     border-bottom: 1px solid silver;
-    overflow-x: scroll;
+    overflow-x: hidden;
     overflow-y: hidden;
     background-color: #f6f6f6;
 }
@@ -420,14 +420,17 @@ flipbook
     margin-left: 1em;
 }
 
-.notifications .success {
+.notifications .success,
+.notification.success {
     background-color: #BCF5A9 !important;
 }
 
-.notifications .warning {
+.notifications .warning,
+.notification.warning {
     background-color: #F3F781 !important;
 }
 
-.notifications .error {
+.notifications .error,
+.notification.error {
     background-color: #F5A9A9 !important;
 }

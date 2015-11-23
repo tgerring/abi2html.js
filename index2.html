@@ -11,6 +11,7 @@
     <script type="text/javascript">
     var loadedAbiHtml = []
     var selectedDocIndex
+    var web3 = new Web3()
 
     window.onload = function() {
         var gistId = getParameterByName('GIST_ID')
@@ -20,7 +21,8 @@
         if (!gistId) {
             if (window.location.protocol === "file:") {
                 // debug
-                gistId = "505534d5a37ffa3a0625"
+                // gistId = "505534d5a37ffa3a0625"
+                gistId = "0e1b884de82d35053a34"
                 toAddress = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
             } else if (window.location.host === 'tgerring.github.io') {
                 // public
@@ -66,6 +68,23 @@
             displayUi(selectedDocIndex)
             document.getElementById('main').classList.toggle('flip')
         }, false)
+        document.getElementById('btnWatch').addEventListener('click', function(ev) {
+            loadedAbiHtml[selectedDocIndex]
+
+            if (connectInstance()) {
+                var filter = web3.eth.filter('latest')
+                var block = web3.eth.getBlock('latest')
+                var el = document.getElementById('notification-anchor')
+                el.children[0].innerHTML = 'Block #' + block.number
+                el.children[0].classList.add('success')
+                filter.watch(function(err, result) {
+                    var block = web3.eth.getBlock(result)
+                    var el = document.getElementById('notification-anchor')
+                    el.children[0].innerHTML = 'Block #' + block.number
+                })
+            } else(displayNotification('Could not connect to node', 'error'))
+
+        }, false)
     }
 
     var getParameterByName = function(name) {
@@ -88,6 +107,13 @@
         }
         xmlhttp.open("GET", url, true)
         xmlhttp.send()
+    }
+
+    var connectInstance = function() {
+        if (!web3.currentProvider)
+            web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'))
+
+        return web3.isConnected()
     }
 
     var displayModal = function() {
@@ -212,7 +238,7 @@
 </head>
 
 <body>
-    <div id="main" class="flip-container full-size flip">
+    <div id="main" class="flip-container full-size">
         <div class="flipper">
             <div id="uiview" class="front">
                 <div class="header">
@@ -232,11 +258,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div>
-                            <div class="notification">Block #1234</div>
+                        <div id="notification-anchor">
+                            <div class="notification">Not connected</div>
                             <div class="inline">
                                 <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
-                                <input type="button" value="Watch" disabled>
+                                <input type="button" id="btnWatch" value="Watch">
                             </div>
                         </div>
                     </div>
