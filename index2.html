@@ -61,7 +61,9 @@
 
     var setHandlers = function() {
         document.getElementById('btnSave').addEventListener('click', function(ev) {
-            updateDoc(ev.srcElement.loadDoc)
+            updateDoc(selectedDocIndex)
+            displayCode(selectedDocIndex)
+            displayUi(selectedDocIndex)
         }, false)
         document.getElementById('btnViewInterface').addEventListener('click', function(ev) {
             // updateDoc(selectedDocIndex) // this can be slow
@@ -169,8 +171,8 @@
 
         // disply loaded doc
         var ah = loadedAbiHtml[index]
-        document.getElementById('abi-code').innerHTML = (ah.abi ? JSON.stringify(ah.abi, null, "  ") : '')
-        document.getElementById('source-code').innerHTML = (ah.source ? ah.source : '')
+        document.getElementById('abi-code').value = (ah.abi ? JSON.stringify(ah.abi, null, "  ") : '')
+        document.getElementById('source-code').value = (ah.source ? ah.source : '')
     }
 
     var displayUi = function(index) {
@@ -224,13 +226,13 @@
     }
 
     var updateDoc = function(index) {
-        var source = document.getElementById('source-code').innerHTML
-        var abi = document.getElementById('abi-code').innerHTML
+        var source = document.getElementById('source-code').value
+        var abi = document.getElementById('abi-code').value
 
         var ah
         if (source) ah = new AbiHtml(source)
         else if (abi) ah = new AbiHtml(abi)
-        ah.name = loadedAbiHtml[index].name
+        if (name in ah) ah.name = loadedAbiHtml[index].name
 
         if (ah) loadedAbiHtml[index] = ah
     }
