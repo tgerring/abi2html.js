@@ -70,6 +70,9 @@
             displayUi(selectedDocIndex)
             document.getElementById('main').classList.toggle('flip')
         }, false)
+        document.getElementById('btnDeploy').addEventListener('click', function(ev) {
+            displayModal('Deployment parameters should go here')
+        }, false)
         document.getElementById('btnWatch').addEventListener('click', function(ev) {
             loadedAbiHtml[selectedDocIndex]
 
@@ -84,7 +87,9 @@
                     var el = document.getElementById('notification-anchor')
                     el.children[0].innerHTML = 'Block #' + block.number
                 })
-            } else(displayNotification('Could not connect to node', 'error'))
+            } else {
+                displayNotification('Could not connect to node', 'error')
+            }
 
         }, false)
     }
@@ -118,8 +123,35 @@
         return web3.isConnected()
     }
 
-    var displayModal = function() {
 
+    var displayModal = function(obj) {
+        var htmlDom
+        if (typeof obj === "object" && "nodeType" in obj) {
+            // looks like HTML Element
+            htmlDom = obj
+        } else if (typeof obj === "string") {
+            // looks like string
+            var htmlDom = document.createElement('p')
+            htmlDom.innerHTML = obj
+        }
+
+        var parElement = document.createElement('div')
+        parElement.classList.add('modal')
+        var button = document.createElement('input')
+        button.type = 'button'
+        button.value = 'Close'
+        button.addEventListener('click', function() {
+            document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+        }, false)
+        parElement.appendChild(button)
+        parElement.appendChild(htmlDom)
+
+        // append the entry and the top
+        var el = document.getElementById('modal')
+        el.innerHTML = ''
+        el.appendChild(parElement)
+
+        document.getElementsByTagName("body")[0].classList.add('dialogIsOpen')
     }
 
     var displayNotification = function(obj, className) {
@@ -240,82 +272,88 @@
 </head>
 
 <body>
-    <div id="main" class="flip-container full-size">
-        <div class="flipper">
-            <div id="uiview" class="front">
-                <div class="header">
-                    <div class="wrapper nowrap">
-                        <div>
-                            <div id="notifications" class="notifications nowrap">
-                                <div>Block #1000
-                                    <hr>ConfirmationNeeded
-                                </div>
-                                <div>Block #1001
-                                    <hr>Confirmation</div>
-                                <div>Block #1050
-                                    <hr>Confirmation</div>
-                                <div>Block #1100
-                                    <hr>Confirmation
-                                    <br>MultiTransact
+    <div id="modalwrapper">
+        <div id="modal">
+        </div>
+    </div>
+    <div class="page-wrap">
+        <div id="main" class="flip-container full-size">
+            <div class="flipper">
+                <div id="uiview" class="front">
+                    <div class="header">
+                        <div class="wrapper nowrap">
+                            <div>
+                                <div id="notifications" class="notifications nowrap">
+                                    <div>Block #1000
+                                        <hr>ConfirmationNeeded
+                                    </div>
+                                    <div>Block #1001
+                                        <hr>Confirmation</div>
+                                    <div>Block #1050
+                                        <hr>Confirmation</div>
+                                    <div>Block #1100
+                                        <hr>Confirmation
+                                        <br>MultiTransact
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div id="notification-anchor">
-                            <div class="notification">Not connected</div>
-                            <div class="inline">
-                                <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
-                                <input type="button" id="btnWatch" value="Watch">
+                            <div id="notification-anchor">
+                                <div class="notification">Not connected</div>
+                                <div class="inline">
+                                    <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
+                                    <input type="button" id="btnWatch" value="Watch">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="main">
-                    <div class="wrapper">
-                        <div id="functions">
-                            <div>
-                                <h2>Functions</h2>
+                    <div class="main">
+                        <div class="wrapper">
+                            <div id="functions">
                                 <div>
-                                    <div id="tab-container">
-                                        <ul>
-                                        </ul>
-                                    </div>
-                                    <div id="main-container">
+                                    <h2>Functions</h2>
+                                    <div>
+                                        <div id="tab-container">
+                                            <ul>
+                                            </ul>
+                                        </div>
+                                        <div id="main-container">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div id="logs">
-                            <div>
-                                <h2>Events</h2>
-                                <div id="log-search"></div>
-                                <div id="message-container"></div>
+                            <div id="logs">
+                                <div>
+                                    <h2>Events</h2>
+                                    <div id="log-search"></div>
+                                    <div id="message-container"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div id="codeview" class="back">
-                <div class="header">
-                    <div class="wrapper">
-                        <nav id="docnav">
-                        </nav>
-                        <div>
-                            <input type="button" value="Deploy" disabled>
-                            <input type="button" id="btnSave" value="Save">
-                            <input type="button" id="btnViewInterface" value="UI">
-                        </div>
-                    </div>
-                </div>
-                <div class="main">
-                    <div class="wrapper">
-                        <div id="contract">
+                <div id="codeview" class="back">
+                    <div class="header">
+                        <div class="wrapper">
+                            <nav id="docnav">
+                            </nav>
                             <div>
-                                <textarea placeholder="contract" id="source-code"></textarea>
+                                <input type="button" id="btnDeploy" value="Deploy">
+                                <input type="button" id="btnSave" value="Save">
+                                <input type="button" id="btnViewInterface" value="UI">
                             </div>
                         </div>
-                        <div id="abi">
-                            <div>
-                                <textarea placeholder="abi" id="abi-code"></textarea>
+                    </div>
+                    <div class="main">
+                        <div class="wrapper">
+                            <div id="contract">
+                                <div>
+                                    <textarea placeholder="contract" id="source-code"></textarea>
+                                </div>
+                            </div>
+                            <div id="abi">
+                                <div>
+                                    <textarea placeholder="abi" id="abi-code"></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
