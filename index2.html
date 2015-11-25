@@ -11,11 +11,13 @@
     <script type="text/javascript">
     var loadedAbiHtml = []
     var selectedDocIndex
-    var web3 = new Web3()
+    var web3 = (typeof web3 === 'undefined' ? new Web3() : web3)
+    var toAddress = ''
+    var watchingBlocks = false
 
     window.onload = function() {
         var gistId = getParameterByName('GIST_ID')
-        var toAddress = getParameterByName('ADDRESS')
+        var address = getParameterByName('ADDRESS')
 
         // set defaults for friendliness
         if (!gistId) {
@@ -57,6 +59,7 @@
         }
 
         setHandlers()
+        connectInstance()
     }
 
     var setHandlers = function() {
@@ -71,27 +74,25 @@
             document.getElementById('main').classList.toggle('flip')
         }, false)
         document.getElementById('btnDeploy').addEventListener('click', function(ev) {
-            displayModal('Deployment parameters should go here')
+            displayModal(makeTransactionDialog())
         }, false)
         document.getElementById('btnWatch').addEventListener('click', function(ev) {
-            loadedAbiHtml[selectedDocIndex]
-
-            if (connectInstance()) {
-                var filter = web3.eth.filter('latest')
-                var block = web3.eth.getBlock('latest')
-                var el = document.getElementById('notification-anchor')
-                el.children[0].innerHTML = 'Block #' + block.number
-                el.children[0].classList.add('success')
-                filter.watch(function(err, result) {
-                    var block = web3.eth.getBlock(result)
-                    var el = document.getElementById('notification-anchor')
-                    el.children[0].innerHTML = 'Block #' + block.number
-                })
-            } else {
-                displayNotification('Could not connect to node', 'error')
-            }
-
+            displayModal(makeConnectionDialog())
         }, false)
+    }
+
+    var watchBlocks = function() {
+        var filter = web3.eth.filter('latest')
+        var block = web3.eth.getBlock('latest')
+        var el = document.getElementById('notification-anchor')
+        el.children[0].innerHTML = 'Block #' + block.number
+        el.children[0].classList.add('success')
+        filter.watch(function(err, result) {
+            var block = web3.eth.getBlock(result)
+            var el = document.getElementById('notification-anchor')
+            el.children[0].innerHTML = 'Block #' + block.number
+        })
+        watchingBlocks = true
     }
 
     var getParameterByName = function(name) {
@@ -120,9 +121,17 @@
         if (!web3.currentProvider)
             web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'))
 
-        return web3.isConnected()
+        isConnected = web3.isConnected()
+        if (isConnected && !watchingBlocks) watchBlocks()
+        return isConnected
     }
 
+    var getTransactionOptions = function() {
+        return {
+            from: '0x392af429f1b9537f28d97b8467e4b4e3498d5108',
+            to: toAddress
+        }
+    }
 
     var displayModal = function(obj) {
         var htmlDom
@@ -221,6 +230,14 @@
         document.getElementById('source-code').value = (ah.source ? ah.source : '')
     }
 
+    var makeConnectionDialog = function() {
+        return 'Connection/watch parameters go here'
+    }
+
+    var makeTransactionDialog = function() {
+        return 'Transaction parameters go here'
+    }
+
     var displayUi = function(index) {
         var ah = loadedAbiHtml[index]
 
@@ -237,7 +254,45 @@
             label.htmlFor = input.id
             label.innerHTML = f.name
             var article = document.createElement('article')
-            article.appendChild(f.makeFieldForm())
+            article.appendChild(f.makeFieldForm(
+                function(web3Function) {
+                    // try to connect if not connected
+                    if (!connectInstance()) {
+                        displayModal(makeConnectionDialog())
+                    }
+
+                    if (connectInstance())
+                        try {
+                            web3Function.Call(getTransactionOptions(), function(evmFunction) {
+                                if (evmFunction.error) {
+                                    displayNotification(evmFunction.error.toString(), 'error')
+                                } else {
+                                    for (var i = 0; i < evmFunction.outputs.length; i++) {
+                                        var field = evmFunction.outputs[i]
+                                        var el = document.getElementById(field.htmlId)
+                                        var val = field.value.toString()
+                                        if (el) el.value = val
+                                    }
+                                }
+                            })
+                        } catch (e) {
+                            displayNotification(e.toString(), 'warning')
+                        }
+                },
+                function(web3Function) {
+                    displayModal(makeTransactionDialog())
+                        // try {
+                        //     web3Function.Transact(getTransactionOptions(), function(evmFunction) {
+                        //         if (evmFunction.error) {
+                        //             displayNotification(evmFunction.error.toString(), 'error')
+                        //         } else {
+                        //             displayNotification('Sent transaction: <pre>' + evmFunction.transactionHash + '</pre>', 'warning')
+                        //         }
+                        //     })
+                        // } catch (e) {
+                        //     displayNotification(e.toString(), 'error')
+                        // }
+                }))
             article.classList.add('ac-large')
             div.appendChild(input)
             div.appendChild(label)
