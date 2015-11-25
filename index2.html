@@ -197,11 +197,25 @@
             li.appendChild(a)
             ul.appendChild(li)
         }
+
+        // add a trailing tab for adding new documents
+        var addTab = document.createElement('li')
+        var a = document.createElement('a')
+        a.innerHTML = "+"
+        a.addEventListener('click', function(ev) {
+            var ah = new AbiHtml()
+            selectedDocIndex = loadedAbiHtml.length
+            loadedAbiHtml.push(ah)
+            displayCode(selectedDocIndex)
+        }, false)
+        addTab.appendChild(a)
+        ul.appendChild(addTab)
+
+        // display loaded doc
         var target = document.getElementById('docnav')
         target.innerHTML = ''
         target.appendChild(ul)
 
-        // disply loaded doc
         var ah = loadedAbiHtml[index]
         document.getElementById('abi-code').value = (ah.abi ? JSON.stringify(ah.abi, null, "  ") : '')
         document.getElementById('source-code').value = (ah.source ? ah.source : '')
