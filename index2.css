@@ -254,6 +254,26 @@ general layout
     margin: 1ex;
 }
 
+#tx-message {
+    color: red;
+    font-weight: bolder;
+    font-size: 125%;
+    margin-bottom: 1em;
+}
+
+.tx-options label {
+    display: inline-block;
+    width: 6em;
+    text-align: right;
+    margin: 0.5ex 1em;
+}
+
+.tx-options input[type=button],
+.tx-options button {
+    width: 18em;
+    margin: 2em 6em 0 6em;
+}
+
 
 /*
 
@@ -458,7 +478,10 @@ flipbook
 
 .solfield input[readonly],
 .solfield textarea[readonly],
-.solfield .readonly {
+.solfield .readonly,
+input[disabled],
+select[disabled],
+textarea[disabled] {
     cursor: not-allowed;
     background-color: #E3E3E3;
 }

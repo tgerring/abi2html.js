@@ -74,7 +74,29 @@
             document.getElementById('main').classList.toggle('flip')
         }, false)
         document.getElementById('btnDeploy').addEventListener('click', function(ev) {
-            displayModal(makeTransactionDialog())
+            // TODO display constructor params before diusplaying transact dialog
+            // displayModal(makeConstructorDialog(function(evmFunction){}))
+            displayModal(makeTransactionDialog('Deploy: ' + loadedAbiHtml[selectedDocIndex].name, function(transactionOptions) {
+                try {
+                    web3Function.Transact(transactionOptions, function(evmFunction) {
+                        if (evmFunction.error) {
+                            document.getElementById('tx-message').innerHTML = evmFunction.error.toString()
+                                // displayNotification(evmFunction.error.toString(), 'error')
+                        } else {
+                            displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash.trim() + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
+                            document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+                        }
+                    })
+
+                } catch (e) {
+                    document.getElementById('tx-message').innerHTML = e.toString()
+                }
+            }, {
+                to: null,
+                data: null,
+                gas: 3000000,
+                gasPrice: web3.eth.gasPrice
+            }))
         }, false)
         document.getElementById('btnWatch').addEventListener('click', function(ev) {
             displayModal(makeConnectionDialog())
@@ -117,6 +139,13 @@
         xmlhttp.send()
     }
 
+    var inArrayIndex = function(array, id) {
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] === id) return i
+        }
+        return -1
+    }
+
     var connectInstance = function() {
         if (!web3.currentProvider)
             web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'))
@@ -124,13 +153,6 @@
         isConnected = web3.isConnected()
         if (isConnected && !watchingBlocks) watchBlocks()
         return isConnected
-    }
-
-    var getTransactionOptions = function() {
-        return {
-            from: '0x392af429f1b9537f28d97b8467e4b4e3498d5108',
-            to: toAddress
-        }
     }
 
     var displayModal = function(obj) {
@@ -200,8 +222,8 @@
                 selectedDocIndex = ev.srcElement.loadDoc
                 displayCode(selectedDocIndex)
             }, false)
-            if ('name' in ah) a.innerHTML = ah.name
-            else a.innerHTML = 'Untitled' + i.toString()
+            if (!('name' in ah)) ah.name = 'Untitled' + i.toString()
+            a.innerHTML = ah.name
             if (selectedDocIndex === i) li.classList.add('selected')
             li.appendChild(a)
             ul.appendChild(li)
@@ -228,14 +250,156 @@
         var ah = loadedAbiHtml[index]
         document.getElementById('abi-code').value = (ah.abi ? JSON.stringify(ah.abi, null, "  ") : '')
         document.getElementById('source-code').value = (ah.source ? ah.source : '')
+        document.getElementById('btnDeploy').disabled = ('source' in ah ? false : true)
     }
 
     var makeConnectionDialog = function() {
         return 'Connection/watch parameters go here'
     }
 
-    var makeTransactionDialog = function() {
-        return 'Transaction parameters go here'
+    var makeTransactionDialog = function(legendText, callback, txDefaults) {
+        var makeUnitSelect = function(id, defaultUnit) {
+            var units = ['ether', 'szabo', 'finney', 'wei']
+            if (!defaultUnit) defaultUnit = 'ether'
+
+            var unitSelect = document.createElement('select')
+            if (id) unitSelect.id = id
+
+            var i = 0
+            var selectedIndex = 0
+            for (key in units) {
+                var unit = units[key]
+                if (unit == defaultUnit) selectedIndex = i
+                var option = document.createElement('option')
+                option.value = unit
+                option.innerHTML = unit
+                unitSelect.options.add(option)
+                i++
+            }
+            unitSelect.selectedIndex = selectedIndex
+            return unitSelect
+        }
+
+        if (!legendText) legendText = 'Create transaction'
+
+        var fieldset = document.createElement('fieldset')
+        fieldset.classList.add('tx-options')
+
+        var legend = document.createElement('legend')
+        legend.innerHTML = legendText
+
+        var message = document.createElement('p')
+        message.id = 'tx-message'
+
+        // convert to select/option
+        var fromLabel = document.createElement('label')
+        fromLabel.innerHTML = 'From'
+        fromLabel.htmlFor = 'txopt-from'
+        var fromInput = document.createElement('select')
+        fromInput.id = fromLabel.htmlFor
+        web3.eth.accounts.forEach(function(address) {
+            var option = document.createElement('option')
+            option.value = address
+            option.innerHTML = address
+            fromInput.options.add(option)
+        })
+        if (txDefaults && 'from' in txDefaults)
+            if (txDefaults.from === null) fromInput.disabled = true
+            else if (txDefaults.from) fromInput.selectedIndex = inArrayIndex(web3.eth.accounts, txDefaults.from)
+
+        var toLabel = document.createElement('label')
+        toLabel.innerHTML = 'To'
+        toLabel.htmlFor = 'txopt-to'
+        var toInput = document.createElement('input')
+        toInput.type = 'text'
+        toInput.id = toLabel.htmlFor
+        if (txDefaults && 'to' in txDefaults)
+            if (txDefaults.to === null) toInput.disabled = true
+            else if (txDefaults.to) toInput.value = txDefaults.to
+
+        var gasLabel = document.createElement('label')
+        gasLabel.innerHTML = 'Gas'
+        gasLabel.htmlFor = 'txopt-gas'
+        var gasInput = document.createElement('input')
+        gasInput.type = 'number'
+        gasInput.id = gasLabel.htmlFor
+        if (txDefaults && 'gas' in txDefaults)
+            if (txDefaults.gas === null) gasInput.disabled = true
+            else gasInput.value = txDefaults.gas
+
+        var gaspriceLabel = document.createElement('label')
+        gaspriceLabel.innerHTML = 'Gas price'
+        gaspriceLabel.htmlFor = 'txopt-gasprice'
+        var gaspriceInput = document.createElement('input')
+        gaspriceInput.type = 'number'
+        gaspriceInput.id = gaspriceLabel.htmlFor
+        var gaspriceUnit = makeUnitSelect('txopt-gaspriceunit', 'szabo')
+        if (txDefaults && 'gasPrice' in txDefaults)
+            if (txDefaults.gasPrice === null) gaspriceInput.disabled = true
+            else gaspriceInput.value = web3.fromWei(txDefaults.gasPrice, 'szabo')
+
+        var valueLabel = document.createElement('label')
+        valueLabel.innerHTML = 'Value'
+        valueLabel.htmlFor = 'txopt-value'
+        var valueInput = document.createElement('input')
+        valueInput.type = 'number'
+        valueInput.id = valueLabel.htmlFor
+        var valueUnit = makeUnitSelect('txopt-valueunit', 'ether')
+        if (txDefaults && 'value' in txDefaults)
+            if (txDefaults.value === null) valueInput.disabled = true
+            else valueInput.value = web3.fromWei(txDefaults.value, 'ether')
+
+        var dataLabel = document.createElement('label')
+        dataLabel.innerHTML = 'Data'
+        dataLabel.htmlFor = 'txopt-data'
+        var dataInput = document.createElement('input')
+        dataInput.type = 'text'
+        dataInput.id = dataLabel.htmlFor
+        if (txDefaults && 'data' in txDefaults)
+            if (txDefaults.data === null) dataInput.disabled = true
+            else dataInput.value = txDefaults.data
+
+        var button = document.createElement('input')
+        button.type = 'button'
+        button.value = 'Transact'
+        button.addEventListener('click', function() {
+            var txOptions = {
+                from: document.getElementById('txopt-from').value,
+                to: document.getElementById('txopt-to').value,
+                gas: document.getElementById('txopt-gas').value,
+                gasPrice: web3.toWei(document.getElementById('txopt-gasprice').value, document.getElementById('txopt-gaspriceunit').value),
+                data: document.getElementById('txopt-data').value,
+                value: web3.toWei(document.getElementById('txopt-value').value, document.getElementById('txopt-valueunit').value)
+            }
+            callback(txOptions)
+        }, false)
+
+        var makeWrap = function(obj0, obj1, obj2) {
+            var div = document.createElement('div')
+            if (obj0) div.appendChild(obj0)
+            if (obj1) div.appendChild(obj1)
+            if (obj2) div.appendChild(obj2)
+            return div
+        }
+        fieldset.appendChild(legend)
+        fieldset.appendChild(message)
+        fieldset.appendChild(makeWrap(fromLabel, fromInput))
+        fieldset.appendChild(makeWrap(toLabel, toInput))
+        fieldset.appendChild(makeWrap(gasLabel, gasInput))
+        fieldset.appendChild(makeWrap(gaspriceLabel, gaspriceInput, gaspriceUnit))
+        fieldset.appendChild(makeWrap(valueLabel, valueInput, valueUnit))
+        fieldset.appendChild(makeWrap(dataLabel, dataInput))
+        fieldset.appendChild(button)
+
+        return fieldset
+    }
+
+
+    var getTransactionOptions = function() {
+        return {
+            from: '0x392af429f1b9537f28d97b8467e4b4e3498d5108',
+            to: toAddress
+        }
     }
 
     var displayUi = function(index) {
@@ -280,18 +444,34 @@
                         }
                 },
                 function(web3Function) {
-                    displayModal(makeTransactionDialog())
-                        // try {
-                        //     web3Function.Transact(getTransactionOptions(), function(evmFunction) {
-                        //         if (evmFunction.error) {
-                        //             displayNotification(evmFunction.error.toString(), 'error')
-                        //         } else {
-                        //             displayNotification('Sent transaction: <pre>' + evmFunction.transactionHash + '</pre>', 'warning')
-                        //         }
-                        //     })
-                        // } catch (e) {
-                        //     displayNotification(e.toString(), 'error')
-                        // }
+                    if (!connectInstance()) {
+                        displayModal(makeConnectionDialog())
+                    }
+
+                    if (connectInstance()) {
+                        displayModal(makeTransactionDialog('Function: ' + f.name, function(transactionOptions) {
+                            try {
+                                web3Function.Transact(transactionOptions, function(evmFunction) {
+                                    if (evmFunction.error) {
+                                        document.getElementById('tx-message').innerHTML = evmFunction.error.toString()
+                                            // displayNotification(evmFunction.error.toString(), 'error')
+                                    } else {
+                                        displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
+                                        document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+                                    }
+                                })
+
+                            } catch (e) {
+                                document.getElementById('tx-message').innerHTML = e.toString()
+                            }
+                        }, {
+                            to: toAddress,
+                            data: null,
+                            gas: 300000,
+                            gasPrice: web3.eth.gasPrice,
+                            value: 0
+                        }))
+                    }
                 }))
             article.classList.add('ac-large')
             div.appendChild(input)
