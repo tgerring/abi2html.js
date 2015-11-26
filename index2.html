@@ -13,7 +13,8 @@
     var selectedDocIndex
     var web3 = (typeof web3 === 'undefined' ? new Web3() : web3)
     var toAddress = ''
-    var watchingBlocks = false
+    var blockFilter
+    var displayAllBlocks = false
 
     window.onload = function() {
         var gistId = getParameterByName('GIST_ID')
@@ -69,14 +70,49 @@
             displayUi(selectedDocIndex)
         }, false)
         document.getElementById('btnViewInterface').addEventListener('click', function(ev) {
-            // updateDoc(selectedDocIndex) // this can be slow
             displayUi(selectedDocIndex)
             document.getElementById('main').classList.toggle('flip')
+        }, false)
+        document.getElementById('btnSend').addEventListener('click', function(ev) {
+            displayModal(makeTransactionDialog('New transaction', function(transactionOptions) {
+                watchEvents(transactionOptions.to)
+                try {
+
+                    web3.eth.sendTransaction(transactionOptions, function(error, transactionHash) {
+
+                        if (error) {
+                            document.getElementById('tx-message').innerHTML = error.toString()
+                            return
+                        }
+
+
+                        displayNotification('Sent transaction: <pre><a href="#tx?hash=' + transactionHash + '">' + transactionHash.substring(0, 8) + '...' + transactionHash.substring(transactionHash.length - 6) + '</a></pre>', 'warning')
+                        document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+
+                        loadedAbiHtml[selectedDocIndex].checkTransaction(transactionHash, function(error, tx) {
+                            if (error) displayNotification(error.toString(), 'error')
+                            else {
+                                var foo = tx.hash.substring(0, 8) + '...' + tx.hash.substring(tx.hash.length - 6)
+                                displayBlock(tx.blockNumber, foo, 'success')
+                            }
+                        })
+
+
+                    })
+                } catch (e) {
+                    document.getElementById('tx-message').innerHTML = e.toString()
+                }
+            }, {
+                gas: 90000,
+                gasPrice: web3.eth.gasPrice,
+                to: toAddress
+            }))
         }, false)
         document.getElementById('btnDeploy').addEventListener('click', function(ev) {
             // TODO display constructor params before diusplaying transact dialog
             // displayModal(makeConstructorDialog(function(evmFunction){}))
             displayModal(makeTransactionDialog('Deploy: ' + loadedAbiHtml[selectedDocIndex].name, function(transactionOptions) {
+                watchEvents(transactionOptions.to)
                 try {
                     web3Function.Transact(transactionOptions, function(evmFunction) {
                         if (evmFunction.error) {
@@ -103,18 +139,40 @@
         }, false)
     }
 
-    var watchBlocks = function() {
-        var filter = web3.eth.filter('latest')
-        var block = web3.eth.getBlock('latest')
-        var el = document.getElementById('notification-anchor')
-        el.children[0].innerHTML = 'Block #' + block.number
-        el.children[0].classList.add('success')
-        filter.watch(function(err, result) {
-            var block = web3.eth.getBlock(result)
-            var el = document.getElementById('notification-anchor')
-            el.children[0].innerHTML = 'Block #' + block.number
+    var watchEvents = function(address) {
+        var ah = loadedAbiHtml[selectedDocIndex]
+        ah.WatchAllEvents({
+            address: address,
+            fromBlock: 'latest',
+            toBlock: 'latest'
+        }, null, function(evmEvent) {
+            var foo = '<a href="#event?blockNum=' + evmEvent.result.blockNumber + '&txIndex=' + evmEvent.result.transactionIndex + '&logIndex=' + evmEvent.result.logIndex + '">' + evmEvent.name + '</a>'
+            displayBlock(evmEvent.result.blockNumber, foo, 'success')
         })
-        watchingBlocks = true
+    }
+
+    var watchBlocks = function(displayAll) {
+        if (blockFilter) blockFilter.stopWatching()
+
+        // display inital state
+        var block = web3.eth.getBlock('pending')
+        var el = document.getElementById('notification-anchor')
+        el.children[0].innerHTML = 'Pending block #' + block.number + '<hr>Difficulty: ' + block.difficulty.valueOf() + '<br>Gas limit: ' + block.gasLimit
+        el.children[0].classList.add('dashed')
+
+        // create filter for new blocks
+        var filter = web3.eth.filter('latest')
+        filter.watch(function(err, hash) {
+            var latest = web3.eth.getBlock(hash)
+            if (displayAll) {
+                displayBlock(latest.number)
+            }
+
+            var block = web3.eth.getBlock('pending')
+            var el = document.getElementById('notification-anchor')
+            el.children[0].innerHTML = 'Pending block #' + block.number + '<hr>Difficulty: ' + block.difficulty.valueOf() + '<br>Gas limit: ' + block.gasLimit
+        })
+        blockFilter = filter
     }
 
     var getParameterByName = function(name) {
@@ -151,7 +209,9 @@
             web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'))
 
         isConnected = web3.isConnected()
-        if (isConnected && !watchingBlocks) watchBlocks()
+
+        // TODO this is yucky
+        if (isConnected && !blockFilter) watchBlocks(displayAllBlocks)
         return isConnected
     }
 
@@ -253,8 +313,32 @@
         document.getElementById('btnDeploy').disabled = ('source' in ah ? false : true)
     }
 
+    var displayBlock = function(blockNumber, item, className) {
+        var id = 'block-' + blockNumber.toString()
+        var el = document.getElementById(id)
+        if (el && item) {
+            el.innerHTML += item.toString() + '<br>'
+        } else if (el && !item) {
+            // this shouldn't happen
+            console.log(el.innerHTML)
+        } else {
+            var div = document.createElement('div')
+            div.id = id
+            div.innerHTML = 'Block #' + blockNumber.toString() + '<hr>'
+            if (item) div.innerHTML += item.toString() + '<br>'
+            displayNotification(div, className)
+        }
+    }
+
     var makeConnectionDialog = function() {
         return 'Connection/watch parameters go here'
+
+        var button = document.createElement('input')
+        button.type = 'button'
+        button.addEventListener('click', function() {
+            displayAllBlocks = true
+            connectInstance()
+        }, false)
     }
 
     var makeTransactionDialog = function(legendText, callback, txDefaults) {
@@ -440,7 +524,7 @@
                                 }
                             })
                         } catch (e) {
-                            displayNotification(e.toString(), 'warning')
+                            displayNotification(e.toString(), 'error')
                         }
                 },
                 function(web3Function) {
@@ -454,9 +538,18 @@
                                 web3Function.Transact(transactionOptions, function(evmFunction) {
                                     if (evmFunction.error) {
                                         document.getElementById('tx-message').innerHTML = evmFunction.error.toString()
-                                            // displayNotification(evmFunction.error.toString(), 'error')
                                     } else {
+                                        watchEvents(transactionOptions.to)
                                         displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
+
+                                        loadedAbiHtml[selectedDocIndex].checkTransaction(evmFunction.transactionHash, function(error, tx) {
+                                            if (error) displayNotification(error.toString(), 'error')
+                                            else {
+                                                var foo = tx.hash.substring(0, 8) + '...' + tx.hash.substring(tx.hash.length - 6)
+                                                displayBlock(tx.blockNumber, foo, 'success')
+                                            }
+                                        })
+
                                         document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
                                     }
                                 })
@@ -533,24 +626,14 @@
                         <div class="wrapper nowrap">
                             <div>
                                 <div id="notifications" class="notifications nowrap">
-                                    <div>Block #1000
-                                        <hr>ConfirmationNeeded
-                                    </div>
-                                    <div>Block #1001
-                                        <hr>Confirmation</div>
-                                    <div>Block #1050
-                                        <hr>Confirmation</div>
-                                    <div>Block #1100
-                                        <hr>Confirmation
-                                        <br>MultiTransact
-                                    </div>
                                 </div>
                             </div>
                             <div id="notification-anchor">
                                 <div class="notification">Not connected</div>
                                 <div class="inline">
-                                    <input class="stack" type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
                                     <input type="button" id="btnWatch" value="Watch">
+                                    <input type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
+                                    <input class="stack" type="button" id="btnSend" value="Send">
                                 </div>
                             </div>
                         </div>

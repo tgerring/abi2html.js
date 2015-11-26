@@ -138,6 +138,7 @@ general layout
     min-width: 100px;
     height: 100px;
     padding: 1ex;
+    margin-right: 1ex;
     display: inline-block;
     text-align: left;
     vertical-align: top;
@@ -506,6 +507,11 @@ textarea[disabled] {
 .solfield .value {
     width: 15em;
     margin-left: 1em;
+}
+
+.notifications .dashed,
+.notification.dashed {
+    border: 1px dashed black !important;
 }
 
 .notifications .success,
