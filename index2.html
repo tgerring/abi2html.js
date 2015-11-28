@@ -637,8 +637,8 @@
 
     var getTransactionOptions = function() {
         return {
-            from: document.getElementById('option-from'),
-            to: document.getElementById('option-address')
+            from: document.getElementById('option-from').value,
+            to: document.getElementById('option-address').value
         }
     }
 
@@ -660,35 +660,36 @@
             var article = document.createElement('article')
             article.appendChild(f.makeFieldForm(
                 function(web3Function) {
-                    // try to connect if not connected
-                    if (!connectInstance()) {
-                        displayModal(makeConnectionDialog())
-                    }
-
-                    if (connectInstance())
-                        try {
-                            web3Function.Call(getTransactionOptions(), function(evmFunction) {
-                                if (evmFunction.error) {
-                                    displayNotification(evmFunction.error.toString(), 'error')
-                                } else {
-                                    for (var i = 0; i < evmFunction.outputs.length; i++) {
-                                        var field = evmFunction.outputs[i]
-                                        var el = document.getElementById(field.htmlId)
-                                        var val = field.value.toString()
-                                        if (el) el.value = val
+                    var foo = function() {
+                            try {
+                                web3Function.Call(getTransactionOptions(), function(evmFunction) {
+                                    if (evmFunction.error) {
+                                        displayNotification(evmFunction.error.toString(), 'error')
+                                    } else {
+                                        for (var i = 0; i < evmFunction.outputs.length; i++) {
+                                            var field = evmFunction.outputs[i]
+                                            var el = document.getElementById(field.htmlId)
+                                            var val = field.value.toString()
+                                            if (el) el.value = val
+                                        }
                                     }
-                                }
-                            })
-                        } catch (e) {
-                            displayNotification(e.toString(), 'error')
+                                })
+                            } catch (e) {
+                                displayNotification(e.toString(), 'error')
+                            }
                         }
+                        // try to connect if not connected
+                    if (!connectInstance()) {
+                        displayModal(makeConnectionDialog(function() {
+                            document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+                            foo()
+                        }))
+                    } else
+                        foo()
+
                 },
                 function(web3Function) {
-                    if (!connectInstance()) {
-                        displayModal(makeConnectionDialog())
-                    }
-
-                    if (connectInstance()) {
+                    var foo = function(options) {
                         displayModal(makeTransactionDialog('Function: ' + f.name, function(transactionOptions) {
                             try {
                                 web3Function.Transact(transactionOptions, function(evmFunction) {
@@ -697,14 +698,6 @@
                                     } else {
                                         watchEvents(transactionOptions.to)
                                         displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
-
-                                        // loadedAbiHtml[selectedDocIndex].checkTransaction(evmFunction.transactionHash, function(error, tx) {
-                                        //     if (error) displayNotification(error.toString(), 'error')
-                                        //     else {
-                                        //         var foo = tx.hash.substring(0, 8) + '...' + tx.hash.substring(tx.hash.length - 6)
-                                        //         displayBlock(tx.blockNumber, foo, 'success')
-                                        //     }
-                                        // })
 
                                         waitingTxs.push(evmFunction.transactionHash)
 
@@ -715,14 +708,26 @@
                             } catch (e) {
                                 document.getElementById('tx-message').innerHTML = e.toString()
                             }
-                        }, {
+                        }, options))
+                    }
+                    if (!connectInstance()) {
+                        displayModal(makeConnectionDialog(function() {
+                            foo({
+                                to: document.getElementById('option-address').value,
+                                data: null,
+                                gas: 300000,
+                                gasPrice: web3.eth.gasPrice,
+                                value: 0
+                            })
+                        }))
+                    } else
+                        foo({
                             to: document.getElementById('option-address').value,
                             data: null,
                             gas: 300000,
                             gasPrice: web3.eth.gasPrice,
                             value: 0
-                        }))
-                    }
+                        })
                 }))
             article.classList.add('ac-large')
             div.appendChild(input)
