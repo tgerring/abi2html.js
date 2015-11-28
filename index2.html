@@ -12,13 +12,13 @@
     var loadedAbiHtml = []
     var selectedDocIndex
     var web3 = (typeof web3 === 'undefined' ? new Web3() : web3)
-    var toAddress = ''
     var blockFilter
-    var displayAllBlocks = false
+    var waitingTxs = []
 
     window.onload = function() {
         var gistId = getParameterByName('GIST_ID')
         var address = getParameterByName('ADDRESS')
+        var providerString = ''
 
         // set defaults for friendliness
         if (!gistId) {
@@ -26,13 +26,17 @@
                 // debug
                 // gistId = "505534d5a37ffa3a0625"
                 gistId = "0e1b884de82d35053a34"
-                toAddress = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
+                address = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
+                providerString = 'http://127.0.0.1:8545'
             } else if (window.location.host === 'tgerring.github.io') {
                 // public
                 gistId = "0e1b884de82d35053a34"
-                toAddress = "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
+                address = "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
             }
         }
+
+        var toAddress = document.getElementById('option-address')
+        if (toAddress && address) toAddress.value = address
 
         // preload resources
         if (gistId) {
@@ -54,13 +58,21 @@
                 selectedDocIndex = 0
                 displayCode(selectedDocIndex)
                 displayUi(selectedDocIndex)
+
+                var connected = connectInstance(providerString)
+                if (connected) {
+                    watchBlocks(document.getElementById('option-allblocks').checked)
+
+                    var address = document.getElementById('option-address').value
+                    watchEvents(address)
+                }
+
             })
         } else {
             document.getElementById('main').classList.add('flip')
         }
 
         setHandlers()
-        connectInstance()
     }
 
     var setHandlers = function() {
@@ -69,73 +81,108 @@
             displayCode(selectedDocIndex)
             displayUi(selectedDocIndex)
         }, false)
+        document.getElementById('btnWatch').addEventListener('click', function(ev) {
+            var func = function() {
+                var contractAddress = document.getElementById('option-address').value
+                try {
+                    var code = web3.eth.getCode(contractAddress)
+                } catch (e) {
+                    displayNotification(e.toString(), 'error')
+                    return
+                }
+
+                // 2 for "0x" prefix
+                if (code.length > 2) {
+                    var displayAllBlocks = document.getElementById('option-allblocks').checked
+                    watchBlocks(displayAllBlocks)
+                    var address = document.getElementById('option-address').checked
+                    watchEvents(address)
+                } else {
+                    displayNotification('Address has no code', 'error')
+                }
+            }
+
+            if (!connectInstance()) {
+                displayModal(makeConnectionDialog(function() {
+                    func()
+                }))
+            } else
+                func()
+
+        }, false)
         document.getElementById('btnViewInterface').addEventListener('click', function(ev) {
             displayUi(selectedDocIndex)
             document.getElementById('main').classList.toggle('flip')
         }, false)
         document.getElementById('btnSend').addEventListener('click', function(ev) {
-            displayModal(makeTransactionDialog('New transaction', function(transactionOptions) {
-                watchEvents(transactionOptions.to)
-                try {
+            var func = function() {
+                displayModal(makeTransactionDialog('New transaction', function(transactionOptions) {
+                    watchEvents(transactionOptions.to)
+                    try {
 
-                    web3.eth.sendTransaction(transactionOptions, function(error, transactionHash) {
+                        web3.eth.sendTransaction(transactionOptions, function(error, transactionHash) {
+                            // if error, display and return
+                            if (error) {
+                                document.getElementById('tx-message').innerHTML = error.toString()
+                                return
+                            }
 
-                        if (error) {
-                            document.getElementById('tx-message').innerHTML = error.toString()
-                            return
-                        }
+                            // display transaction and close dialog
+                            displayNotification('Sent transaction: <pre><a href="#tx?hash=' + transactionHash + '">' + transactionHash.substring(0, 8) + '...' + transactionHash.substring(transactionHash.length - 6) + '</a></pre>', 'warning')
+                            document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+                            waitingTxs.push(transactionHash)
+                        })
+                    } catch (e) {
+                        document.getElementById('tx-message').innerHTML = e.toString()
+                    }
+                }, {
+                    gas: 90000,
+                    gasPrice: web3.eth.gasPrice,
+                    to: document.getElementById('option-address').value
+                }))
+            }
+            if (!connectInstance()) {
+                displayModal(makeConnectionDialog(function() {
+                    func()
+                }))
+            } else
+                func()
 
-
-                        displayNotification('Sent transaction: <pre><a href="#tx?hash=' + transactionHash + '">' + transactionHash.substring(0, 8) + '...' + transactionHash.substring(transactionHash.length - 6) + '</a></pre>', 'warning')
-                        document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
-
-                        loadedAbiHtml[selectedDocIndex].checkTransaction(transactionHash, function(error, tx) {
-                            if (error) displayNotification(error.toString(), 'error')
-                            else {
-                                var foo = tx.hash.substring(0, 8) + '...' + tx.hash.substring(tx.hash.length - 6)
-                                displayBlock(tx.blockNumber, foo, 'success')
+        }, false)
+        document.getElementById('btnDeploy').addEventListener('click', function(ev) {
+            var func = function() {
+                displayModal(makeTransactionDialog('Deploy: ' + loadedAbiHtml[selectedDocIndex].name, function(transactionOptions) {
+                    watchEvents(transactionOptions.to)
+                    try {
+                        web3Function.Transact(transactionOptions, function(evmFunction) {
+                            if (evmFunction.error) {
+                                document.getElementById('tx-message').innerHTML = evmFunction.error.toString()
+                                    // displayNotification(evmFunction.error.toString(), 'error')
+                            } else {
+                                displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash.trim() + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
+                                document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+                                waitingTxs.push(evmFunction.transactionHash)
                             }
                         })
 
+                    } catch (e) {
+                        document.getElementById('tx-message').innerHTML = e.toString()
+                    }
+                }, {
+                    to: null,
+                    data: null,
+                    gas: 3000000,
+                    gasPrice: web3.eth.gasPrice
+                }))
+            }
 
-                    })
-                } catch (e) {
-                    document.getElementById('tx-message').innerHTML = e.toString()
-                }
-            }, {
-                gas: 90000,
-                gasPrice: web3.eth.gasPrice,
-                to: toAddress
-            }))
-        }, false)
-        document.getElementById('btnDeploy').addEventListener('click', function(ev) {
-            // TODO display constructor params before diusplaying transact dialog
-            // displayModal(makeConstructorDialog(function(evmFunction){}))
-            displayModal(makeTransactionDialog('Deploy: ' + loadedAbiHtml[selectedDocIndex].name, function(transactionOptions) {
-                watchEvents(transactionOptions.to)
-                try {
-                    web3Function.Transact(transactionOptions, function(evmFunction) {
-                        if (evmFunction.error) {
-                            document.getElementById('tx-message').innerHTML = evmFunction.error.toString()
-                                // displayNotification(evmFunction.error.toString(), 'error')
-                        } else {
-                            displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash.trim() + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
-                            document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
-                        }
-                    })
+            if (!connectInstance()) {
+                displayModal(makeConnectionDialog(function() {
+                    func()
+                }))
+            } else
+                func()
 
-                } catch (e) {
-                    document.getElementById('tx-message').innerHTML = e.toString()
-                }
-            }, {
-                to: null,
-                data: null,
-                gas: 3000000,
-                gasPrice: web3.eth.gasPrice
-            }))
-        }, false)
-        document.getElementById('btnWatch').addEventListener('click', function(ev) {
-            displayModal(makeConnectionDialog())
         }, false)
     }
 
@@ -149,6 +196,8 @@
             var foo = '<a href="#event?blockNum=' + evmEvent.result.blockNumber + '&txIndex=' + evmEvent.result.transactionIndex + '&logIndex=' + evmEvent.result.logIndex + '">' + evmEvent.name + '</a>'
             displayBlock(evmEvent.result.blockNumber, foo, 'success')
         })
+        var el = document.getElementById('notification-anchor').querySelector('.notification')
+        el.classList.add('success')
     }
 
     var watchBlocks = function(displayAll) {
@@ -164,6 +213,15 @@
         var filter = web3.eth.filter('latest')
         filter.watch(function(err, hash) {
             var latest = web3.eth.getBlock(hash)
+            for (var i = 0; i < latest.transactions.length; i++) {
+                var txhash = latest.transactions[i]
+                var j = inArrayIndex(waitingTxs, txhash)
+                if (j > -1) {
+                    var msg = txhash.substring(0, 8) + '...' + txhash.substring(txhash.length - 6)
+                    displayBlock(latest.number, msg, 'success')
+                    delete waitingTxs[j]
+                }
+            }
             if (displayAll) {
                 displayBlock(latest.number)
             }
@@ -204,14 +262,32 @@
         return -1
     }
 
-    var connectInstance = function() {
+    var connectInstance = function(providerString) {
+        // try to connect if not connected
         if (!web3.currentProvider)
-            web3.setProvider(new web3.providers.HttpProvider('http://127.0.0.1:8545'))
+            web3.setProvider(new web3.providers.HttpProvider(providerString))
 
-        isConnected = web3.isConnected()
+        // check if connected
+        var isConnected = web3.isConnected()
 
-        // TODO this is yucky
-        if (isConnected && !blockFilter) watchBlocks(displayAllBlocks)
+        if (isConnected) {
+            // fill in "from accounts"
+            var fromInput = document.getElementById('option-from')
+            fromInput.options.length = 0
+            web3.eth.accounts.forEach(function(address) {
+                var option = document.createElement('option')
+                option.value = address
+                option.innerHTML = address
+                fromInput.options.add(option)
+            })
+            fromInput.disabled = false
+
+            // enable watch target
+            document.getElementById('option-address').disabled = false
+            document.getElementById('option-allblocks').disabled = false
+            document.getElementById('btnWatch').disabled = false
+        }
+
         return isConnected
     }
 
@@ -264,6 +340,7 @@
         // append the entry and the top
         var el = document.getElementById('notifications')
         el.appendChild(parElement)
+            // el.insertBefore(parElement, el.children[0])
 
     }
 
@@ -330,15 +407,78 @@
         }
     }
 
-    var makeConnectionDialog = function() {
-        return 'Connection/watch parameters go here'
+    var makeConnectionDialog = function(callback) {
+        var parent = document.createElement('div')
+        var p = document.createElement('p')
+        p.id = 'connect-message'
+
+        var fieldset = document.createElement('fieldset')
+        var legend = document.createElement('legend')
+        legend.innerHTML = 'Connection'
+        var ipLabel = document.createElement('label')
+        ipLabel.htmlFor = 'connect-ip'
+        ipLabel.innerHTML = 'IP:'
+        var ip = document.createElement('input')
+        ip.type = 'text'
+        ip.value = '127.0.0.1'
+        ip.id = ipLabel.htmlFor
+        var portLabel = document.createElement('label')
+        portLabel.htmlFor = 'connect-port'
+        portLabel.innerHTML = 'Port:'
+        var port = document.createElement('input')
+        port.type = 'number'
+        port.id = portLabel.htmlFor
+        port.value = '8545'
+        fieldset.appendChild(legend)
+        fieldset.appendChild(ipLabel)
+        fieldset.appendChild(ip)
+        fieldset.appendChild(portLabel)
+        fieldset.appendChild(port)
+
+        var func = function(isConnected, element) {
+            if (isConnected) {
+                status.innerHTML = 'Connected to: ' + web3.version.node
+                status.classList.remove('error')
+                status.classList.remove('warning')
+                status.classList.add('success')
+            } else {
+                status.innerHTML = 'Not connected'
+                status.classList.add('error')
+                status.classList.remove('warning')
+                status.classList.remove('success')
+            }
+            status.innerHTML += '<br>Web3 version: ' + web3.version.api
+        }
 
         var button = document.createElement('input')
         button.type = 'button'
+        button.value = 'Connect'
         button.addEventListener('click', function() {
-            displayAllBlocks = true
-            connectInstance()
+            var isConnected = connectInstance()
+            if (!isConnected) {
+                var ip = document.getElementById('connect-ip').value
+                var port = document.getElementById('connect-port').value
+                isConnected = connectInstance('http://' + ip + ':' + port)
+            }
+
+            isConnected = connectInstance()
+            var status = document.getElementById('connect-status')
+            func(isConnected, status)
+            if (typeof callback === 'function' && isConnected) callback()
         }, false)
+
+        var wrap = document.createElement('div')
+        wrap.classList.add('wrapper')
+        var status = document.createElement('p')
+        status.id = 'connect-status'
+        func(connectInstance(), status)
+        wrap.appendChild(status)
+
+        parent.appendChild(p)
+        parent.appendChild(fieldset)
+        parent.appendChild(wrap)
+        parent.appendChild(button)
+        return parent
     }
 
     var makeTransactionDialog = function(legendText, callback, txDefaults) {
@@ -481,8 +621,8 @@
 
     var getTransactionOptions = function() {
         return {
-            from: '0x392af429f1b9537f28d97b8467e4b4e3498d5108',
-            to: toAddress
+            from: document.getElementById('option-from'),
+            to: document.getElementById('option-address')
         }
     }
 
@@ -542,13 +682,15 @@
                                         watchEvents(transactionOptions.to)
                                         displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
 
-                                        loadedAbiHtml[selectedDocIndex].checkTransaction(evmFunction.transactionHash, function(error, tx) {
-                                            if (error) displayNotification(error.toString(), 'error')
-                                            else {
-                                                var foo = tx.hash.substring(0, 8) + '...' + tx.hash.substring(tx.hash.length - 6)
-                                                displayBlock(tx.blockNumber, foo, 'success')
-                                            }
-                                        })
+                                        // loadedAbiHtml[selectedDocIndex].checkTransaction(evmFunction.transactionHash, function(error, tx) {
+                                        //     if (error) displayNotification(error.toString(), 'error')
+                                        //     else {
+                                        //         var foo = tx.hash.substring(0, 8) + '...' + tx.hash.substring(tx.hash.length - 6)
+                                        //         displayBlock(tx.blockNumber, foo, 'success')
+                                        //     }
+                                        // })
+
+                                        waitingTxs.push(evmFunction.transactionHash)
 
                                         document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
                                     }
@@ -558,7 +700,7 @@
                                 document.getElementById('tx-message').innerHTML = e.toString()
                             }
                         }, {
-                            to: toAddress,
+                            to: document.getElementById('option-address').value,
                             data: null,
                             gas: 300000,
                             gasPrice: web3.eth.gasPrice,
@@ -619,7 +761,7 @@
         </div>
     </div>
     <div class="page-wrap">
-        <div id="main" class="flip-container full-size">
+        <div id="main" class="flip-container full-size flip">
             <div class="flipper">
                 <div id="uiview" class="front">
                     <div class="header">
@@ -631,9 +773,9 @@
                             <div id="notification-anchor">
                                 <div class="notification">Not connected</div>
                                 <div class="inline">
-                                    <input type="button" id="btnWatch" value="Watch">
+                                    <input type="button" id="btnSend" value="Send">
                                     <input type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
-                                    <input class="stack" type="button" id="btnSend" value="Send">
+                                    <input type="button" value="Watch" id="btnWatch" class="stack">
                                 </div>
                             </div>
                         </div>
@@ -643,6 +785,10 @@
                             <div id="functions">
                                 <div>
                                     <h2>Functions</h2>
+                                    <label for="option-from">Account:</label>
+                                    <select id="option-from" disabled>
+                                        <option>Not connected</option>
+                                    </select>
                                     <div>
                                         <div id="tab-container">
                                             <ul>
@@ -656,6 +802,10 @@
                             <div id="logs">
                                 <div>
                                     <h2>Events</h2>
+                                    <label for="option-address">Watch address:</label>
+                                    <input type="text" id="option-address" class="solfield address" placeholder="0x" disabled>
+                                    <input type="checkbox" id="option-allblocks" disabled>
+                                    <label for="option-allblocks">Display all blocks</label>
                                     <div id="log-search"></div>
                                     <div id="message-container"></div>
                                 </div>
@@ -684,6 +834,7 @@
                             </div>
                             <div id="abi">
                                 <div>
+                                    <div id="abi-tree"></div>
                                     <textarea placeholder="abi" id="abi-code"></textarea>
                                 </div>
                             </div>

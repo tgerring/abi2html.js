@@ -28,6 +28,7 @@ button {
     font-family: Helvetica, Arial, sans-serif;
     width: 50px;
     height: 50px;
+    padding: 0.5ex;
 }
 
 
@@ -38,6 +39,10 @@ general layout
 
 
 */
+
+#notifications {
+    overflow-x: hidden;
+}
 
 #contract {
     width: 66%;
@@ -87,7 +92,7 @@ general layout
     width: 100%;
     text-align: right;
     border-bottom: 1px solid silver;
-    overflow-x: hidden;
+    /*overflow-x: hidden;*/
     overflow-y: hidden;
     background-color: #f6f6f6;
 }
@@ -190,6 +195,23 @@ general layout
     padding: 1em;
 }
 
+#functions h2,
+#logs h2 {
+    display: inline-block;
+    margin-right: 1em;
+}
+
+.wrapper #connect-status {
+    padding: 1ex;
+}
+
+#connect-status {
+    margin: 1ex 0;
+    line-height: 150%;
+    font-family: monospace;
+    border: 1px solid silver;
+}
+
 
 /*
 
@@ -255,7 +277,8 @@ general layout
     margin: 1ex;
 }
 
-#tx-message {
+#tx-message,
+#connect-message {
     color: red;
     font-weight: bolder;
     font-size: 125%;
@@ -514,17 +537,28 @@ textarea[disabled] {
     border: 1px dashed black !important;
 }
 
-.notifications .success,
-.notification.success {
+
+/*.notifications .success,
+.notification.success {*/
+
+.success {
     background-color: #BCF5A9 !important;
 }
 
-.notifications .warning,
+
+/*.notifications .warning,
 .notification.warning {
+*/
+
+.warning {
     background-color: #F3F781 !important;
 }
 
-.notifications .error,
+
+/*.notifications .error,
 .notification.error {
+*/
+
+.error {
     background-color: #F5A9A9 !important;
 }
