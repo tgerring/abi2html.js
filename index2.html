@@ -151,7 +151,8 @@
         }, false)
         document.getElementById('btnDeploy').addEventListener('click', function(ev) {
             var func = function() {
-                displayModal(makeTransactionDialog('Deploy: ' + loadedAbiHtml[selectedDocIndex].name, function(transactionOptions) {
+
+                var txdia = makeTransactionDialog('Deploy: ' + loadedAbiHtml[selectedDocIndex].name, function(transactionOptions) {
                     watchEvents(transactionOptions.to)
                     try {
                         web3Function.Transact(transactionOptions, function(evmFunction) {
@@ -173,7 +174,15 @@
                     data: null,
                     gas: 3000000,
                     gasPrice: web3.eth.gasPrice
-                }))
+                })
+
+                var div = document.createElement('div')
+                var p = document.createElement('p')
+                p.classList.add('error')
+                p.innerHTML = 'Constructor fields not implemented'
+                div.appendChild(p)
+                div.appendChild(txdia)
+                displayModal(div)
             }
 
             if (!connectInstance()) {
@@ -388,6 +397,13 @@
         document.getElementById('abi-code').value = (ah.abi ? JSON.stringify(ah.abi, null, "  ") : '')
         document.getElementById('source-code').value = (ah.source ? ah.source : '')
         document.getElementById('btnDeploy').disabled = ('source' in ah ? false : true)
+
+        if (ah.abi) {
+            var dom = ah.RenderTree()
+            var el = document.getElementById('abi-tree')
+            el.children.length = 0
+            el.appendChild(dom)
+        }
     }
 
     var displayBlock = function(blockNumber, item, className) {
@@ -748,7 +764,7 @@
         var ah
         if (source) ah = new AbiHtml(source)
         else if (abi) ah = new AbiHtml(abi)
-        if (name in ah) ah.name = loadedAbiHtml[index].name
+        if ('name' in loadedAbiHtml[index]) ah.name = loadedAbiHtml[index].name
 
         if (ah) loadedAbiHtml[index] = ah
     }
