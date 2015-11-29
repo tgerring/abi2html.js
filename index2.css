@@ -167,7 +167,8 @@ general layout
     box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
 }
 
-#uiview .main button {
+#uiview .main button,
+#uiview .main input[type=button] {
     margin: 1ex;
     height: 25px;
     width: 75px;
@@ -249,9 +250,10 @@ general layout
 #modal {
     position: fixed;
     width: 50%;
-    top: 25%;
-    left: 25%;
-    /*margin: -25% 0 0 -25%;*/
+    top: 12.5%;
+    left: 12.5%;
+    width: 75%;
+    height: 75%;
     /* Embiggen */
     transform: scale(1.5);
     /* prefix me */
@@ -262,6 +264,8 @@ general layout
     border-radius: 15px;
     box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
     padding: 1em;
+    overflow-y: auto;
+    overflow-x: auto;
 }
 
 .dialogIsOpen .page-wrap {
@@ -440,11 +444,7 @@ flipbook
 
 .ac-container input:checked ~ article {
     display: block;
-}
-
-.ac-container article > div {
-    margin: 1ex;
-    padding: 1ex;
+    padding: 1em;
 }
 
 
@@ -540,11 +540,9 @@ textarea[disabled] {
 
 .solfield .comparison {
     width: 8em;
-    /*margin: 0 1em 0 1em;*/
 }
 
 .solfield .value {
-    width: 15em;
     margin-left: 1em;
 }
 
@@ -553,28 +551,47 @@ textarea[disabled] {
     border: 1px dashed black !important;
 }
 
-
-/*.notifications .success,
-.notification.success {*/
-
 .success {
     background-color: #BCF5A9 !important;
 }
-
-
-/*.notifications .warning,
-.notification.warning {
-*/
 
 .warning {
     background-color: #F3F781 !important;
 }
 
-
-/*.notifications .error,
-.notification.error {
-*/
-
 .error {
     background-color: #F5A9A9 !important;
+}
+
+#contents-logsearch .event {
+    border: 1px solid black;
+    margin: 1em;
+    padding: 1ex;
+}
+
+#contents-logsearch dl dt {
+    display: inline-block;
+    min-width: 150px;
+    margin-bottom: 1ex;
+}
+
+#contents-logsearch dl dd {
+    display: inline;
+    margin: 0;
+    font-family: monospace;
+    font-size: 80%;
+}
+
+#contents-logsearch dl dd:after {
+    display: block;
+    content: '';
+}
+
+.address {
+    width: 30em;
+}
+
+#log-search input {
+    margin-right: 1em;
+    margin-left: 1em;
 }
