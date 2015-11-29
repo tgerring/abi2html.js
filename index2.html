@@ -137,15 +137,125 @@
                     watchEvents(address)
                 }
 
+                routeApp()
+
             })
         } else {
             document.getElementById('main').classList.add('flip')
         }
 
         setHandlers()
+
+    }
+
+    var routeApp = function() {
+        var hash = (window.location.hash.substring(0, 1) === '#' ? window.location.hash.substring(1, window.location.hash.length) : window.location.hash)
+
+        var parts = hash.split('/')
+        if (parts.length > 0)
+            switch (parts[0]) {
+                case 'event':
+                    // this should link to pretified form
+                    break
+                case 'log':
+                    if (parts.length > 3) {
+                        var block = web3.eth.getBlock(parts[1])
+                        var txhash = block.transactions[parts[2]]
+                        var receipt = web3.eth.getTransactionReceipt(txhash)
+                        var pre = document.createElement('pre')
+                        pre.innerHTML = JSON.stringify(receipt.logs[parts[3]], null, '  ')
+                        displayModal(pre)
+                    }
+                    break
+                case 'block':
+                    if (parts.length > 1) {
+                        var pre = document.createElement('pre')
+                        pre.innerHTML = JSON.stringify(web3.eth.getBlock(parts[1], true), null, '  ')
+                        displayModal(pre)
+                    }
+                    break
+                case 'tx':
+                case 'transaction':
+                    if (parts.length > 1) {
+                        var tx = document.createElement('div')
+                        var r = document.createElement('div')
+
+                        var txh3 = document.createElement('h3')
+                        txh3.innerHTML = 'Transaction'
+                        var txpre = document.createElement('pre')
+                        txpre.innerHTML = JSON.stringify(web3.eth.getTransaction(parts[1]), null, '  ')
+
+                        var rh3 = document.createElement('h3')
+                        rh3.innerHTML = 'Receipt'
+                        var rpre = document.createElement('pre')
+                        rpre.innerHTML = JSON.stringify(web3.eth.getTransactionReceipt(parts[1]), null, '  ')
+
+                        tx.appendChild(txh3)
+                        tx.appendChild(txpre)
+                        r.appendChild(rh3)
+                        r.appendChild(rpre)
+
+                        var div = document.createElement('div')
+                        div.appendChild(tx)
+                        div.appendChild(r)
+                        displayModal(div)
+
+                    }
+                    break
+                default:
+                    if (parts[0] in loadedAbiHtml[selectedDocIndex].functions)
+                        document.getElementById('acc-function' + parts[0]).checked = true
+                    else if (parts[0] in loadedAbiHtml[selectedDocIndex].events) {
+                        var e = loadedAbiHtml[selectedDocIndex].events[parts[0]]
+                        document.getElementById('acc-event' + parts[0]).checked = true
+                        if (parts.length > 3) {
+                            var wrap = document.createElement('div')
+                            var h3 = document.createElement('h3')
+                            h3.innerHTML = 'Log search: ' + e.name
+                            var contents = document.createElement('div')
+                            contents.id = 'contents-logsearch'
+
+                            wrap.appendChild(h3)
+                            wrap.appendChild(contents)
+                            displayModal(wrap)
+
+                            var block = web3.eth.getBlock(parts[1])
+                            var txhash = block.transactions[parts[2]]
+                            var receipt = web3.eth.getTransactionReceipt(txhash)
+                            var options = {
+                                toBlock: parts[1],
+                                fromBlock: parts[1],
+                                address: receipt.logs[parts[3]].address,
+                                logIndex: parts[3]
+                            }
+                            e.FetchLogs(options, {}, function(ev) {
+                                if (ev.result.logIndex == options.logIndex) {
+                                    var el = document.getElementById('contents-logsearch')
+                                    var div = document.createElement('div')
+                                    var dom = makeLogSearch(ev)
+                                    var p = document.createElement('p')
+                                    var log = ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
+                                    var link = ev.name + '/' + ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
+                                    p.innerHTML = '<a href="#' + link + '">Event permalink</a> <a href="#log/' + log + '">Raw log</a>'
+                                    div.appendChild(p)
+                                    div.appendChild(dom)
+                                    el.insertBefore(div, el.children[0])
+                                }
+                            })
+                        }
+                    }
+            }
     }
 
     var setHandlers = function() {
+        // watch for changes to href
+        window.addEventListener('popstate', routeApp);
+        const pushUrl = (href) => {
+            history.pushState({}, '', href);
+            window.dispatchEvent(new Event('popstate'));
+        }
+
+
         document.getElementById('btnSave').addEventListener('click', function(ev) {
             updateDoc(selectedDocIndex)
             displayCode(selectedDocIndex)
@@ -198,7 +308,7 @@
                             }
 
                             // display transaction and close dialog
-                            displayNotification('Sent transaction: <pre><a href="#tx?hash=' + transactionHash + '">' + transactionHash.substring(0, 8) + '...' + transactionHash.substring(transactionHash.length - 6) + '</a></pre>', 'warning')
+                            displayNotification('Sent transaction: <pre><a href="#tx/' + transactionHash + '">' + transactionHash.substring(0, 8) + '...' + transactionHash.substring(transactionHash.length - 6) + '</a></pre>', 'warning')
                             document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
                             waitingTxs.push(transactionHash)
                         })
@@ -230,7 +340,7 @@
                                 document.getElementById('tx-message').innerHTML = evmFunction.error.toString()
                                     // displayNotification(evmFunction.error.toString(), 'error')
                             } else {
-                                displayNotification('Sent transaction: <pre><a href="#tx?hash=' + evmFunction.transactionHash.trim() + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
+                                displayNotification('Sent transaction: <pre><a href="#tx/' + evmFunction.transactionHash.trim() + '">' + evmFunction.transactionHash.substring(0, 8) + '...' + evmFunction.transactionHash.substring(evmFunction.transactionHash.length - 6) + '</a></pre>', 'warning')
                                 document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
                                 waitingTxs.push(evmFunction.transactionHash)
                             }
@@ -272,7 +382,8 @@
             fromBlock: 'latest',
             toBlock: 'latest'
         }, null, function(evmEvent) {
-            var foo = '<a href="#event?blockNum=' + evmEvent.result.blockNumber + '&txIndex=' + evmEvent.result.transactionIndex + '&logIndex=' + evmEvent.result.logIndex + '">' + evmEvent.name + '</a>'
+            var link = evmEvent.name + '/' + evmEvent.result.blockNumber + '/' + evmEvent.result.transactionIndex + '/' + evmEvent.result.logIndex
+            var foo = '<a href="#' + link + '">' + evmEvent.name + '</a>'
             displayBlock(evmEvent.result.blockNumber, foo, 'success')
         })
         var el = document.getElementById('notification-anchor').querySelector('.notification')
@@ -387,7 +498,8 @@
         button.type = 'button'
         button.value = 'Close'
         button.addEventListener('click', function() {
-            document.getElementsByTagName("body")[0].classList.remove('dialogIsOpen')
+            document.getElementsByTagName('body')[0].classList.remove('dialogIsOpen')
+            window.location.href = '#'
         }, false)
         parElement.appendChild(button)
         parElement.appendChild(htmlDom)
@@ -483,11 +595,11 @@
             el.innerHTML += item.toString() + '<br>'
         } else if (el && !item) {
             // this shouldn't happen
-            console.log(el.innerHTML)
+            console.log(el.innerHTML, item)
         } else {
             var div = document.createElement('div')
             div.id = id
-            div.innerHTML = 'Block #' + blockNumber.toString() + '<hr>'
+            div.innerHTML = '<a href="#block/' + blockNumber.toString() + '">Block #' + blockNumber.toString() + '</a><hr>'
             if (item) div.innerHTML += item.toString() + '<br>'
             displayNotification(div, className)
         }
@@ -722,7 +834,7 @@
             var div = document.createElement('div')
             var input = document.createElement('input')
             input.type = 'checkbox'
-            input.id = 'acc-' + f.name
+            input.id = 'acc-function' + f.name
             input.name = 'acc-functions'
             var label = document.createElement('label')
             label.htmlFor = input.id
@@ -815,7 +927,7 @@
             var div = document.createElement('div')
             var input = document.createElement('input')
             input.type = 'checkbox'
-            input.id = 'acc-' + e.name
+            input.id = 'acc-event' + e.name
             input.name = 'acc-events'
             var label = document.createElement('label')
             label.htmlFor = input.id
@@ -840,7 +952,15 @@
 
                     e.FetchLogs(searchOptions, filterOptions, function(ev) {
                         var el = document.getElementById('contents-logsearch')
-                        el.insertBefore(makeLogSearch(ev), el.children[0])
+                        var div = document.createElement('div')
+                        var dom = makeLogSearch(ev)
+                        var p = document.createElement('p')
+                        var log = ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
+                        var link = ev.name + '/' + ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
+                        p.innerHTML = '<a href="#' + link + '">Event permalink</a> <a href="#log/' + log + '">Raw log</a>'
+                        div.appendChild(p)
+                        div.appendChild(dom)
+                        el.insertBefore(div, el.children[0])
                     })
                 }
 

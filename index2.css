@@ -297,6 +297,13 @@ general layout
     margin: 1ex;
 }
 
+.modal h2,
+.modal h3,
+.modal h3 {
+    margin-top: 1ex;
+    margin-bottom: 1em;
+}
+
 #tx-message,
 #connect-message {
     color: red;
