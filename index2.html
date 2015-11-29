@@ -16,7 +16,7 @@
     var waitingTxs = []
 
     // detailed object for log seearch
-    var makeLogSearch = function(evmEvent, cb) {
+    var makeEventResult = function(evmEvent, cb) {
         var div = document.createElement('div')
         div.className = ['event'].join(' ')
 
@@ -145,7 +145,7 @@
         }
 
         setHandlers()
-
+        connectInstance()
     }
 
     var routeApp = function() {
@@ -163,14 +163,25 @@
                         var txhash = block.transactions[parts[2]]
                         var receipt = web3.eth.getTransactionReceipt(txhash)
                         var pre = document.createElement('pre')
-                        pre.innerHTML = JSON.stringify(receipt.logs[parts[3]], null, '  ')
+                        var log = receipt.logs[parts[3]]
+                        log.blockHash = '<a href=#block/' + log.blockHash + '>' + log.blockHash + '</a>'
+                        log.transactionHash = '<a href=#tx/' + log.transactionHash + '>' + log.transactionHash + '</a>'
+
+                        pre.innerHTML = JSON.stringify(log, null, '  ')
                         displayModal(pre)
                     }
                     break
                 case 'block':
                     if (parts.length > 1) {
                         var pre = document.createElement('pre')
-                        pre.innerHTML = JSON.stringify(web3.eth.getBlock(parts[1], true), null, '  ')
+                        var block = web3.eth.getBlock(parts[1], false)
+                        block.parentHash = '<a href=#block/' + block.parentHash + '>' + block.parentHash + '</a>'
+                        for (var i = 0; i < block.transactions.length; i++) {
+                            var txhash = block.transactions[i]
+                            var link = '<a href=#tx/' + txhash + '>' + txhash + '</a>'
+                            block.transactions[i] = link
+                        }
+                        pre.innerHTML = JSON.stringify(block, null, '  ')
                         displayModal(pre)
                     }
                     break
@@ -183,7 +194,11 @@
                         var txh3 = document.createElement('h3')
                         txh3.innerHTML = 'Transaction'
                         var txpre = document.createElement('pre')
-                        txpre.innerHTML = JSON.stringify(web3.eth.getTransaction(parts[1]), null, '  ')
+                        var transaction = web3.eth.getTransaction(parts[1])
+                        var blockhash = transaction.blockHash
+                        var link = '<a href=#block/' + blockhash + '>' + blockhash + '</a>'
+                        transaction.blockHash = link
+                        txpre.innerHTML = JSON.stringify(transaction, null, '  ')
 
                         var rh3 = document.createElement('h3')
                         rh3.innerHTML = 'Receipt'
@@ -228,19 +243,24 @@
                                 address: receipt.logs[parts[3]].address,
                                 logIndex: parts[3]
                             }
-                            e.FetchLogs(options, {}, function(ev) {
-                                if (ev.result.logIndex == options.logIndex) {
-                                    var el = document.getElementById('contents-logsearch')
-                                    var div = document.createElement('div')
-                                    var dom = makeLogSearch(ev)
-                                    var p = document.createElement('p')
-                                    var log = ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
-                                    var link = ev.name + '/' + ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
-                                    p.innerHTML = '<a href="#' + link + '">Event permalink</a> <a href="#log/' + log + '">Raw log</a>'
-                                    div.appendChild(p)
-                                    div.appendChild(dom)
-                                    el.insertBefore(div, el.children[0])
-                                }
+                            e.FetchLogs(options, {}, function(eventLogs) {
+                                var el = document.getElementById('contents-logsearch')
+                                el.children.length = 0
+                                eventLogs.forEach(function(ev) {
+                                    if (ev.result.logIndex == options.logIndex) {
+
+                                        var div = document.createElement('div')
+                                        var dom = makeEventResult(ev)
+                                        var p = document.createElement('p')
+                                        var log = ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
+                                        var link = ev.name + '/' + ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
+                                        p.innerHTML = '<a href="#' + link + '">Event permalink</a> <a href="#log/' + log + '">Raw log</a>'
+                                        div.appendChild(p)
+                                        div.appendChild(dom)
+                                        el.insertBefore(div, el.children[0])
+                                    }
+
+                                })
                             })
                         }
                     }
@@ -463,7 +483,7 @@
         if (isConnected) {
             // fill in "from accounts"
             var fromInput = document.getElementById('option-from')
-            fromInput.options.length = 0
+            fromInput.innerHTML = ''
             web3.eth.accounts.forEach(function(address) {
                 var option = document.createElement('option')
                 option.value = address
@@ -937,31 +957,89 @@
             button.type = 'button'
             button.value = 'Search'
             button.addEventListener('click', function() {
-                var foo = function(searchOptions, filterOptions) {
-                    var wrap = document.createElement('div')
-                    var h3 = document.createElement('h3')
-                    h3.innerHTML = 'Log search: ' + e.name
-                    var contents = document.createElement('div')
-                    contents.id = 'contents-logsearch'
-
-                    wrap.appendChild(h3)
-                    wrap.appendChild(contents)
-                    displayModal(wrap)
-
-                    // display logs
-
-                    e.FetchLogs(searchOptions, filterOptions, function(ev) {
-                        var el = document.getElementById('contents-logsearch')
+                var bar = function(e, callback) {
+                    var filterFields = e.getFieldFilterValues()
+                    e.GetLogsFiltered(filterFields, function(ev) {
                         var div = document.createElement('div')
-                        var dom = makeLogSearch(ev)
+                        var dom = makeEventResult(ev)
                         var p = document.createElement('p')
                         var log = ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
                         var link = ev.name + '/' + ev.result.blockNumber + '/' + ev.result.transactionIndex + '/' + ev.result.logIndex
                         p.innerHTML = '<a href="#' + link + '">Event permalink</a> <a href="#log/' + log + '">Raw log</a>'
                         div.appendChild(p)
                         div.appendChild(dom)
-                        el.insertBefore(div, el.children[0])
+                        if (typeof callback === 'function') callback(div)
                     })
+                }
+                var foo = function(searchOptions, filterOptions) {
+                    var wrap = document.createElement('div')
+                    var h3 = document.createElement('h3')
+                    h3.innerHTML = 'Log search: ' + e.name
+                    var search = document.createElement('div')
+                    search.id = 'search-logsearch'
+                    var searchDom = e.makeFieldFilter('livesearch')
+                    var results = searchDom.querySelectorAll('input, select, textarea') // TODO fill in selector
+                    for (var i = 0; i < results.length; i++) {
+                        var result = results[i]
+                        result.addEventListener('change', function() {
+                            var el = document.getElementById('contents-logsearch')
+                            el.innerHTML = ''
+                            bar(e, function(dom) {
+                                el.insertBefore(dom, el.children[0])
+                            })
+                        }, false)
+                        result.addEventListener('keyup', function() {
+                            var el = document.getElementById('contents-logsearch')
+                            el.innerHTML = ''
+                            bar(e, function(dom) {
+                                el.insertBefore(dom, el.children[0])
+                            })
+                        }, false)
+                    }
+                    search.appendChild(searchDom)
+                    var contents = document.createElement('div')
+                    contents.id = 'contents-logsearch'
+                    contents.innerHTML = '<p>Loading...</p>'
+
+
+                    wrap.appendChild(h3)
+                    wrap.appendChild(search)
+                    wrap.appendChild(contents)
+                    displayModal(wrap)
+
+
+                    // buffer logs from client
+                    e.FetchLogs(searchOptions, filterOptions, function(loadedLogs) {
+                        // set values from caller
+                        for (key in filterOptions) {
+                            var filterVals = filterOptions[key]
+
+                            var field = e.ev.GetInputByName(key)
+                            document.getElementById(field.htmlId).value = filterVals.value
+
+                            var select = document.getElementById(field.htmlId + '-operator')
+                            for (var i = 0; i < select.options.length; i++) {
+                                var option = select.options[i]
+                                if (option.value == filterVals.operator)
+                                    select.selectedIndex = i
+                            }
+                        }
+
+                        // insert the results
+                        var el = document.getElementById('contents-logsearch')
+                        if (loadedLogs.length === 0) {
+                            el.innerHTML = '<p>No logs founds</p>'
+                            return
+                        } else {
+                            el.innerHTML = ''
+                            bar(e, function(dom) {
+                                el.insertBefore(dom, el.children[0])
+                            })
+                        }
+
+                    })
+
+
                 }
 
                 var searchOptions = {
@@ -970,8 +1048,8 @@
                     address: document.getElementById('option-address').value
                 }
 
-                // BUG this does not grab the operator
                 var filterOptions = e.getFieldFilterValues()
+                    // var filterOptions = e.getIndexedFilterValues()
 
                 if (connectInstance())
                     foo(searchOptions, filterOptions)
@@ -1053,7 +1131,7 @@
                                 <div class="inline">
                                     <input type="button" id="btnSend" value="Send">
                                     <input type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
-                                    <input type="button" value="Watch" id="btnWatch" class="stack">
+                                    <input type="button" value="Update" id="btnWatch" class="stack">
                                 </div>
                             </div>
                         </div>
