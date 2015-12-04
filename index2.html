@@ -603,7 +603,7 @@
         if (ah.abi) {
             var dom = ah.RenderTree()
             var el = document.getElementById('abi-tree')
-            el.children.length = 0
+            el.innerHTML = ''
             el.appendChild(dom)
         }
     }
