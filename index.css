@@ -13,381 +13,592 @@ body {
     font-size: 11pt;
 }
 
-.readonly {
-    font-family: monospace;
-    color: #000000;
-    background-color: #E6E6E6
-}
-
-div.function > h3 {
-    display: inline;
-    margin-right: 2em;
-}
-
-#functions {
-    margin: 0;
-}
-
-#functions > div {
-    display: inline-block;
-}
-
-#events {
-    margin: 0;
-    width: 100%;
-    display: inline-block;
-}
-
-#message-container div.solfield input,
-#message-container div.solfield textarea {
-    border: none;
-}
-
-#messages {
-    margin: 0;
-    height: 10em;
-    overflow-y: scroll;
-}
-
-#contract-abi {
-    width: 100%;
-    height: 8em;
-}
-
-#contract-code {
-    width: 100%;
-    height: 8em;
-}
-
-#main > div > div {
-    margin-bottom: 1em;
-}
-
-fieldset.input label,
-fieldset.output label,
-fieldset.event label {
-    margin-right: 1em;
-    display: inline-block;
-    width: 8em;
-    text-align: right;
-}
-
-fieldset.input,
-fieldset.output,
-fieldset.event {
-    clear: both;
-}
-
-.event > h3 {
-    display: inline-block;
-    margin-right: 1em;
-}
-
-.pull-left {
-    float: left;
-    width: 50%;
-    /*overflow-y: scroll;*/
-}
-
-.pull-right {
-    float: right;
-    width: 50%;
-}
-
-.address,
-.string {
-    width: 100%;
-    /*height: 1.8em;*/
-}
-
-.bytes {
-    width: 100%;
-}
-
-.int,
-.uint {
-    height: 1.8em;
-}
-
-.log {
-    margin: 1em 1em;
-    border: 1px solid gray;
-    padding: 1em 1em;
-    -moz-border-radius: 8px;
-    border-radius: 8px;
-}
-
-.notification {
-    margin: 0 0 1em 0;
-    border: 1px solid gray;
-    padding: 10px 5px;
-    -moz-border-radius: 8px;
-    border-radius: 8px;
-    line-height: 1.4;
-}
-
-.notification > button {
-    /*position: absolute;*/
-    /*right: 20;*/
-    float: right;
-    margin-top: -0.5em;
-}
-
-.notification pre {
-    background-color: silver;
-    border: 1px solid black;
-    padding: 5px;
-    font-size: 80%;
-}
-
-.notification samp {
-    background-color: silver;
-    border: 1px solid black;
-    padding: 1px;
-    font-size: 80%;
-}
-
-.success {
-    background-color: #BCF5A9
-}
-
-.warning {
-    background-color: #F3F781
-}
-
-.error {
-    background-color: #F5A9A9
-}
-
-.wordwrap {
-    word-wrap: break-word;
-}
-
-.notifications > div {
-    margin: 1em 1ex;
-}
-
-.notification > div dl dt,
-.log > div dl dt {
-    display: inline-block;
-    min-width: 150px;
-    margin-bottom: 1ex;
-}
-
-.notification > div dl dd,
-.log > div dl dd {
-    display: inline;
-    margin: 0;
-    font-family: monospace;
-    font-size: 80%;
-}
-
-.notification > div dl dd:after,
-.log > div dl dd:after {
-    display: block;
-    content: '';
-}
-
-div.solfield {
-    margin: 1ex 0;
-}
-
-#events div.solfield > label {
-    display: inline-block;
-    min-width: 5em;
-    margin-right: 1em;
-}
-
-#eventFilter {
-    margin: 1em;
-}
-
-#main > div {
-    vertical-align: top;
-}
-
-fieldset#inputs {
-    clear: both;
-}
-
 dfn {
     font-style: normal;
     border-bottom: 1px dashed black;
     cursor: help;
 }
 
-.comparison {
-    width: 8em;
+input[type=button],
+button {
+    border: 1px solid gray;
+    background-color: #ffff66;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+    font-family: Helvetica, Arial, sans-serif;
+    width: 50px;
+    height: 50px;
+    padding: 0.5ex;
+}
+
+
+/*
+
+
+general layout
+
+
+*/
+
+#notifications {
+    overflow-x: hidden;
+}
+
+#contract {
+    width: 66%;
+    display: inline-block;
+    margin-bottom: -25px;
+}
+
+#contract textarea,
+#abi textarea {
+    display: block;
+    height: auto;
+    width: 100%;
+    background-color: #dddddd;
+    font-family: monospace;
+    font-size: 140%;
+}
+
+#abi {
+    width: 34%;
+    display: inline-block;
+    float: right;
+}
+
+#contract textarea {
+    height: 100%;
+}
+
+#abi textarea {
+    height: 50%;
+}
+
+#abi-tree {
+    height: 50%;
+    overflow: scroll;
+}
+
+#abi-tree > div {
+    margin: 1em;
+}
+
+#codeview > .header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    text-align: right;
+}
+
+#codeview > .main {
+    position: absolute;
+    top: 80px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#uiview .header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 150px;
+    width: 100%;
+    text-align: right;
+    border-bottom: 1px solid silver;
+    /*overflow-x: hidden;*/
+    overflow-y: hidden;
+    background-color: #f6f6f6;
+}
+
+#uiview .header .wrapper,
+#codeview .header .wrapper > div {
+    margin: 15px;
+}
+
+#codeview nav {
+    float: left;
+}
+
+#codeview nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#codeview nav li a {
+    padding: 0 10px 50px 10px;
+    cursor: pointer;
+}
+
+#codeview nav li {
+    float: left;
+    border: 1px solid;
+    border-bottom-width: 0;
+    margin: 40px 0 0 5px;
+    height: 100%;
+    padding-top: 3px;
+}
+
+#codeview nav li.selected {
+    /*position: relative;*/
+    /*top: 1px;*/
+    background: orange;
+    margin-top: 25px;
+}
+
+#uiview .header > div > div {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#uiview .header .notifications > div,
+#uiview .header .notification {
+    min-width: 100px;
+    height: 100px;
+    padding: 1ex;
+    margin-right: 1ex;
+    display: inline-block;
+    text-align: left;
+    vertical-align: top;
+    background-color: white;
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+#uiview .main button,
+#uiview .main input[type=button] {
+    margin: 1ex;
+    height: 25px;
+    width: 75px;
+}
+
+#uiview .main {
+    position: absolute;
+    top: 150px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: scroll;
+}
+
+#uiview .header input[type=button],
+#uiview .header button {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    margin-bottom: 1ex;
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+#codeview .header input[type=button],
+#codeview .header button {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    margin-bottom: 1ex;
+}
+
+#functions,
+#logs {
+    vertical-align: top;
+    display: inline-block;
+    width: 49%;
+}
+
+#functions > div,
+#logs > div {
+    padding: 1em;
+}
+
+#functions h2,
+#logs h2 {
     display: inline-block;
     margin-right: 1em;
 }
 
-.indexed {
-    margin-left: 1em;
-    font-weight: bold;
+.wrapper #connect-status {
+    padding: 1ex;
 }
 
-#main > div {
+#connect-status {
+    margin: 1ex 0;
+    line-height: 150%;
+    font-family: monospace;
+    border: 1px solid silver;
+}
+
+
+/*
+
+
+    modal
+
+*/
+
+.dialogIsOpen #modalwrapper {
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+#modal {
+    position: fixed;
+    width: 50%;
+    top: 12.5%;
+    left: 12.5%;
+    width: 75%;
+    height: 75%;
+    /* Embiggen */
+    transform: scale(1.5);
+    /* prefix me */
+    /* Hidden */
+    opacity: 0;
+    pointer-events: none;
+    background: #F5F5F5;
+    border-radius: 15px;
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
+    padding: 1em;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.dialogIsOpen .page-wrap {
+    /* Blur and de-color */
+    filter: blur(5px) grayscale(50%);
+    -webkit-filter: blur(5px) grayscale(50%);
+    /* Recede */
+    /*-webkit-transform: scale(0.9);*/
+}
+
+.dialogIsOpen #modal {
+    /* Regular size and visible */
+    transform: scale(1);
+    /* prefix me */
+    opacity: 1;
+    /* Clickable */
+    pointer-events: auto;
+    z-index: 100;
+}
+
+.page-wrap,
+#modal {
+    transition: all 0.4s ease;
+    /* prefix me */
+}
+
+.modal > input[type=button] {
+    float: right;
+    margin: 1ex;
+}
+
+.modal h2,
+.modal h3,
+.modal h3 {
+    margin-top: 1ex;
+    margin-bottom: 1em;
+}
+
+#tx-message,
+#connect-message {
+    color: red;
+    font-weight: bolder;
+    font-size: 125%;
+    margin-bottom: 1em;
+}
+
+.tx-options label {
+    display: inline-block;
+    width: 6em;
+    text-align: right;
+    margin: 0.5ex 1em;
+}
+
+.tx-options input[type=button],
+.tx-options button {
+    width: 18em;
+    margin: 2em 6em 0 6em;
+}
+
+
+/*
+
+
+flipbook
+
+
+*/
+
+
+/* entire `ainer, keeps perspective */
+
+.flip-container {
+    perspective: 1000;
+}
+
+
+/* flip the pane when hovered */
+
+.flip-container.hover .flipper,
+.flip-container.flip .flipper {
+    transform: rotateY(180deg);
+}
+
+.flip-container,
+.front,
+.back {
     width: 100%;
+    height: 100%;
 }
 
-#controls {
-    overflow-y: scroll;
+
+/* flip speed goes here */
+
+.flipper {
+    transition: 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
+    height: 100%;
 }
 
-#dashboard > div {
+
+/* hide back of pane during swap */
+
+.front,
+.back {
+    backface-visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+
+/* front pane, placed above back */
+
+.front {
+    z-index: 2;
+    /* for firefox 31 */
+    transform: rotateY(0deg);
+}
+
+
+/* back, initially hidden pane */
+
+.back {
+    transform: rotateY(180deg);
+}
+
+
+/*
+
+
+    ui accordian
+
+
+*/
+
+.ac-container {
+    width: 100%;
+    margin: 1em auto 1em auto;
+}
+
+.ac-container > div > label {
+    padding: 5px 20px;
+    position: relative;
+    z-index: 20;
+    display: block;
+    height: 30px;
+    cursor: pointer;
+    color: #777;
+    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.8);
+    line-height: 33px;
+    font-size: 19px;
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 1px 0px 0px 0px rgba(255, 255, 255, 0.9) inset, 0px 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ac-container > div > label:hover {
+    background: #c6e1ec;
+}
+
+.ac-container input:checked + label,
+.ac-container input:checked + label:hover {
+    background: #c6e1ec;
+    color: #3d7489;
+    text-shadow: 0px 1px 1px rgba(255, 255, 255, 0.6);
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3), 0px 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ac-container > div > input {
+    display: none;
+}
+
+.ac-container article {
+    background: rgba(255, 255, 255, 0.5);
+    margin-top: -1px;
+    display: none;
+    z-index: 10;
+}
+
+.ac-container input:checked ~ article {
+    box-shadow: 0px 0px 0px 1px rgba(155, 155, 155, 0.3);
+}
+
+.ac-container input:checked ~ article {
+    display: block;
     padding: 1em;
 }
 
 
-/*#tab-container {
+/* hide redundant */
+
+.function > h3,
+.event > h3 {
     display: none;
 }
+
+
+/*
+
+
+
 */
 
-@media screen and (max-width: 1023px) {
-    #tab-container {
-        position: relative;
-        margin: 20px 0;
-    }
-    #tab-container ul {
-        margin: 0;
-        padding: 0;
-    }
-    #tab-container li {
-        margin: 0 5px 10px 0;
-        padding: 0;
-        list-style: none;
-        display: inline-block;
-    }
-    #tab-container a {
-        padding: 3px 12px;
-        text-decoration: none;
-        color: #999;
-        line-height: 100%;
-    }
+.full-size {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    overflow: hidden;
 }
 
-@media screen and (min-width: 1024px) {
-    #header {
-        position: fixed;
-        top: 0px;
-        margin: auto;
-        z-index: 100000;
-        width: 100%;
-        background-color: white;
-    }
-    #header-wrapper: {
-        background: #000;
-        height: 200px;
-    }
-    #header-wrapper > div {
-        width: 100%;
-        vertical-align: top;
-    }
-    #header-wrapper > div > div {
-        display: inline-block;
-        vertical-align: top;
-    }
-    #main {
-        margin: 200px 0 0 0;
-    }
-    #abi {
-        width: 50%;
-        float: left;
-    }
-    #contract {
-        width: 50%;
-        float: left;
-    }
-    #controls {
-        width: 45%;
-    }
-    #controls > h2 {
-        display: none;
-    }
-    #messages {
-        width: 50%;
-        display: inline-block;
-    }
-    #tab-container {
-        vertical-align: top;
-        display: inline-block;
-    }
-    #tab-container ul {
-        list-style: none;
-        text-align: right;
-        padding: 0;
-    }
-    #tab-container ul li {
-        border-top: 1px solid #666;
-        border-left: 1px solid #666;
-        border-bottom: 1px solid #666;
-        border-right: 8px solid #666;
-        background-color: #ddd;
-        margin: 4px 0;
-        padding-right: 1em;
-    }
-    #tab-container ul li a,
-    #tab-container ul li a:visited {
-        text-decoration: none;
-        color: #666;
-        display: block;
-        padding: 8px 5px;
-    }
-    #tab-container ul li:hover {
-        border-right: 8px solid #333;
-    }
-    #tab-container ul li a:hover {
-        color: #000;
-    }
-    #tab-container ul li.selected {
-        border-right: none;
-        background-color: #fff;
-        border-right: 8px solid #006699;
-    }
-    #tab-container ul li.call {
-        border-left: 8px solid green;
-    }
-    /* transact must be before call because anything can be transacted to */
-    #tab-container ul li a.transact::after {
-        content: " \2192";
-    }
-    #tab-container ul li a.call::after {
-        content: " \21c4";
-    }
-    #main-container {
-        min-height: 400px;
-        margin-left: -5px;
-        padding: 20px;
-        background-color: #fff;
-        border: 1px solid #888;
-        display: inline-block;
-    }
-    #main > div > div {
-        display: inline-block;
-        width: 45%;
-    }
-    #dashboard > h2 {
-        display: none;
-    }
-    #functions > h2 {
-        margin-left: 220px;
-    }
-    #messages > h2,
-    #events > h2 {
-        display: inline-block;
-    }
-    .mainleft {
-        padding: 1em;
-    }
-    .mainright {
-        float: right;
-        padding: 1em;
-    }
-    .address,
-    .string {
-        width: 60ex;
-        height: 1.8em;
-    }
+.pull-left {
+    float: left;
+}
+
+.pull-right {
+    float: right;
+}
+
+.nowrap {
+    white-space: nowrap;
+}
+
+.inline {
+    display: inline-block;
+}
+
+.stack {
+    display: block;
+    clear: both;
+    margin-bottom: 1ex;
+}
+
+
+/*
+
+
+
+
+*/
+
+.event legend {
+    display: none;
+}
+
+.event fieldset {
+    border: none;
+}
+
+.solfield input,
+.solfield textarea {
+    font-family: monospace;
+    color: black;
+    border: 1px solid gray;
+}
+
+.solfield input[readonly],
+.solfield textarea[readonly],
+.solfield .readonly,
+input[disabled],
+select[disabled],
+textarea[disabled] {
+    cursor: not-allowed;
+    background-color: #E3E3E3;
+}
+
+.solfield > * {
+    display: inline-block;
+    margin-top: 1ex;
+    vertical-align: top;
+}
+
+.solfield .name {
+    width: 8em;
+    text-align: right;
+    margin-right: 1em;
+}
+
+.solfield .comparison {
+    width: 8em;
+}
+
+.solfield .value {
+    margin-left: 1em;
+}
+
+.notifications .dashed,
+.notification.dashed {
+    border: 1px dashed black !important;
+}
+
+.success {
+    background-color: #BCF5A9 !important;
+}
+
+.warning {
+    background-color: #F3F781 !important;
+}
+
+.error {
+    background-color: #F5A9A9 !important;
+}
+
+#contents-logsearch .event {
+    border: 1px solid black;
+    margin: 1em;
+    padding: 1ex;
+}
+
+#contents-logsearch dl dt {
+    display: inline-block;
+    min-width: 150px;
+    margin-bottom: 1ex;
+}
+
+#contents-logsearch dl dd {
+    display: inline;
+    margin: 0;
+    font-family: monospace;
+    font-size: 80%;
+}
+
+#contents-logsearch dl dd:after {
+    display: block;
+    content: '';
+}
+
+.address {
+    width: 30em;
+}
+
+#log-search input {
+    margin-right: 1em;
+    margin-left: 1em;
 }
