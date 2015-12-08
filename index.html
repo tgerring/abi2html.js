@@ -188,7 +188,10 @@
         if (result) {
             for (var f in result.files) {
                 var content = result.files[f].content
-                var abi = makeSignatureAbi(re, content)
+
+
+                var ah = new AbiHtml()
+                var abi = ah.FromRegex(content)
 
                 document.getElementById('contract-code').value = ''
                 document.getElementById('contract-abi').value = JSON.stringify(abi, null, "\t")
@@ -201,84 +204,6 @@
         }
     }
 
-    var makeSignatureAbi = function(re, str) {
-        var abi = []
-        var match
-        while (match = re.exec(str)) {
-            abiItem = {
-                type: match[1],
-                name: match[2]
-            }
-
-            var modifiers = match[4].split(' ')
-            if (abiItem.type === 'event' && 'anonymous' in modifiers) abiItem.anonymous = modifiers.indexed
-            if (abiItem.type === 'function' && 'constant' in modifiers) abiItem.constant = modifiers.constant
-
-            abiItem.inputs = makeInputs(match[3])
-            abiItem.outputs = makeOutputs(match[5])
-
-            abi.push(abiItem)
-        }
-
-        return abi
-    }
-
-
-    var makeInputs = function(inputSig) {
-        if (!inputSig || typeof inputSig !== 'string' || inputSig.trim().length === 0) return []
-
-        var result = []
-        var inputs = inputSig.split(',')
-        inputs.forEach(function(v) {
-            var words = v.trim().split(' ')
-            var field = {
-                type: null,
-                name: null
-            }
-            switch (words.length) {
-                case 1:
-                    field.type = words[0]
-                    field.name = ''
-                    break
-                case 2:
-                    field.type = words[0]
-                    field.name = words[1]
-                    break
-                case 3:
-                    field.type = words[0]
-                    field.name = words[2]
-                    if (words[1] === 'indexed') field.indexed = true
-                    else field.indexed = false
-            }
-            result.push(field)
-        })
-        return result
-    }
-
-    var makeOutputs = function(outputSig) {
-        if (!outputSig || typeof outputSig !== 'string' || outputSig.trim().length === 0) return []
-
-        var result = []
-        var outputs = outputSig.split(',')
-        outputs.forEach(function(v) {
-            var words = v.trim().split(' ')
-            var field = {
-                type: null,
-                name: null
-            }
-            switch (words.length) {
-                case 1:
-                    field.type = words[0]
-                    field.name = ''
-                    break
-                case 2:
-                    field.type = words[0]
-                    field.name = words[1]
-            }
-            result.push(field)
-        })
-        return result
-    }
 
     var compileContract = function(code, callback) {
         if (!code) code = document.getElementById('contract-code').value

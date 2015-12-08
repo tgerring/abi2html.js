@@ -16,7 +16,7 @@ git clone https://github.com/tgerring/abi2html-js.git
 open abi2html-js/index.html
 ```
 
-The applicattion can be deep-linked to a prticular function with an anchor the name of the function, i.e. `index.html#changeRequirement`. Additionally, it's possible to load Solidity source or ABI from GitHub Gist and set the target contract address with URL query parameters, for example `?ABI_GIST=0e1b884de82d35053a34`. Combining the two might look this: `?SOLIDITY_GIST=c835f38889b989e8488c&TO_ADDRESS=0x21a3a128968f7fd17eb0a16045a84769374aeae0#confirm`
+The application can be deep-linked to a prticular function with an anchor the name of the function, i.e. `index.html#changeRequirement`. Additionally, it's possible to load Solidity source or ABI from GitHub Gist and set the target contract address with URL query parameters, for example `?ABI_GIST=0e1b884de82d35053a34`. Combining the two might look this: `?SOLIDITY_GIST=c835f38889b989e8488c&TO_ADDRESS=0x21a3a128968f7fd17eb0a16045a84769374aeae0#confirm`
 
 Valid URL query parameters include:
 ```
