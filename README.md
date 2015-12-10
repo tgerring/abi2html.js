@@ -1,5 +1,7 @@
 # abi2html-js
 
+[Preview on GitHub pages](https://tgerring.github.io/abi2html-js/) or open in Mist to connect to the network.
+
 Generate HTML page from Solidity ABI with JavaScript. This is useful as an "admin" interface to a contract or as a basis for generating forms for more advanced DApps.
 
 ## Usage:
