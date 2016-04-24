@@ -602,3 +602,11 @@ textarea[disabled] {
     margin-right: 1em;
     margin-left: 1em;
 }
+
+#pending-tx {
+    padding: 0;
+}
+
+#pending-tx li {
+    list-style-type: none;
+}
