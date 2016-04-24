@@ -63,7 +63,6 @@
 
                 var connected = connectInstance(providerString)
                 if (connected) {
-                    // watchBlocks(document.getElementById('option-allblocks').checked)
                     watchBlocks(false)
 
                     var address = document.getElementById('option-address').value
@@ -103,7 +102,6 @@
       var block = web3.eth.getBlock('pending')
       var el = document.getElementById('notification-anchor')
       el.children[0].innerHTML  = 'Pending block #' + block.number + '<br>'
-      // el.children[0].innerHTML += 'Difficulty: ' + block.difficulty.valueOf() + '<br>'
       el.children[0].innerHTML += 'Gas limit: ' + block.gasLimit + '<hr>'
       el.children[0].innerHTML += '<ul id="pending-tx"></ul>'
       el.children[0].classList.add('dashed')
@@ -131,7 +129,6 @@
         var block = web3.eth.getBlock('pending')
         var el = document.getElementById('notification-anchor')
         el.children[0].innerHTML  = 'Pending block #' + block.number + '<br>'
-        // el.children[0].innerHTML += 'Difficulty: ' + block.difficulty.valueOf() + '<br>'
         el.children[0].innerHTML += 'Gas limit: ' + block.gasLimit + '<hr>'
         el.children[0].innerHTML += '<ul id="pending-tx"></ul>'
         el.children[0].classList.add('dashed')
@@ -193,8 +190,6 @@
                                     <h2>Events</h2>
                                     <label for="option-address">Watch address:</label>
                                     <input type="text" id="option-address" class="solfield address" placeholder="0x" disabled>
-                                    <!-- <input type="checkbox" id="option-allblocks" checked disabled> -->
-                                    <!-- <label for="option-allblocks">Display all blocks</label> -->
                                     <div id="log-search"></div>
                                     <div id="message-container"></div>
                                 </div>

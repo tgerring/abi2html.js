@@ -29,5 +29,5 @@ Some options:
 * #log/&lt;BlockNum&gt;/&lt;TransactionIndex&gt;/&lt;LogIndex&gt;
 * #tx/&lt;TransactionHash&gt;
 * #&lt;EventName&gt;
-* #&lt;EventName&gt;/&lt;BlockNum&gt;/&lt;TransactionIndex&gt;/&ltLogIndex&gt;
+* #&lt;EventName&gt;/&lt;BlockNum&gt;/&lt;TransactionIndex&gt;/&lt;LogIndex&gt;
 * #&lt;FunctionName&gt;
