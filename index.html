@@ -14,7 +14,6 @@
     var loadedAbiHtml = []
     var selectedDocIndex
     var web3 = (typeof web3 === 'undefined' ? new Web3() : web3)
-    var blockFilter
     var appStatus = new AppStatus()
 
     window.onload = function() {
@@ -60,22 +59,32 @@
             document.getElementById('main').classList.add('flip')
         }
 
-                // render code
-                selectedDocIndex = 0
-                displayCode(selectedDocIndex)
-                displayUi(selectedDocIndex)
+        // render code
+        selectedDocIndex = 0
+        displayCode(selectedDocIndex)
+        displayUi(selectedDocIndex)
 
-                var connected = connectInstance(providerString)
-                if (connected) {
-                    watchBlocks(false)
+        var connected = connectInstance(providerString)
+        if (connected) {
+            // display inital state
+            appStatus.displayPending()
 
-                    var address = document.getElementById('option-address').value
-                    watchEvents(address)
-                }
+            appStatus.watchBlocks(function(txhash, latest){
+              // if the block transaction is in the local cache
+              var foo = txhash.substring(0, 8) + '...' + txhash.substring(txhash.length - 6)
+              var link = 'tx/' + txhash
+              var msg = '<a href="#' + link + '">' + foo + '</a>'
+              displayBlock(latest.number, msg, 'success')
 
-                routeApp()
+              appStatus.displayPending()
+            })
 
 
+            var address = document.getElementById('option-address').value
+            watchEvents(address)
+        }
+
+        routeApp()
 
         setHandlers()
         connectInstance()
@@ -95,51 +104,7 @@
         // when we send a transaction, this is getting loaded another time. why?
         displayBlock(evmEvent.result.blockNumber, foo, 'success')
       })
-      var el = document.getElementById('notification-anchor').querySelector('.notification')
-    }
-
-    var watchBlocks = function() {
-      if (blockFilter) blockFilter.stopWatching()
-
-      // display inital state
-      var block = web3.eth.getBlock('pending')
-      var el = document.getElementById('notification-anchor')
-      el.children[0].innerHTML  = 'Pending block #' + block.number + '<br>'
-      el.children[0].innerHTML += 'Gas limit: ' + block.gasLimit + '<hr>'
-      el.children[0].innerHTML += '<ul id="pending-tx"></ul>'
-      el.children[0].classList.add('dashed')
-
-      // create filter for new blocks
-      var filter = web3.eth.filter('latest')
-      filter.watch(function(err, hash) {
-        // get new block
-        var latest = web3.eth.getBlock(hash)
-        // loop through transactions
-        for (var i = 0; i < latest.transactions.length; i++) {
-            // get transaction hash
-          var txhash = latest.transactions[i]
-          if (appStatus.isTransactionPending(txhash)) {
-            // if the block transaction is in the local cache
-            var foo = txhash.substring(0, 8) + '...' + txhash.substring(txhash.length - 6)
-            var link = 'tx/' + txhash
-            var msg = '<a href="#' + link + '">' + foo + '</a>'
-            displayBlock(latest.number, msg, 'success')
-            // remove the transaction 
-            appStatus.removeTransaction(txhash)
-          }
-        }
-
-        var block = web3.eth.getBlock('pending')
-        var el = document.getElementById('notification-anchor')
-        el.children[0].innerHTML  = 'Pending block #' + block.number + '<br>'
-        el.children[0].innerHTML += 'Gas limit: ' + block.gasLimit + '<hr>'
-        el.children[0].innerHTML += '<ul id="pending-tx"></ul>'
-        el.children[0].classList.add('dashed')
-
-        appStatus.displayPending()
-      })
-
-      blockFilter = filter
+      // var el = document.getElementById('notification-anchor').querySelector('.notification')
     }
     </script>
 </head>
@@ -160,7 +125,7 @@
                                 </div>
                             </div>
                             <div id="notification-anchor">
-                                <div class="notification">Not connected</div>
+                                <div class="notification dashed"><span id="pending-status">Not connected</span><hr><ul id="pending-tx"></ul></div>
                                 <div class="inline">
                                     <input type="button" value="Update" id="btnWatch">
                                     <input type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
