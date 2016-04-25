@@ -43,18 +43,22 @@
         // preload resources
         if (gistId) {
             callAjax('https://api.github.com/gists/' + gistId, function(response) {
-                if (response === null) return
-
-                var result = JSON.parse(response)
-                if (result) {
-                    var i = 0
-                    for (var filename in result.files) {
-                        var ah = new AbiHtml(result.files[filename].content)
-                        ah.name = filename
-                        loadedAbiHtml[i] = ah
-                        i++
-                    }
+                if (response != null) {
+                  var result = JSON.parse(response)
+                  if (result) {
+                      var i = 0
+                      for (var filename in result.files) {
+                          var ah = new AbiHtml(result.files[filename].content)
+                          ah.name = filename
+                          loadedAbiHtml[i] = ah
+                          i++
+                      }
+                  }
                 }
+            })
+        } else {
+            document.getElementById('main').classList.add('flip')
+        }
 
                 // render code
                 selectedDocIndex = 0
@@ -71,10 +75,7 @@
 
                 routeApp()
 
-            })
-        } else {
-            document.getElementById('main').classList.add('flip')
-        }
+
 
         setHandlers()
         connectInstance()
@@ -83,6 +84,7 @@
 
     var watchEvents = function(address) {
       var ah = loadedAbiHtml[selectedDocIndex]
+      if (!ah) return
       ah.WatchAllEvents({
         address: address,
         fromBlock: 'latest',
