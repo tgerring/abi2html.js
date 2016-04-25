@@ -92,12 +92,13 @@
       }, null, function(evmEvent) {
         var link = evmEvent.name + '/' + evmEvent.result.blockNumber + '/' + evmEvent.result.transactionIndex + '/' + evmEvent.result.logIndex
         var foo = '<a href="#' + link + '">' + evmEvent.name + '</a>'
+        // when we send a transaction, this is getting loaded another time. why?
         displayBlock(evmEvent.result.blockNumber, foo, 'success')
       })
       var el = document.getElementById('notification-anchor').querySelector('.notification')
     }
 
-    var watchBlocks = function(displayAll) {
+    var watchBlocks = function() {
       if (blockFilter) blockFilter.stopWatching()
 
       // display inital state
@@ -161,9 +162,9 @@
                             <div id="notification-anchor">
                                 <div class="notification">Not connected</div>
                                 <div class="inline">
-                                    <input type="button" id="btnSend" value="Send">
+                                    <input type="button" value="Update" id="btnWatch">
                                     <input type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
-                                    <input type="button" value="Update" id="btnWatch" class="stack">
+                                    <input type="button" id="btnSend" value="Send" class="stack">
                                 </div>
                             </div>
                         </div>
