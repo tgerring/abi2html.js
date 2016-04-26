@@ -11,8 +11,6 @@
     <script type="text/javascript" src="./lib/util.js"></script>
     <script type="text/javascript" src="./lib/uiComponents.js"></script>
     <script type="text/javascript">
-    var loadedAbiHtml = []
-    var selectedDocIndex
     var web3 = (typeof web3 === 'undefined' ? new Web3() : web3)
     var appStatus = new AppStatus()
 
@@ -25,8 +23,8 @@
         if (!gistId) {
             if (window.location.protocol === "file:") {
                 // debug
-                // gistId = "505534d5a37ffa3a0625"
-                gistId = "0e1b884de82d35053a34"
+                gistId = "505534d5a37ffa3a0625"
+                // gistId = "0e1b884de82d35053a34"
                 address = "0x63f33b08404987648ce2dde79715e14e8b69e4d8"
                 providerString = 'http://127.0.0.1:8545'
             } else if (window.location.host === 'tgerring.github.io') {
@@ -41,6 +39,7 @@
 
         // preload resources
         if (gistId) {
+            console.log('loading gist', gistId)
             callAjax('https://api.github.com/gists/' + gistId, function(response) {
                 if (response != null) {
                   var result = JSON.parse(response)
@@ -49,9 +48,11 @@
                       for (var filename in result.files) {
                           var ah = new AbiHtml(result.files[filename].content)
                           ah.name = filename
-                          loadedAbiHtml[i] = ah
+                          appStatus.loadedDocs[i] = ah
+                          console.log('loaded', ah.name)
                           i++
                       }
+                    appStatus.renderInterface(appStatus.selectedDocIndex)
                   }
                 }
             })
@@ -59,40 +60,16 @@
             document.getElementById('main').classList.add('flip')
         }
 
-        // render code
-        selectedDocIndex = 0
-        displayCode(selectedDocIndex)
-        displayUi(selectedDocIndex)
-
-        var connected = connectInstance(providerString)
-        if (connected) {
-            // display inital state
-            appStatus.displayPending()
-
-            appStatus.watchBlocks(function(txhash, latest){
-              // if the block transaction is in the local cache
-              var foo = txhash.substring(0, 8) + '...' + txhash.substring(txhash.length - 6)
-              var link = 'tx/' + txhash
-              var msg = '<a href="#' + link + '">' + foo + '</a>'
-              displayBlock(latest.number, msg, 'success')
-
-              appStatus.displayPending()
-            })
-
-
-            var address = document.getElementById('option-address').value
-            watchEvents(address)
-        }
-
-        routeApp()
-
-        setHandlers()
-        connectInstance()
+        connectInstance(providerString)
+        appStatus.selectedDocIndex = 0
+        appStatus.renderInterface(appStatus.selectedDocIndex)
+        appStatus.routeApp()
+        appStatus.setHandlers()
     }
 
 
     var watchEvents = function(address) {
-      var ah = loadedAbiHtml[selectedDocIndex]
+      var ah = appStatus.loadedDocs[appStatus.selectedDocIndex]
       if (!ah) return
       ah.WatchAllEvents({
         address: address,
