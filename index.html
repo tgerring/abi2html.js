@@ -67,22 +67,63 @@
         appStatus.setHandlers()
     }
 
-
-    var watchEvents = function(address) {
-      var ah = appStatus.loadedDocs[appStatus.selectedDocIndex]
-      if (!ah) return
-      ah.WatchAllEvents({
-        address: address,
-        fromBlock: 'latest',
-        toBlock: 'latest'
-      }, null, function(evmEvent) {
-        var link = evmEvent.name + '/' + evmEvent.result.blockNumber + '/' + evmEvent.result.transactionIndex + '/' + evmEvent.result.logIndex
-        var foo = '<a href="#' + link + '">' + evmEvent.name + '</a>'
-        // when we send a transaction, this is getting loaded another time. why?
-        displayBlock(evmEvent.result.blockNumber, foo, 'success')
-      })
-      // var el = document.getElementById('notification-anchor').querySelector('.notification')
+    var getParameterByName = function(name) {
+      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
+      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search)
+      return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "))
     }
+
+    var callAjax = function(url, callback) {
+      var xmlhttp
+      xmlhttp = new XMLHttpRequest()
+      xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+          callback(xmlhttp.responseText)
+        }
+      }
+      xmlhttp.onerror = function() {
+        callback(null)
+      }
+      xmlhttp.open("GET", url, true)
+      xmlhttp.send()
+    }
+
+    var inArrayIndex = function(array, id) {
+      for (var i = 0; i < array.length; i++) {
+        if (array[i] === id) return i
+      }
+      return -1
+    }
+
+    var connectInstance = function(providerString) {
+      // try to connect if not connected
+      if (!web3.currentProvider)
+        web3.setProvider(new web3.providers.HttpProvider(providerString))
+
+      // check if connected
+      var isConnected = web3.isConnected()
+
+      if (isConnected) {
+        // fill in "from accounts"
+        var fromInput = document.getElementById('option-from')
+        fromInput.innerHTML = ''
+        web3.eth.accounts.forEach(function(address) {
+          var option = document.createElement('option')
+          option.value = address
+          option.innerHTML = address
+          fromInput.options.add(option)
+        })
+        fromInput.disabled = false
+
+        // enable watch target
+        document.getElementById('option-address').disabled = false
+        document.getElementById('btnWatch').disabled = false
+      }
+
+      return isConnected
+    }
+
     </script>
 </head>
 
