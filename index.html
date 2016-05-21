@@ -42,88 +42,88 @@
             console.log('loading gist', gistId)
             callAjax('https://api.github.com/gists/' + gistId, function(response) {
                 if (response != null) {
-                  var result = JSON.parse(response)
-                  if (result) {
-                      var i = 0
-                      for (var filename in result.files) {
-                          var ah = new AbiHtml(result.files[filename].content)
-                          ah.name = filename
-                          appStatus.loadedDocs[i] = ah
-                          console.log('loaded', ah.name)
-                          i++
-                      }
-                    appStatus.renderInterface(appStatus.selectedDocIndex)
-                  }
+                    var result = JSON.parse(response)
+                    if (result) {
+                        var i = 0
+                        for (var filename in result.files) {
+                            var ah = new AbiHtml(result.files[filename].content)
+                            ah.name = filename
+                            appStatus.loadedDocs[i] = ah
+                            console.log('loaded', ah.name)
+                            i++
+                        }
+                    }
                 }
+                appStatus.renderInterface()
+                appStatus.routeApp()
             })
         } else {
             document.getElementById('main').classList.add('flip')
+            appStatus.renderInterface()
+            appStatus.routeApp()
         }
 
         connectInstance(providerString)
-        appStatus.selectedDocIndex = 0
-        appStatus.renderInterface(appStatus.selectedDocIndex)
-        appStatus.routeApp()
+        appStatus.selectedDocIndex = 0 // would like to get rid of this
         appStatus.setHandlers()
     }
 
     var getParameterByName = function(name) {
-      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
-      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-        results = regex.exec(location.search)
-      return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "))
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search)
+        return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "))
     }
 
     var callAjax = function(url, callback) {
-      var xmlhttp
-      xmlhttp = new XMLHttpRequest()
-      xmlhttp.onreadystatechange = function() {
-        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-          callback(xmlhttp.responseText)
+        var xmlhttp
+        xmlhttp = new XMLHttpRequest()
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                callback(xmlhttp.responseText)
+            }
         }
-      }
-      xmlhttp.onerror = function() {
-        callback(null)
-      }
-      xmlhttp.open("GET", url, true)
-      xmlhttp.send()
+        xmlhttp.onerror = function() {
+            callback(null)
+        }
+        xmlhttp.open("GET", url, true)
+        xmlhttp.send()
     }
 
     var inArrayIndex = function(array, id) {
-      for (var i = 0; i < array.length; i++) {
-        if (array[i] === id) return i
-      }
-      return -1
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] === id) return i
+        }
+        return -1
     }
 
     var connectInstance = function(providerString) {
-      // try to connect if not connected
-      if (!web3.currentProvider)
-        web3.setProvider(new web3.providers.HttpProvider(providerString))
+        // try to connect if not connected
+        if (!web3.currentProvider)
+            web3.setProvider(new web3.providers.HttpProvider(providerString))
 
-      // check if connected
-      var isConnected = web3.isConnected()
+        // check if connected
+        var isConnected = web3.isConnected()
 
-      if (isConnected) {
-        // fill in "from accounts"
-        var fromInput = document.getElementById('option-from')
-        fromInput.innerHTML = ''
-        web3.eth.accounts.forEach(function(address) {
-          var option = document.createElement('option')
-          option.value = address
-          option.innerHTML = address
-          fromInput.options.add(option)
-        })
-        fromInput.disabled = false
+        if (isConnected) {
+            // fill in "from accounts"
+            var fromInput = document.getElementById('option-from')
+            fromInput.innerHTML = ''
+            web3.eth.accounts.forEach(function(address) {
+                var option = document.createElement('option')
+                option.value = address
+                option.innerHTML = address
+                fromInput.options.add(option)
+            })
+            fromInput.disabled = false
 
-        // enable watch target
-        document.getElementById('option-address').disabled = false
-        document.getElementById('btnWatch').disabled = false
-      }
+            // enable watch target
+            document.getElementById('option-address').disabled = false
+            document.getElementById('btnWatch').disabled = false
+        }
 
-      return isConnected
+        return isConnected
     }
-
     </script>
 </head>
 
@@ -143,7 +143,10 @@
                                 </div>
                             </div>
                             <div id="notification-anchor">
-                                <div class="notification dashed"><span id="pending-status">Not connected</span><hr><ul id="pending-tx"></ul></div>
+                                <div class="notification dashed"><span id="pending-status">Not connected</span>
+                                    <hr>
+                                    <ul id="pending-tx"></ul>
+                                </div>
                                 <div class="inline">
                                     <input type="button" value="Update" id="btnWatch">
                                     <input type="button" onclick="document.getElementById('main').classList.toggle('flip');" value="Code">
