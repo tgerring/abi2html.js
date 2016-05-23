@@ -75,7 +75,7 @@ general layout
 }
 
 #abi-tree {
-    height: 50%;
+    height: 100%;
     overflow: scroll;
 }
 
@@ -610,3 +610,17 @@ textarea[disabled] {
 #pending-tx li {
     list-style-type: none;
 }
+
+ul.abi.function, ul.abi.event {
+    list-style-type: none;
+    // padding-left: 0;
+}
+
+li.abi.function.input:before, li.abi.event.input:before {
+    content: "\00bb\00a0";
+}
+
+li.abi.function.output:before, li.abi.event.output:before {
+    content: "\00ab\00a0";
+}
+
