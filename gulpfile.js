@@ -80,7 +80,7 @@ gulp.task('scripts', function() {
 
             gulp.src(config.typeMap.jslibs, { cwd: config.typePaths.scripts.src }))
         .pipe(plugins.order(config.scriptOrder))
-        .pipe(isProduction ? plugins.concat(config.appName + '.js') : gutil.noop())
+        .pipe(plugins.concat(config.appName + '.js'))
 
     .pipe(plugins.size({ title: 'scripts', showFiles: false, gzip: true }))
         .pipe(isProduction ? gutil.noop() : plugins.connect.reload())
