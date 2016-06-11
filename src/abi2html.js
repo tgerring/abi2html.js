@@ -45,7 +45,6 @@ AbiHtml.prototype.constructor = function(abi) {
         var abiItem = abi[i]
 
         if (typeof abiItem !== "object") continue
-        if (!("name" in abiItem)) continue
         if (!("type" in abiItem)) continue
 
         // it's not currently possible to store a subset of the contract so we store the whole thing
@@ -62,7 +61,7 @@ AbiHtml.prototype.constructor = function(abi) {
                 this.events[abiItem.name] = item
                 break
             case 'constructor':
-                item = new Web3Function(abiItem)
+                item = new EvmConstructor(abiItem)
                 item.contract = this.contract
                 this.init = item
                 break
@@ -106,6 +105,23 @@ AbiHtml.prototype.FromRegex = function(str) {
 }
 
 AbiHtml.prototype.RenderTree = function() {
+    var cdiv = document.createElement('div')
+    cdiv.innerHTML = 'Constructor: '
+    var cons = this.init
+
+    var ci = document.createElement('ul')
+    ci.classList.add('abi', 'constructor', 'input')
+    if (cons && 'inputs' in cons) {
+
+        cons.inputs.forEach(function(field) {
+            var cil = document.createElement('li')
+            cil.classList.add('abi', 'constructor', 'input', field.type)
+            cil.innerHTML = field.type + ' ' + field.name
+            ci.appendChild(cil)
+        })
+        cdiv.appendChild(ci)
+    }
+
     var fdiv = document.createElement('div')
     fdiv.innerHTML = 'Functions: '
     var ful = document.createElement('ul')
@@ -181,6 +197,7 @@ AbiHtml.prototype.RenderTree = function() {
     ediv.appendChild(eul)
 
     var div = document.createElement('div')
+    div.appendChild(cdiv)
     div.appendChild(fdiv)
     div.appendChild(ediv)
     return div
@@ -277,6 +294,10 @@ AbiHtml.prototype.GetEventLogs = function(options, shouldWatch, callback) {
 
     }
 
+}
+
+AbiHtml.prototype.GetConstructor = function() {
+    return this.init
 }
 
 AbiHtml.prototype.GetEventLogsByName = function(name, options, filterFields, cb) {
