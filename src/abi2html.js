@@ -51,12 +51,12 @@ AbiHtml.prototype.constructor = function(abi) {
         var item
         switch (abiItem.type) {
             case 'function':
-                item = new Web3Function(abiItem)
+                item = new EvmFunction(abiItem)
                 item.contract = this.contract
                 this.functions[abiItem.name] = item
                 break
             case 'event':
-                item = new Web3Event(abiItem)
+                item = new EvmEvent(abiItem)
                 item.contract = this.contract
                 this.events[abiItem.name] = item
                 break
@@ -131,7 +131,7 @@ AbiHtml.prototype.RenderTree = function() {
         var fspan = document.createElement('span')
         fspan.classList.add('abi', 'function')
         fspan.innerHTML = func.name
-        if (func.func.constant) {
+        if (func.constant) {
             var icon = document.createElement('span')
             icon.innerHTML = ' <dfn title="Constant">&#8594;</dfn>'
             icon.className = 'indexed'
@@ -142,7 +142,7 @@ AbiHtml.prototype.RenderTree = function() {
 
         var fi = document.createElement('ul')
         fi.classList.add('abi', 'function', 'input')
-        func.func.inputs.forEach(function(field) {
+        func.inputs.forEach(function(field) {
             var fil = document.createElement('li')
             fil.classList.add('abi', 'function', 'input', field.type)
             fil.innerHTML = field.type + ' ' + field.name
@@ -152,7 +152,7 @@ AbiHtml.prototype.RenderTree = function() {
 
         var fo = document.createElement('ul')
         fo.classList.add('abi', 'function', 'output')
-        func.func.outputs.forEach(function(field) {
+        func.outputs.forEach(function(field) {
             var fol = document.createElement('li')
             fol.classList.add('abi', 'function', 'output')
             fol.innerHTML = field.type + ' ' + field.name
@@ -177,7 +177,7 @@ AbiHtml.prototype.RenderTree = function() {
 
         var ei = document.createElement('ul')
         ei.classList.add('abi', 'event', 'input')
-        ev.ev.inputs.forEach(function(field) {
+        ev.inputs.forEach(function(field) {
             var eil = document.createElement('li')
             eil.classList.add('abi', 'event', 'input', field.type)
             eil.innerHTML = field.type + ' ' + field.name
