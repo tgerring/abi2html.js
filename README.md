@@ -5,7 +5,7 @@ Add extra expresiveness for Ethereum ABI & Solidity types. Useful for generating
 ## Get the code:
 
 ```
-git clone https://github.com/tgerring/abi2html-js.git
+git clone https://github.com/tgerring/abi2html.js.git
 ```
 
 ## Build the code:

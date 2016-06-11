@@ -1,5 +1,5 @@
 {
-  "name": "abi2html-js",
+  "name": "abi2html.js",
   "version": "0.5.0",
   "description": "library to enhance solidity types",
   "main": "",
@@ -41,12 +41,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tgerring/abi2html-js.git"
+    "url": "git+https://github.com/tgerring/abi2html.js.git"
   },
   "author": "Taylor Gerring",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tgerring/abi2html-js/issues"
+    "url": "https://github.com/tgerring/abi2html.js/issues"
   },
-  "homepage": "https://github.com/tgerring/abi2html-js#readme"
+  "homepage": "https://github.com/tgerring/abi2html.js#readme"
 }
