@@ -80,7 +80,7 @@ AbiHtml.prototype.inArray = function(array, id) {
 }
 
 AbiHtml.prototype.FromRegex = function(str) {
-    var re = /(?:(function|event)\s*)(\w+)\s*\((|(?:(?:,|\s*)?\w+(?:\[\])? \w+\s*)+)\)((?:\s+(?!returns\s*?)(?:\w+(?:\(.+\))?))*)(?:\s+returns\s*?\((|(?:(?:,|\s*)?(?:\w+(?:\[\])? )?\w+\s*)+)\))?/g
+    var re = /(?:(function|event)\s*)(\w+)\s*\((\s*|(?:(?:,\s*|\s*)?\w+(?:\[\])? \w+\s*)+)\)((?:\s+(?!returns\s*?)(?:\w+(?:\(.+\))?))*)(?:\s+returns\s*?\((|(?:(?:,\s*|\s*)?(?:\w+(?:\[\])? )?\w+\s*)+)\))?/g
 
     var abi = []
     var match
